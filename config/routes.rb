@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
-  mount_devise_token_auth_for 'User', at: 'auth'
+  mount_devise_token_auth_for 'User', controllers: {
+    confirmations: 'auth/users/confirmations'
+  },at: 'auth', :skip => [
+    :registrations
+  ]
 
   mount_devise_token_auth_for 'Customer', controllers: {
     registrations: 'auth/customers/registrations'
@@ -12,7 +16,6 @@ Rails.application.routes.draw do
     :token_validations,
     :registrations
   ]
-
 
   devise_scope :customer do
     post '/register-customer' => 'auth/customers/registrations#create'

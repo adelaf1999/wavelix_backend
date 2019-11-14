@@ -18,10 +18,18 @@ module  Auth
               end
         
               # give redirect value from params priority
-              @redirect_url = params.fetch(
-                :confirm_success_url,
-                DeviseTokenAuth.default_confirm_success_url
-              )
+              # @redirect_url = params.fetch(
+              #   :confirm_success_url,
+              #   DeviseTokenAuth.default_confirm_success_url
+              # )
+
+              
+              # The redirect url is the page the user will be redirected to upon
+              # successful email confirmation
+
+              @redirect_url = "http://192.168.1.103:19006"
+
+             
         
               # success redirect url is required
               if confirmable_enabled? && !@redirect_url
