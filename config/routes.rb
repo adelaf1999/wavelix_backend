@@ -3,7 +3,8 @@ Rails.application.routes.draw do
     confirmations: 'auth/users/confirmations'
   },at: 'auth', :skip => [
     :registrations,
-    :confirmations
+    :confirmations,
+    :sessions
   ]
 
   mount_devise_token_auth_for 'Customer', controllers: {
@@ -33,6 +34,8 @@ Rails.application.routes.draw do
   devise_scope :user do
     get '/auth/confirmation' => "auth/users/confirmations#show", as: :user_confirmation
     post '/auth/confirmation' => "auth/users/confirmations#create"
+    post '/auth/sign_in' => "devise_token_auth/sessions#create", as: :user_session 
+    delete '/auth/sign_out' => "devise_token_auth/sessions#destroy", as: :destroy_user_session
 
   end
 
