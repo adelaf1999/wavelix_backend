@@ -34,7 +34,7 @@ module Auth
                 # or the user was already confirmed
 
                 if @resource.confirmed?
-                    redirect_to("http://192.168.1.103:19006")
+                    redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
                 else
                      # redirect to 404 not found page or something went wront page in the website
                 end
@@ -54,7 +54,7 @@ module Auth
               return render_not_found_error unless @resource
         
               @resource.send_confirmation_instructions({
-                redirect_url: "http://192.168.1.103:19006",
+                redirect_url: ENV.fetch("DEVELOPMENT_WEBSITE_URL"),
                 client_config: resource_params[:config_name]
               })
         

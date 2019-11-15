@@ -47,13 +47,13 @@ module Auth
                 # redirect_to(@resource.build_auth_url(after_unlock_path_for(@resource),
                 #                                      redirect_headers))
 
-                redirect_to("http://192.168.1.103:19006")
+                redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
 
               else
                 # render_show_error
                 if @resource.locked_at? == false
                     # already unlocked 
-                    redirect_to("http://192.168.1.103:19006")
+                    redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
                 else
                    # redirect to 404 not found page or something went wrong page in the website
                 end

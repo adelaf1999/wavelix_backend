@@ -27,7 +27,7 @@ module  Auth
               # The redirect url is the page the user will be redirected to upon
               # successful email confirmation
 
-              @redirect_url = "http://192.168.1.103:19006"
+              @redirect_url = ENV.fetch("DEVELOPMENT_WEBSITE_URL")
 
              
         
