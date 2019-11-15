@@ -18,6 +18,18 @@ Rails.application.routes.draw do
     :registrations
   ]
 
+  mount_devise_token_auth_for 'Store', controllers: {
+    registrations: 'auth/stores/registrations'
+  }, at: 'store_auth', :skip => [
+    :sessions,
+    :passwords,
+    :confirmations,
+    :unlocks,
+    :omniauth_callbacks,
+    :token_validations,
+    :registrations
+  ]
+
   devise_scope :user do
     get '/auth/confirmation' => "auth/users/confirmations#show", as: :user_confirmation
     post '/auth/confirmation' => "auth/users/confirmations#create"
@@ -26,6 +38,10 @@ Rails.application.routes.draw do
 
   devise_scope :customer do
     post '/register-customer' => 'auth/customers/registrations#create'
+  end
+
+  devise_scope :store do
+    post '/register-store' => 'auth/stores/registrations#create'
   end
 
 end
