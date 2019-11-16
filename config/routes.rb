@@ -1,7 +1,8 @@
 Rails.application.routes.draw do
   mount_devise_token_auth_for 'User', controllers: {
     confirmations: 'auth/users/confirmations',
-    unlocks: 'auth/users/unlocks'
+    unlocks: 'auth/users/unlocks',
+    passwords: 'auth/users/passwords'
   },at: 'auth', :skip => [
     :registrations,
     :confirmations,
