@@ -84,7 +84,7 @@ module  Auth
         
 
             def customer_user_params
-              params.require(:customer_user_attributes).permit(:full_name, :date_of_birth, :residential_address, :gender, :country_of_residence)
+              params.permit(:full_name, :date_of_birth, :residential_address, :gender, :country_of_residence)
             end
 
             def validate_customer_user_params(customer_params)
@@ -113,6 +113,7 @@ module  Auth
                 residential_address = customer_params[:residential_address]
                 gender = customer_params[:gender].downcase
                 country_of_residence = customer_params[:country_of_residence]
+
 
                 if full_name.length == 0
                   valid = false
@@ -155,13 +156,18 @@ module  Auth
 
               begin
                 
-           
-                t_date = Time.strptime(date,'%m-%d-%Y')
-           
-                # check if parsed date is same as input date
-                if t_date.strftime('%m-%d-%Y') != date
-                   valid = false
+
+                t_date = Time.strptime(date,'%Y-%m-%d')
+
+
+                # t_date_values = t_date.strftime('%Y-%m-%d').split("-")
+
+                date_values = date.split("-")
+
+                if t_date.year != date_values[0].to_i || t_date.month != date_values[1].to_i || t_date.day != date_values[2].to_i
+                  valid = false
                 end
+                
            
              rescue ArgumentError => e
                 valid = false
