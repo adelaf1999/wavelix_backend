@@ -86,14 +86,14 @@ module Auth
                 params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license)
             end
 
-            def validate_store_user_params(store_params)
+            def validate_store_user_params
 
-                 # returns true if valid
-                 # return false if invalid or missing params
 
                  valid = true
 
                  req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license]
+
+                 store_params = store_user_params
 
                  req_params.each do |p|
                     if store_params[p] == nil
@@ -111,8 +111,11 @@ module Auth
                     store_name = store_params[:store_name]
                     store_address = store_params[:store_address]
                     store_number = store_params[:store_number]
-                    store_country = store_params[:store_country]
                     store_business_license = store_params[:store_business_license]
+
+                    store_country_code = store_params[:store_country]
+                    c = ISO3166::Country.new(store_country_code)
+                   
 
                     if store_owner_full_name.length == 0
                         valid = false
@@ -134,19 +137,37 @@ module Auth
                         valid = false
                     end
 
-                    if valid && !is_country_valid?(store_country)
-                        valid = false
+                    if valid && (c == nil || store_country_code == "IL")
+                      valid = false
                     end
 
                     if valid && !is_business_license_valid?(store_business_license)
                         valid = false
                     end
 
+                    if valid
+
+
+                      @resource.store_user = StoreUser.new(
+                        store_owner_full_name: store_owner_full_name,
+                        store_owner_work_number: store_owner_work_number,
+                        store_name: store_name,
+                        store_address: store_address,
+                        store_number: store_number,
+                        store_country: c.name,
+                        store_business_license: store_business_license
+                      )
+
+
+
+
+                    end
+
                     
 
                 end
 
-                valid
+             
 
             end
 
@@ -189,17 +210,6 @@ module Auth
   
             end
   
-            def is_country_valid?(country_code)
-              
-              c = ISO3166::Country.new(country_code)
-  
-              if c == nil || country_code == "IL"
-                false
-              else
-                true
-              end
-  
-            end
         
             def build_resource
               @resource            = resource_class.new(sign_up_params)
@@ -214,12 +224,7 @@ module Auth
 
               # check store user params
 
-
-             store_attributes = store_user_params
-
-              if validate_store_user_params(store_attributes)
-                @resource.store_user = StoreUser.new(store_attributes)
-              end
+              validate_store_user_params
 
 
 

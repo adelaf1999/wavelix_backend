@@ -87,14 +87,13 @@ module  Auth
               params.permit(:full_name, :date_of_birth, :residential_address, :gender, :country_of_residence)
             end
 
-            def validate_customer_user_params(customer_params)
-
-              # returns true if valid
-              # return false if invalid or missing params
+            def validate_customer_user_params
 
               valid = true
 
               req_params = [:full_name, :date_of_birth, :residential_address, :gender, :country_of_residence]
+
+              customer_params = customer_user_params
 
               req_params.each do |p|
                   if customer_params[p] == nil
@@ -112,7 +111,8 @@ module  Auth
                 date_of_birth = customer_params[:date_of_birth]
                 residential_address = customer_params[:residential_address]
                 gender = customer_params[:gender].downcase
-                country_of_residence = customer_params[:country_of_residence]
+                country_code = customer_params[:country_of_residence]
+                c = ISO3166::Country.new(country_code)
 
 
                 if full_name.length == 0
@@ -133,17 +133,25 @@ module  Auth
                 end
 
                 
-                if valid && !is_country_of_residence_valid?(country_of_residence)
+                if valid && (c == nil || country_code == "IL")
                   valid = false
+                end
+
+                if valid
+
+                  @resource.customer_user = CustomerUser.new(
+                    full_name: full_name,
+                    date_of_birth: date_of_birth,
+                    residential_address: residential_address,
+                    gender: gender,
+                    country_of_residence: c.name
+                  )
+
                 end
 
               end
 
-              
-
-              puts "Valid is #{valid}"
-
-              valid
+        
 
             end
         
@@ -179,17 +187,6 @@ module  Auth
   
             end
   
-            def is_country_of_residence_valid?(country_code)
-              
-              c = ISO3166::Country.new(country_code)
-  
-              if c == nil || country_code == "IL"
-                false
-              else
-                true
-              end
-  
-            end
         
             def build_resource
               @resource            = resource_class.new(sign_up_params)
@@ -204,11 +201,7 @@ module  Auth
 
               # check customer user params
 
-              customer_attributes = customer_user_params
-
-              if validate_customer_user_params(customer_attributes)
-                @resource.customer_user = CustomerUser.new(customer_user_params)
-              end
+              validate_customer_user_params
 
 
 
