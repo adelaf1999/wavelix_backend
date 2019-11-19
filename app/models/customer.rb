@@ -1,6 +1,6 @@
 class Customer < User
 
-    before_destroy :destroy_customer_user
+
     before_create :set_user_type
     has_one :customer_user
     validates_presence_of :customer_user
@@ -20,16 +20,6 @@ class Customer < User
         self.user_type = 0
     end
 
-    def destroy_customer_user
 
-        customer_user = CustomerUser.find_by(customer_id: self.id)
-
-        if customer_user != nil
-
-            customer_user.destroy
-
-        end
-
-    end
 
 end

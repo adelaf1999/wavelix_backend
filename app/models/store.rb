@@ -1,6 +1,6 @@
 class Store < User
 
-    before_destroy :destroy_store_user
+
     before_create :set_user_type
     has_one :store_user
     validates_presence_of :store_user
@@ -18,18 +18,7 @@ class Store < User
         self.user_type = 1
     end
 
-    def destroy_store_user
 
-
-        store_user = StoreUser.find_by(store_id: self.id)
-
-        if store_user != nil
-
-            store_user.destroy
-
-        end
-
-    end
 
 
 end
