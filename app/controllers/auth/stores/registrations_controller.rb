@@ -27,7 +27,7 @@ module Auth
               # The redirect url is the page the user will be redirected to upon
               # successful email confirmation
 
-              @redirect_url =  ENV.fetch("DEVELOPMENT_WEBSITE_URL")
+              @redirect_url = Rails.env.production? ?  ENV.fetch("PRODUCTION_WEBSITE_URL")  : ENV.fetch("DEVELOPMENT_WEBSITE_URL")
 
              
         

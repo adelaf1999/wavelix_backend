@@ -47,13 +47,23 @@ module Auth
                 # redirect_to(@resource.build_auth_url(after_unlock_path_for(@resource),
                 #                                      redirect_headers))
 
-                redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
+                if Rails.env.production?
+                  redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
+                else
+                  redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
+                end
 
               else
                 # render_show_error
                 if @resource.locked_at? == false
                     # already unlocked 
-                    redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
+                    
+                    if Rails.env.production?
+                      redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
+                    else
+                      redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
+                    end
+
                 else
                    # redirect to 404 not found page or something went wrong page in the website
                 end
