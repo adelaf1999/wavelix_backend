@@ -17,7 +17,7 @@ module Auth
                 @resource.send_reset_password_instructions(
                   email: @email,
                   provider: 'email',
-                  redirect_url: ENV.fetch("DEVELOPMENT_WEBSITE_URL"),
+                  redirect_url: Rails.env.production? ? ENV.fetch("PRODUCTION_WEBSITE_URL") : ENV.fetch("DEVELOPMENT_WEBSITE_URL"),
                   client_config: params[:config_name]
                 )
         
@@ -61,17 +61,32 @@ module Auth
                 #                                        redirect_headers))
                 # end
 
-                if !require_client_password_reset_token?
+                # if !require_client_password_reset_token?
 
-                    redirect_header_options = { reset_password: true }
-                    redirect_headers = build_redirect_headers(token.token,
+                redirect_header_options = { reset_password: true }
+                redirect_headers = build_redirect_headers(token.token,
                                                                 token.client,
                                                                 redirect_header_options)
+
+                access_token = redirect_headers["access-token"]
+
+                client = redirect_headers["client"]
+
+                uid = @resource.uid
+
+                reset_password_token = params[:reset_password_token]
+
+
+                redirect_reset_password_domain = Rails.env.production? ? ENV.fetch("PRODUCTION_WEBSITE_URL") : ENV.fetch("DEVELOPMENT_WEBSITE_URL")
+
+                redirect_reset_password_url = "#{redirect_reset_password_domain}/reset-password/access_token=#{access_token}&client=#{client}&uid=#{uid}&reset_password_token=#{reset_password_token}"
+
+                redirect_to redirect_reset_password_url
                 
     
-                    redirect_to( @resource.build_auth_url(ENV.fetch("DEVELOPMENT_WEBSITE_URL"), redirect_headers) )
+                # redirect_to( @resource.build_auth_url(ENV.fetch("DEVELOPMENT_WEBSITE_URL"), redirect_headers) )
 
-                end
+                # end
 
 
               
