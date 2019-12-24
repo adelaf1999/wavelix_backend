@@ -9,6 +9,7 @@ module  Auth
             
         
             def create
+       
               build_resource
         
               unless @resource.present?
@@ -84,14 +85,14 @@ module  Auth
         
 
             def customer_user_params
-              params.permit(:full_name, :date_of_birth, :residential_address, :gender, :country_of_residence)
+              params.permit(:full_name, :date_of_birth, :gender, :country_of_residence, :home_address, :building_name, :apartment_floor)
             end
 
             def validate_customer_user_params
 
               valid = true
 
-              req_params = [:full_name, :date_of_birth, :residential_address, :gender, :country_of_residence]
+              req_params = [:full_name, :date_of_birth, :country_of_residence, :gender, :home_address ]
 
               customer_params = customer_user_params
 
@@ -105,13 +106,15 @@ module  Auth
               
               if valid
 
-                # no parameters are missings
+                # no parameters are missings (except maybe optional)
 
                 full_name = customer_params[:full_name]
                 date_of_birth = customer_params[:date_of_birth]
-                residential_address = customer_params[:residential_address]
                 gender = customer_params[:gender].downcase
                 country_code = customer_params[:country_of_residence]
+                home_address = eval(customer_params[:home_address])
+                latitude = home_address[:latitude]
+                longitude = home_address[:longitude]
                 c = ISO3166::Country.new(country_code)
 
 
@@ -123,10 +126,7 @@ module  Auth
                   valid = false
                 end
 
-                if valid && residential_address.length == 0
-                  valid = false
-                end
-
+              
 
                 if valid && gender != "male" && gender != "female" && gender != "other"
                   valid = false
@@ -137,15 +137,44 @@ module  Auth
                   valid = false
                 end
 
+                if valid && latitude != nil
+                  latitude = latitude.to_s
+                else
+                  valid = false
+                end
+
+                if valid && longitude != nil
+                  longitude = longitude.to_s
+                else
+                  valid = false
+                end
+
+                if valid && ( !is_number?(latitude) || !is_number?(longitude) )
+                    valid = false
+                end
+
+                building_name = customer_params[:building_name]
+                apartment_floor = customer_params[:apartment_floor]
+
+                
+
                 if valid
 
                   @resource.customer_user = CustomerUser.new(
                     full_name: full_name,
                     date_of_birth: date_of_birth,
-                    residential_address: residential_address,
                     gender: gender,
-                    country_of_residence: c.name
+                    country_of_residence: c.name,
+                    home_address: home_address
                   )
+
+                  if building_name != nil 
+                    @resource.customer_user.building_name = building_name
+                  end
+
+                  if apartment_floor != nil && is_number?(apartment_floor)
+                    @resource.customer_user.apartment_floor = apartment_floor
+                  end
 
                 end
 
@@ -156,6 +185,14 @@ module  Auth
             end
         
             protected
+
+            def is_number?(arg)
+              if /^\d+([.]\d+)?$/.match(arg) == nil
+                false
+              else
+                true
+              end
+            end
 
             def is_birthdate_valid?(date)
 
@@ -192,6 +229,8 @@ module  Auth
               @resource            = resource_class.new(sign_up_params)
               @resource.provider   = provider
         
+          
+
               # honor devise configuration for case_insensitive_keys
               if resource_class.case_insensitive_keys.include?(:email)
                 @resource.email = sign_up_params[:email].try(:downcase)
@@ -200,7 +239,6 @@ module  Auth
               end
 
               # check customer user params
-
               validate_customer_user_params
 
 
