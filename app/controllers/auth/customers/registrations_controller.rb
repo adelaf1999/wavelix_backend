@@ -149,7 +149,7 @@ module  Auth
                   valid = false
                 end
 
-                if valid && ( !is_number?(latitude) || !is_number?(longitude) )
+                if valid && ( !is_number?(latitude) || !is_number?(longitude) || home_address.size != 2 )
                     valid = false
                 end
 
