@@ -168,11 +168,11 @@ module  Auth
                     home_address: home_address
                   )
 
-                  if building_name != nil 
+                  if building_name != nil && building_name.length > 0
                     @resource.customer_user.building_name = building_name
                   end
 
-                  if apartment_floor != nil && is_number?(apartment_floor)
+                  if apartment_floor != nil && apartment_floor.to_s.length > 0 && is_number?(apartment_floor.to_s)
                     @resource.customer_user.apartment_floor = apartment_floor
                   end
 
