@@ -109,12 +109,15 @@ module Auth
                     store_owner_full_name = store_params[:store_owner_full_name]
                     store_owner_work_number = store_params[:store_owner_work_number]
                     store_name = store_params[:store_name]
-                    store_address = store_params[:store_address]
                     store_number = store_params[:store_number]
                     store_business_license = store_params[:store_business_license]
 
                     store_country_code = store_params[:store_country]
                     c = ISO3166::Country.new(store_country_code)
+
+                    store_address = eval(store_params[:store_address])
+                    latitude = store_address[:latitude]
+                    longitude = store_address[:longitude]
                    
 
                     if store_owner_full_name.length == 0
@@ -129,9 +132,6 @@ module Auth
                         valid = false
                     end
 
-                    if valid && store_address.length == 0
-                        valid = false
-                    end
 
                     if valid && store_number.length == 0
                         valid = false
@@ -145,7 +145,26 @@ module Auth
                         valid = false
                     end
 
+                    if valid && latitude != nil
+                      latitude = latitude.to_s
+                    else
+                      valid = false
+                    end
+    
+                    if valid && longitude != nil
+                      longitude = longitude.to_s
+                    else
+                      valid = false
+                    end
+
+                    if valid && ( !is_number?(latitude) || !is_number?(longitude) || store_address.size != 2 )
+                      valid = false
+                    end
+
                     if valid
+
+                      store_address[:latitude] = latitude.to_d
+                      store_address[:longitude] = longitude.to_d
 
 
                       @resource.store_user = StoreUser.new(
@@ -174,6 +193,14 @@ module Auth
            
         
             protected
+
+            def is_number?(arg)
+              if /^\d+([.]\d+)?$/.match(arg) == nil
+                false
+              else
+                true
+              end
+            end
 
             def is_business_license_valid?(business_license)
 

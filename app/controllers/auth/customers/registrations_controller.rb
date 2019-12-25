@@ -160,6 +160,9 @@ module  Auth
 
                 if valid
 
+                  home_address[:latitude] = latitude.to_d
+                  home_address[:longitude] = longitude.to_d
+
                   @resource.customer_user = CustomerUser.new(
                     full_name: full_name,
                     date_of_birth: date_of_birth,
