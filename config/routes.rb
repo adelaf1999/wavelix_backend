@@ -51,4 +51,6 @@ Rails.application.routes.draw do
     post '/register-store' => 'auth/stores/registrations#create'
   end
 
+  post '/create-categories' => 'categories#create'
+
 end
