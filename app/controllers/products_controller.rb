@@ -214,7 +214,7 @@ class ProductsController < ApplicationController
                     if value.include?(",") && !value.include?(" ")  && value.length >= 3
                         # list can't contain duplicates
                         product_attributes[key] = value.split(",").uniq
-                    elsif value.include?(":") && value.count(":") == 1 && value.length >= 3
+                    elsif value.include?(":") && !value.include?(" ") && value.count(":") == 1 && value.length >= 3
                         
                         numbers = []
                         
