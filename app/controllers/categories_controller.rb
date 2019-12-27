@@ -63,6 +63,45 @@ class CategoriesController < ApplicationController
 
     end
 
+    def add_subcategory
+
+        if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            category = store_user.categories.find_by(id: params[:category_id])
+
+            if category != nil
+
+                category_name = params[:category_name]
+
+
+
+                if category_name != nil && category_name.length > 0
+
+                    Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
+
+                    @success = true
+
+                else
+
+                    @success = false
+
+                end
+
+
+
+
+            else
+
+                @success = false
+
+            end
+
+        end
+
+    end
+
 
     private
 

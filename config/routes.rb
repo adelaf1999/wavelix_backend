@@ -57,4 +57,6 @@ Rails.application.routes.draw do
 
   patch '/change-category-name' => 'categories#change_category_name'
 
+  post '/add-subcategory' => 'categories#add_subcategory'
+
 end
