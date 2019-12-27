@@ -2,7 +2,7 @@ class Product < ApplicationRecord
 
    validates_presence_of :name, :description, :price, :main_picture, :category_id, :stock_quantity
 
-#    mount_uploader :main_picture, ImageUploader
+   mount_uploader :main_picture, ImageUploader
 
    belongs_to :category
 
