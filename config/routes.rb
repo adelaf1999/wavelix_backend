@@ -53,4 +53,6 @@ Rails.application.routes.draw do
 
   post '/create-categories' => 'categories#create'
 
+  get '/get-categories' => 'categories#get_categories'
+
 end

@@ -16,6 +16,16 @@ class CategoriesController < ApplicationController
 
     end
 
+    def get_categories
+
+        if current_user.store_user?
+
+            @categories = StoreUser.find_by(store_id: current_user.id).get_categories
+
+        end
+
+    end
+
 
     private
 
