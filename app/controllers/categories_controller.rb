@@ -45,16 +45,19 @@ class CategoriesController < ApplicationController
                     category.update!(name: category_name)
 
                     @success = true
+                    @message = "Successfully changed category name"
 
                 else
 
                     @success = false
+                    @message = "Invalid category name"
 
                 end
 
             else
 
                 @success = false
+                @message = "Category may have been moved or deleted"
 
 
             end
@@ -65,6 +68,8 @@ class CategoriesController < ApplicationController
 
     def add_subcategory
 
+        # cant create subcategory if category has products
+
         if current_user.store_user?
 
             store_user = StoreUser.find_by(store_id: current_user.id)
@@ -73,28 +78,39 @@ class CategoriesController < ApplicationController
 
             if category != nil
 
-                category_name = params[:category_name]
 
+                if category.products.length > 0
 
-
-                if category_name != nil && category_name.length > 0
-
-                    Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
-
-                    @success = true
+                    @success = false
+                    @message = "Cannot add subcategory since category already has products"
 
                 else
 
-                    @success = false
+                    category_name = params[:category_name]
+
+
+
+                    if category_name != nil && category_name.length > 0
+
+                        Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
+
+                        @success = true
+                        @message = "Successfully added subcategory"
+
+                    else
+
+                        @success = false
+                        @message = "Invalid category name"
+
+                    end
+
 
                 end
-
-
-
 
             else
 
                 @success = false
+                @message = "Category may have been moved or deleted"
 
             end
 
