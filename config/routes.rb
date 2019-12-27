@@ -55,4 +55,6 @@ Rails.application.routes.draw do
 
   get '/get-categories' => 'categories#get_categories'
 
+  patch '/change-category-name' => 'categories#change_category_name'
+
 end

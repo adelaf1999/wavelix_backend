@@ -26,6 +26,43 @@ class CategoriesController < ApplicationController
 
     end
 
+    def change_category_name
+
+        if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            category = store_user.categories.find_by(id: params[:category_id])
+
+            if category != nil
+
+                # store owns this category 
+
+                category_name = params[:category_name]
+
+                if category_name != nil && category_name.length > 0
+
+                    category.update!(name: category_name)
+
+                    @success = true
+
+                else
+
+                    @success = false
+
+                end
+
+            else
+
+                @success = false
+
+
+            end
+
+        end
+
+    end
+
 
     private
 
