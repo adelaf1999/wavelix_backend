@@ -51,6 +51,9 @@ Rails.application.routes.draw do
     post '/register-store' => 'auth/stores/registrations#create'
   end
 
+
+  # CATEGORIES ROUTES
+
   post '/create-categories' => 'categories#create'
 
   get '/get-categories' => 'categories#get_categories'
@@ -58,5 +61,9 @@ Rails.application.routes.draw do
   patch '/change-category-name' => 'categories#change_category_name'
 
   post '/add-subcategory' => 'categories#add_subcategory'
+
+  # PRODUCTS ROUTES
+
+  post '/create-product' => 'products#create'
 
 end
