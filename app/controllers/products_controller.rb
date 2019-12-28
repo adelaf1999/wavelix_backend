@@ -125,25 +125,36 @@ class ProductsController < ApplicationController
 
                     product = Product.new
 
-                    # validate and modify product_attributes as necessary
+                    # validate product_attributes as necessary
 
                     if product_attributes != nil
 
-                        product_attributes = validate_and_modify_product_attributes(product_attributes)
+                        begin
 
-                        if valid &&  product_attributes == false 
+                            product_attributes = eval(product_attributes)
+                        
+                            if product_attributes.instance_of?(Hash) && product_attributes.length > 0
+                        
+                                product.product_attributes = product_attributes
+                        
+                            else
+                               
+                                valid = false
+                                @success = false
+                                @message = "Invalid product attributes"
+                                return
 
+                            end
+                        
+                          rescue  SyntaxError, NameError
+                            
                             valid = false
                             @success = false
                             @message = "Invalid product attributes"
-
                             return
-
-                        else
-
-                            product.product_attributes = product_attributes
-
+                          
                         end
+
 
                     end
 
