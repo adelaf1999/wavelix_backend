@@ -12,6 +12,7 @@ class ProductsController < ApplicationController
 
             req_params = [:name, :description, :price, :main_picture, :category_id, :stock_quantity]
 
+
             product_params = params.permit(
                 :name, 
                 :description, 
@@ -19,7 +20,9 @@ class ProductsController < ApplicationController
                 :main_picture, 
                 :category_id, 
                 :stock_quantity,
-                :product_attributes
+                :product_attributes,
+                :product_pictures_attributes,
+                {product_pictures: []}
             )
 
             req_params.each do |p|
@@ -35,14 +38,26 @@ class ProductsController < ApplicationController
             if !missing_params
 
                 name = product_params[:name]
+                
                 description = product_params[:description]
+                
                 price = product_params[:price]
+                
                 main_picture = product_params[:main_picture]
+                
                 category_id = product_params[:category_id]
+                
                 stock_quantity = product_params[:stock_quantity]
+                
                 product_attributes = product_params[:product_attributes]
-
+                
+                product_pictures_attributes = product_params[:product_pictures_attributes]
+                
+                product_pictures = product_params[:product_pictures]
+                
                 category = store_user.categories.find_by(id: category_id)
+
+
 
                 if category != nil
 
@@ -158,6 +173,75 @@ class ProductsController < ApplicationController
 
                     end
 
+                    # validate product pictures as neccesary
+
+                    if product_pictures != nil
+
+
+                        if valid && !are_product_pictures_valid?(product_pictures)
+
+                            valid = false
+                            @success = false
+                            @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                            return
+
+                        else
+
+                            product.product_pictures = product_pictures
+
+                        end
+
+                    end
+
+
+                    
+                    if product_pictures == nil &&  product_pictures_attributes != nil
+
+                        valid = false
+                        @success = false
+                        @message = "Upload product pictures to continue"
+                        return
+
+                    elsif product_pictures != nil && product_pictures_attributes == nil
+
+                        valid = false
+                        @success = false
+                        @message = "State the product pictures attributes to continue"
+                        return
+
+                    elsif product_pictures != nil && product_pictures_attributes != nil
+
+
+                        product_pictures_filenames = []
+
+                        product_pictures.each do |picture|
+
+                            # include the picture extension
+                            product_pictures_filenames.push(picture.original_filename)
+
+                        end
+
+
+                        if valid && !are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
+
+                            valid = false
+                            @success = false
+                            @message = "Error uploading product pictures"
+                            return
+
+
+                        else
+
+                            product_pictures_attributes = eval(product_pictures_attributes)
+
+                            product.product_pictures_attributes = product_pictures_attributes
+
+                        end
+
+                        
+
+                    end
+
 
                     if valid
 
@@ -208,75 +292,6 @@ class ProductsController < ApplicationController
 
     private
 
-    def validate_and_modify_product_attributes(product_attributes)
-
-
-
-        begin
-
-            product_attributes = eval(product_attributes)
-        
-            if product_attributes.instance_of?(Hash) && product_attributes.length > 0
-        
-                product_attributes.each  do |key, value|
-        
-                    value = value.to_s.strip
-        
-                    if value.include?(",") && !value.include?(" ")  && value.length >= 3
-                        # list can't contain duplicates
-                        product_attributes[key] = value.split(",").uniq
-                    elsif value.include?(":") && !value.include?(" ") && value.count(":") == 1 && value.length >= 3
-                        
-                        numbers = []
-                        
-                        range_array = value.split(":")
-                        
-                        min = range_array[0]
-                        
-                        max = range_array[1]
-                    
-                        if is_positive_integer?(min) && is_positive_integer?(max)
-                            
-                            # can be 0 or more
-        
-                            min = min.to_i
-        
-                            max = max.to_i
-
-                            # min and max cant be equal
-        
-                            if max > min
-        
-                                for i in min..max
-                                    numbers.push(i)
-                                end
-            
-                                product_attributes[key] = numbers
-        
-                            end
-        
-                            
-        
-                        end
-        
-                    end
-                    
-        
-                end
-        
-                product_attributes
-        
-            else
-                # p "Not a hash"
-                false
-            end
-        
-          rescue  SyntaxError, NameError
-             false
-          end
-
-    end
-
 
     def is_positive_integer?(arg)
      
@@ -304,6 +319,101 @@ class ProductsController < ApplicationController
         extension = filename[filename.length - 1]
         valid_extensions = ["png" , "jpeg", "jpg", "gif"]
         valid_extensions.include?(extension)
+
+    end
+
+    def are_product_pictures_valid?(product_pictures)
+
+        valid = true
+
+        # !main_picture.is_a?(ActionDispatch::Http::UploadedFile)
+
+        product_pictures.each do |picture|
+
+            if picture.is_a?(ActionDispatch::Http::UploadedFile)
+
+                filename = picture.original_filename.split(".")
+                extension = filename[filename.length - 1]
+                valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+                if !valid_extensions.include?(extension)
+                    valid = false
+                    break
+                end
+
+            else
+                valid = false
+                break
+
+            end
+
+        end
+
+        valid
+
+    end
+
+    def are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
+
+        begin
+
+            product_pictures_attributes = eval(product_pictures_attributes)
+        
+            if product_pictures_attributes.instance_of?(Hash) && product_pictures_attributes.length > 0
+        
+                attributes_valid = true
+        
+                product_pictures_attributes.values().each do |attribute|
+        
+                    if attributes_valid
+        
+                        if attribute.instance_of?(Hash)
+        
+                            if attribute.length > 0
+        
+                                attribute.values().each do |v|
+                            
+                                    if !v.instance_of?(String) || !product_pictures_filenames.include?(v)
+                                        attributes_valid = false
+                                        break
+                                    end
+                
+                                end
+        
+                            else
+        
+                                attributes_valid = false
+                                break
+        
+                            end
+        
+        
+                        elsif !attribute.instance_of?(String) || !product_pictures_filenames.include?(attribute)
+                            attributes_valid = false
+                            break
+                        end
+        
+                    else
+        
+                        break
+        
+                    end
+        
+                end
+        
+        
+                attributes_valid
+        
+            else
+        
+                false
+        
+            end
+        
+          rescue  SyntaxError, NameError
+        
+            false
+        
+        end
 
     end
 

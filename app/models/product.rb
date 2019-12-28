@@ -4,9 +4,16 @@ class Product < ApplicationRecord
 
    mount_uploader :main_picture, ImageUploader
 
+   mount_uploaders :product_pictures, ImageUploader
+
    belongs_to :category
 
    serialize :product_attributes, Hash
+
+   serialize :product_pictures, Array
+
+   serialize :product_pictures_attributes, Hash
+
 
    def decrement_stock_quantity(amount)
         # amount must be an integer
