@@ -6,10 +6,44 @@ class CategoriesController < ApplicationController
 
         if current_user.store_user?
 
-            categories = eval(params[:categories])
+            # categories = eval(params[:categories])
 
-            if categories != nil
-                traverse_data(categories)
+            # if categories != nil
+            #     traverse_data(categories)
+            # end
+
+            category_name = params[:category_name]
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            if category_name != nil && category_name.length > 0
+
+                category = Category.new
+
+                category.name = category_name
+                category.store_user_id = store_user.id
+
+                if category.save
+                    
+                    @success = true
+                    @message = "Successfully created categories"
+                    @categories = store_user.get_categories
+                
+                
+                else
+
+                    @success = false
+                    @message = "Error creating category"
+                   
+
+                end
+
+            else
+
+                @success = false
+                @message = "Category Name cannot be empty"
+               
+
             end
 
         end

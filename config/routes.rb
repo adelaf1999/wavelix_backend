@@ -54,7 +54,7 @@ Rails.application.routes.draw do
 
   # CATEGORIES ROUTES
 
-  post '/create-categories' => 'categories#create'
+  post '/create-category' => 'categories#create'
 
   get '/get-categories' => 'categories#get_categories'
 
