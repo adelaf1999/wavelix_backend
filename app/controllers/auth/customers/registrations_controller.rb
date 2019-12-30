@@ -138,13 +138,13 @@ module  Auth
                 end
 
                 if valid && latitude != nil
-                  latitude = latitude.to_s
+                  latitude = latitude.to_d
                 else
                   valid = false
                 end
 
                 if valid && longitude != nil
-                  longitude = longitude.to_s
+                  longitude = longitude.to_d
                 else
                   valid = false
                 end
@@ -160,8 +160,8 @@ module  Auth
 
                 if valid
 
-                  home_address[:latitude] = latitude.to_d
-                  home_address[:longitude] = longitude.to_d
+                  home_address[:latitude] = latitude
+                  home_address[:longitude] = longitude
 
                   @resource.customer_user = CustomerUser.new(
                     full_name: full_name,
@@ -175,7 +175,8 @@ module  Auth
                     @resource.customer_user.building_name = building_name
                   end
 
-                  if apartment_floor != nil && apartment_floor.to_s.length > 0 && is_number?(apartment_floor.to_s)
+                  if apartment_floor != nil && apartment_floor.to_s.length > 0 && is_positive_integer?(apartment_floor.to_s)
+                    apartment_floor = apartment_floor.to_i
                     @resource.customer_user.apartment_floor = apartment_floor
                   end
 
@@ -190,12 +191,22 @@ module  Auth
             protected
 
             def is_number?(arg)
-              if /^\d+([.]\d+)?$/.match(arg) == nil
-                false
-              else
-                true
-              end
+              arg.is_a?(Numeric)
             end
+
+            def is_positive_integer?(arg)
+     
+              res = /^(?<num>\d+)$/.match(arg)
+         
+              if res == nil
+                 false
+              else
+                 true
+              end
+         
+            end
+
+
 
             def is_birthdate_valid?(date)
 

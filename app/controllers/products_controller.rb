@@ -80,18 +80,9 @@ class ProductsController < ApplicationController
 
                     if valid
 
-                        if is_number?(price.to_s)
+                        if is_valid_price?(price.to_s)
 
                             price = price.to_d 
-
-                            if price == 0
-                            
-                                valid = false
-                                @success = false
-                                @message = "Invalid price"
-                                return
-
-                            end
 
                         else
 
@@ -305,11 +296,22 @@ class ProductsController < ApplicationController
    
     end
 
-    def is_number?(arg)
+    def is_valid_price?(arg)
+        
+        # price must be a number greater than 0
+
         if /^\d+([.]\d+)?$/.match(arg) == nil
           false
         else
-          true
+
+            arg = arg.to_d
+
+            if arg == 0
+                false
+            else
+                true
+            end
+         
         end
     end
 

@@ -146,13 +146,13 @@ module Auth
                     end
 
                     if valid && latitude != nil
-                      latitude = latitude.to_s
+                      latitude = latitude.to_d
                     else
                       valid = false
                     end
     
                     if valid && longitude != nil
-                      longitude = longitude.to_s
+                      longitude = longitude.to_d
                     else
                       valid = false
                     end
@@ -163,8 +163,8 @@ module Auth
 
                     if valid
 
-                      store_address[:latitude] = latitude.to_d
-                      store_address[:longitude] = longitude.to_d
+                      store_address[:latitude] = latitude
+                      store_address[:longitude] = longitude
 
 
                       @resource.store_user = StoreUser.new(
@@ -195,11 +195,7 @@ module Auth
             protected
 
             def is_number?(arg)
-              if /^\d+([.]\d+)?$/.match(arg) == nil
-                false
-              else
-                true
-              end
+              arg.is_a?(Numeric)
             end
 
             def is_business_license_valid?(business_license)
