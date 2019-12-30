@@ -126,10 +126,24 @@ class CategoriesController < ApplicationController
 
                     if category_name != nil && category_name.length > 0
 
-                        Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
+                        # Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
+                        new_subcategory = Category.new
+                        new_subcategory.name = category_name
+                        new_subcategory.store_user_id = store_user.id
+                        new_subcategory.parent_id = category.id
 
-                        @success = true
-                        @message = "Successfully added subcategory"
+                        if new_subcategory.save
+                            @success = true
+                            @message = "Successfully added subcategory"
+                            @categories = store_user.get_categories
+                        else
+
+                            @success = false
+                            @message = "Error adding subcategory"
+
+                        end
+
+
 
                     else
 
