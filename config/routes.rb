@@ -65,5 +65,7 @@ Rails.application.routes.draw do
   # PRODUCTS ROUTES
 
   post '/create-product' => 'products#create'
+  
+  post '/get-products' => 'products#get_products'
 
 end
