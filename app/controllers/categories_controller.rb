@@ -80,6 +80,8 @@ class CategoriesController < ApplicationController
 
                     @success = true
                     @message = "Successfully changed category name"
+                    @categories = store_user.get_categories
+
 
                 else
 
