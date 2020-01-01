@@ -62,6 +62,8 @@ Rails.application.routes.draw do
 
   post '/add-subcategory' => 'categories#add_subcategory'
 
+  post '/store-has-category' => 'categories#store_has_category'
+
   # PRODUCTS ROUTES
 
   post '/create-product' => 'products#create'

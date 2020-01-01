@@ -168,6 +168,28 @@ class CategoriesController < ApplicationController
 
     end
 
+    def store_has_category
+
+        if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            category = store_user.categories.find_by(id: params[:category_id])
+
+            if category != nil
+
+                @success = true
+
+            else
+
+                @success = false
+
+            end
+
+        end
+
+    end
+
 
     private
 
