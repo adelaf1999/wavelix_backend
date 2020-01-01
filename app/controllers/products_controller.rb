@@ -299,6 +299,7 @@ class ProductsController < ApplicationController
 
                 @success = true
                 @products = products
+                @category_name = category.name
 
             else
 
