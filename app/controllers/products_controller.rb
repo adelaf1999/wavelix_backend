@@ -400,31 +400,38 @@ class ProductsController < ApplicationController
                 product_pictures_attributes.values().each do |attribute|
         
                     if attributes_valid
-        
-                        if attribute.instance_of?(Hash)
-        
-                            if attribute.length > 0
-        
-                                attribute.values().each do |v|
-                            
-                                    if !v.instance_of?(String) || !product_pictures_filenames.include?(v)
-                                        attributes_valid = false
-                                        break
-                                    end
-                
-                                end
-        
-                            else
-        
-                                attributes_valid = false
-                                break
-        
-                            end
-        
-        
-                        elsif !attribute.instance_of?(String) || !product_pictures_filenames.include?(attribute)
+
+
+                        if !attribute.instance_of?(Array) && !attribute.instance_of?(String) 
                             attributes_valid = false
                             break
+
+                        else
+
+                            if attribute.instance_of?(String) && !product_pictures_filenames.include?(attribute)
+
+                                attributes_valid = false
+                                break
+
+                            else
+
+                                attribute.each do |filename|
+
+                                    if !product_pictures_filenames.include?(filename)
+
+                                         attributes_valid = false
+                                         break
+
+                                    end
+
+                                end
+
+
+
+                            end
+
+
+
                         end
         
                     else
@@ -451,5 +458,7 @@ class ProductsController < ApplicationController
         end
 
     end
+
+   
 
 end
