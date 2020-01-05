@@ -320,15 +320,18 @@ class ProductsController < ApplicationController
 
             name = params[:name]
 
-            if name != nil
+            category_id = params[:category_id]
+
+            if name != nil && category_id != nil
 
                 @products = []
 
                 store_user = StoreUser.find_by(store_id: current_user.id)
-    
-    
-                store_user.categories.each do |category|
-    
+
+                category = store_user.categories.find_by(id: category_id)
+
+                if category != nil
+
                     category_products = category.products
     
                     category_products = category_products.where("name ILIKE ?", "%#{name}%")
@@ -338,9 +341,9 @@ class ProductsController < ApplicationController
                         @products.push(category_product.to_json)
 
                     end
-                   
-    
+
                 end
+    
 
             end
 
