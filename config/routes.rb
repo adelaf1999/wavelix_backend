@@ -70,4 +70,6 @@ Rails.application.routes.draw do
   
   post '/get-products' => 'products#get_products'
 
+  post '/search-product' => 'products#search_product'
+
 end

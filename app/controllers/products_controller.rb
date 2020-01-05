@@ -314,8 +314,42 @@ class ProductsController < ApplicationController
 
     end
 
-    private
+    def search_product
 
+        if current_user.store_user?
+
+            name = params[:name]
+
+            if name != nil
+
+                @products = []
+
+                store_user = StoreUser.find_by(store_id: current_user.id)
+    
+    
+                store_user.categories.each do |category|
+    
+                    category_products = category.products
+    
+                    category_products = category_products.where("name ILIKE ?", "%#{name}%")
+
+                    category_products.each do |category_product|
+
+                        @products.push(category_product.to_json)
+
+                    end
+                   
+    
+                end
+
+            end
+
+
+        end
+
+    end
+
+    private
 
     def is_positive_integer?(arg)
      
