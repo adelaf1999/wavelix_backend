@@ -388,6 +388,7 @@ class ProductsController < ApplicationController
                         main_picture = params[:main_picture]
                         product_available = params[:product_available]
                         stock_quantity = params[:stock_quantity]
+                        product_attributes = params[:product_attributes]
 
                         if name != nil && name.length == 0
 
@@ -490,14 +491,41 @@ class ProductsController < ApplicationController
 
                         end
 
+
+
+                        if product_attributes != nil
+
+                            begin
+    
+                                product_attributes = eval(product_attributes)
+                            
+                                if !product_attributes.instance_of?(Hash)
+
+                                    # can be empty hash
+
+                                    canUpdate = false
+                                    @success = false
+                                    @message = "Invalid product attributes"
+                                    return
+    
+                                end
+                            
+                              rescue  SyntaxError, NameError
+
+                                canUpdate = false
+                                @success = false
+                                @message = "Invalid product attributes"
+                                return
+                            
+                              
+                            end
+    
+    
+                        end
+
+
                         if canUpdate
 
-                            # name = params[:name]
-                            # description = params[:description]
-                            # price = params[:price]
-                            # main_picture = params[:main_picture]
-                            # product_available = params[:product_available]
-                            # stock_quantity = params[:stock_quantity]
 
                             if name != nil
                                 product.name = name
@@ -521,6 +549,10 @@ class ProductsController < ApplicationController
 
                             if stock_quantity != nil
                                 product.stock_quantity = stock_quantity
+                            end
+
+                            if product_attributes != nil
+                                product.product_attributes = product_attributes
                             end
 
                             
