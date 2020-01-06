@@ -352,6 +352,215 @@ class ProductsController < ApplicationController
 
     end
 
+    def update_product
+
+
+        if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            category_id = params[:category_id]
+
+            product_id = params[:product_id]
+
+
+            if category_id != nil && product_id != nil
+
+
+                category = store_user.categories.find_by(id: category_id)
+
+                if category != nil
+
+                    product = category.products.find_by(id: product_id)
+
+                    if product != nil
+
+
+                        # user owns the product can start updating
+
+                        # PRODUCT NAME VALIDATORS
+
+                        canUpdate = true
+
+                        name = params[:name]
+                        description = params[:description]
+                        price = params[:price]
+                        main_picture = params[:main_picture]
+                        product_available = params[:product_available]
+                        stock_quantity = params[:stock_quantity]
+
+                        if name != nil && name.length == 0
+
+                            canUpdate = false
+                            @success = false
+                            @message = "product name cannot be empty"
+                            return
+
+                        end
+
+                        if description != nil && description.length == 0
+
+                            canUpdate = false
+                            @success = false
+                            @message = "description cannot be empty"
+                            return
+
+                        end
+
+                        if price != nil
+
+                            if !is_valid_price?(price.to_s)
+
+                                canUpdate = false
+                                @success = false
+                                @message = "invalid price"
+                                return
+
+                            else
+
+                                price = price.to_d
+
+                            end
+
+                        end
+
+                        if main_picture != nil && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_main_picture_valid?(main_picture))
+
+                            canUpdate = false
+                            @success = false
+                            @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
+                            return
+
+                        end
+
+                        if stock_quantity != nil
+
+                            if !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 
+
+                                canUpdate = false
+                                @success = false
+                                @message = "Stock quantity must be greater than 0. If you want your product to no longer be available to customers, set product availaility off."
+                                return
+
+                            else
+
+                                stock_quantity = stock_quantity.to_i
+
+                            end
+
+
+                        end
+
+                        if product_available != nil
+
+
+                            if product_available.instance_of?(String)
+
+                                product_available.downcase!
+
+                                if product_available == "true"
+
+                                    product_available = true
+                                
+                                elsif product_available == "false"
+
+                                    product_available = false
+
+                                else
+
+                                    canUpdate = false
+                                    @success = false
+                                    @message = "error updating product"
+                                    return
+
+                                end
+
+
+
+                            elsif product_available != true && product_available != false
+
+                                canUpdate = false
+                                @success = false
+                                @message = "error updating product"
+                                return
+
+
+                            end
+
+
+                        end
+
+                        if canUpdate
+
+                            # name = params[:name]
+                            # description = params[:description]
+                            # price = params[:price]
+                            # main_picture = params[:main_picture]
+                            # product_available = params[:product_available]
+                            # stock_quantity = params[:stock_quantity]
+
+                            if name != nil
+                                product.name = name
+                            end
+
+                            if description != nil
+                                product.description = description
+                            end
+
+                            if price != nil
+                                product.price = price
+                            end
+
+                            if main_picture != nil
+                                product.main_picture = main_picture
+                            end
+
+                            if product_available != nil
+                                product.product_available = product_available
+                            end
+
+                            if stock_quantity != nil
+                                product.stock_quantity = stock_quantity
+                            end
+
+                            
+
+                            if product.save!
+
+                                @success = true
+                                @message = "Updated product"
+                                @product = product.to_json
+
+                                return
+
+                            else
+
+                                @success = false
+                                @message = "Error updating"
+                                return
+
+                            end
+
+                            
+
+
+                        end
+
+
+                    end
+
+
+                end
+
+
+
+            end
+
+
+        end
+
+    end
+
     private
 
     def is_positive_integer?(arg)

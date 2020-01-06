@@ -72,4 +72,6 @@ Rails.application.routes.draw do
 
   post '/search-product' => 'products#search_product'
 
+  patch '/update-product' => 'products#update_product'
+
 end
