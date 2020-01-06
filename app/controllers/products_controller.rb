@@ -293,7 +293,7 @@ class ProductsController < ApplicationController
 
                 products = []
 
-                category.products.each do |product|
+                category.products.order('name ASC').each do |product|
                     products.push(product.to_json)
                 end
 
@@ -334,7 +334,7 @@ class ProductsController < ApplicationController
 
                     category_products = category.products
     
-                    category_products = category_products.where("name ILIKE ?", "%#{name}%")
+                    category_products = category_products.where("name ILIKE ?", "%#{name}%").order('name ASC')
 
                     category_products.each do |category_product|
 
