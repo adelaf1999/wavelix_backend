@@ -389,6 +389,8 @@ class ProductsController < ApplicationController
                         product_available = params[:product_available]
                         stock_quantity = params[:stock_quantity]
                         product_attributes = params[:product_attributes]
+                        product_pictures_attributes = params[:product_pictures_attributes]
+                        product_pictures = params[:product_pictures]
 
                         if name != nil && name.length == 0
 
@@ -524,6 +526,69 @@ class ProductsController < ApplicationController
                         end
 
 
+                        if product_pictures != nil
+
+
+                            if !are_product_pictures_valid?(product_pictures)
+    
+                                canUpdate = false
+                                @success = false
+                                @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                                return
+    
+                            end
+
+                        end
+                        
+
+
+                        
+                        if product_pictures == nil &&  product_pictures_attributes != nil
+
+                            canUpdate = false
+                            @success = false
+                            @message = "Upload product pictures to continue"
+                            return
+    
+                        elsif product_pictures != nil && product_pictures_attributes == nil
+    
+                            canUpdate = false
+                            @success = false
+                            @message = "State the product pictures attributes to continue"
+                            return
+    
+                        elsif product_pictures != nil && product_pictures_attributes != nil
+    
+    
+                            product_pictures_filenames = []
+    
+                            product_pictures.each do |picture|
+    
+                                # include the picture extension
+                                product_pictures_filenames.push(picture.original_filename)
+    
+                            end
+    
+    
+                            if !are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
+    
+                                canUpdate = false
+                                @success = false
+                                @message = "Error uploading product pictures"
+                                return
+    
+    
+                            else
+    
+                                product_pictures_attributes = eval(product_pictures_attributes)
+    
+                            end
+    
+                            
+    
+                        end
+
+
                         if canUpdate
 
 
@@ -555,8 +620,16 @@ class ProductsController < ApplicationController
                                 product.product_attributes = product_attributes
                             end
 
-                            
 
+                            if product_pictures != nil
+                                product.product_pictures = product_pictures 
+                            end
+
+                            if product_pictures_attributes != nil
+                                product.product_pictures_attributes = product_pictures_attributes
+                            end
+
+                            
                             if product.save!
 
                                 @success = true
