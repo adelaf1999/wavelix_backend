@@ -352,6 +352,43 @@ class ProductsController < ApplicationController
 
     end
 
+    def remove_product_image
+
+        if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            category = store_user.categories.find_by(id: params[:category_id])
+
+            if category != nil
+
+                product = category.products.find_by(id: params[:product_id])
+
+                if product != nil
+
+                    image_name = params[:image_name]
+
+                    color_name = params[:color_name]
+
+                    if image_name != nil && image_name.length > 0 && color_name != nil && color_name.length > 0
+
+                        product.remove_image(image_name, color_name)
+                        @color_images = product.get_colors_images_map.to_json
+
+                    end
+
+
+
+                end
+
+
+            end
+
+
+        end
+
+    end
+
     def store_owns_product_check
 
         if current_user.store_user?
@@ -370,6 +407,8 @@ class ProductsController < ApplicationController
 
                     @success = true
                     @product = product.to_json
+                    @color_images = product.get_colors_images_map.to_json
+
 
                 else
 
@@ -676,6 +715,7 @@ class ProductsController < ApplicationController
                                 @success = true
                                 @message = "Updated product"
                                 @product = product.to_json
+                                @color_images = product.get_colors_images_map.to_json
 
                                 return
 

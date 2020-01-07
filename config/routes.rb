@@ -76,4 +76,6 @@ Rails.application.routes.draw do
 
   post '/store-owns-product-check' => 'products#store_owns_product_check'
 
+  patch '/remove-product-image' => 'products#remove_product_image'
+
 end

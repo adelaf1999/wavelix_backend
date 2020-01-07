@@ -37,6 +37,49 @@ class Product < ApplicationRecord
         end
    end
 
+   def get_colors_images_map
+
+     # red: [ { uri: , image_name: , color_name:  }  ]
+
+     colors_images = {}
+
+     self.product_pictures_attributes.each do |color_name, images_names|
+
+       images_names.each do |image_name|
+
+         # any image uri can be used even if its in another color
+
+         image_index = find_image_index(self.product_pictures, image_name )
+
+         uri = self.product_pictures[image_index].url
+
+         if colors_images.has_key?(color_name)
+
+           images = colors_images[color_name]
+
+           images.push({ uri: uri, image_name: image_name, color_name: color_name })
+
+           colors_images[color_name] = images
+
+         else
+
+           image = [{ uri: uri, image_name: image_name, color_name: color_name }]
+           colors_images[color_name] = image
+
+         end
+
+
+
+       end
+
+
+     end
+
+     colors_images
+
+
+   end
+
    def remove_image(image_name, color_name)
 
      # image index is the image index in the product_pictures array
