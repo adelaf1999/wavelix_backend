@@ -462,10 +462,10 @@ class ProductsController < ApplicationController
                         stock_quantity = params[:stock_quantity]
                         product_available = params[:product_available]
                         product_attributes = params[:product_attributes]
-
                         main_picture = params[:main_picture]
-                        product_pictures_attributes = params[:product_pictures_attributes]
                         product_pictures = params[:product_pictures]
+                        product_pictures_attributes = params[:product_pictures_attributes]
+
 
 
                         if name != nil && name.length == 0
@@ -604,67 +604,96 @@ class ProductsController < ApplicationController
 
 
 
-                        #if product_pictures != nil
-                        #
-                        #
-                        #    if !are_product_pictures_valid?(product_pictures)
-                        #
-                        #        canUpdate = false
-                        #        @success = false
-                        #        @message = "Make sure you uploaded an appropriate pictures with valid extension."
-                        #        return
-                        #
-                        #    end
-                        #
-                        #end
-                        #
-                        #
-                        #
-                        #
-                        #if product_pictures == nil &&  product_pictures_attributes != nil
-                        #
-                        #    canUpdate = false
-                        #    @success = false
-                        #    @message = "Upload product pictures to continue"
-                        #    return
-                        #
-                        #elsif product_pictures != nil && product_pictures_attributes == nil
-                        #
-                        #    canUpdate = false
-                        #    @success = false
-                        #    @message = "State the product pictures attributes to continue"
-                        #    return
-                        #
-                        #elsif product_pictures != nil && product_pictures_attributes != nil
-                        #
-                        #
-                        #    product_pictures_filenames = []
-                        #
-                        #    product_pictures.each do |picture|
-                        #
-                        #        # include the picture extension
-                        #        product_pictures_filenames.push(picture.original_filename)
-                        #
-                        #    end
-                        #
-                        #
-                        #    if !are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
-                        #
-                        #        canUpdate = false
-                        #        @success = false
-                        #        @message = "Error uploading product pictures"
-                        #        return
-                        #
-                        #
-                        #    else
-                        #
-                        #        product_pictures_attributes = eval(product_pictures_attributes)
-                        #
-                        #    end
-                        #
-                        #
-                        #
-                        #end
+                        if product_pictures != nil
+
+
+                            if !are_product_pictures_valid?(product_pictures)
+
+                                canUpdate = false
+                                @success = false
+                                @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                                return
+
+                            end
+
+                        end
+
+
+                        if product_pictures == nil &&  product_pictures_attributes != nil
+
+                            canUpdate = false
+                            @success = false
+                            @message = "Upload product pictures to continue"
+                            return
+
+                        elsif product_pictures != nil && product_pictures_attributes == nil
+
+                            canUpdate = false
+                            @success = false
+                            @message = "State the product pictures attributes to continue"
+                            return
+
+                        elsif product_pictures != nil && product_pictures_attributes != nil
+
+
+                            product_pictures_filenames = []
+
+                            product_pictures.each do |picture|
+
+                                # include the picture extension
+                                product_pictures_filenames.push(picture.original_filename)
+
+                            end
+
+
+                            if !are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
+
+                                canUpdate = false
+                                @success = false
+                                @message = "Error uploading product pictures"
+                                return
+
+
+                            else
+
+                                product_pictures_attributes = eval(product_pictures_attributes)
+
+                                if product.product_pictures.size > 0
+                                    # there exists pictures
+                                    product.product_pictures += product_pictures
+                                else
+                                    product.product_pictures = product_pictures
+                                end
+
+                                if product.product_pictures_attributes.size > 0
+
+                                    product_pictures_attributes.keys.each do |key|
+
+                                        if product.product_pictures_attributes.has_key?(key)
+
+                                            product.product_pictures_attributes[key] += product_pictures_attributes[key]
+
+                                        else
+
+                                            product.product_pictures_attributes[key] = product_pictures_attributes[key]
+
+                                        end
+
+                                    end
+
+                                else
+
+                                    product.product_pictures_attributes = product_pictures_attributes
+
+                                end
+
+
+
+                            end
+
+
+
+                        end
 
 
                         if canUpdate
@@ -698,16 +727,6 @@ class ProductsController < ApplicationController
                             if product_available != nil
                                 product.product_available = product_available
                             end
-
-
-                            #
-                            #if product_pictures != nil
-                            #    product.product_pictures = product_pictures
-                            #end
-                            #
-                            #if product_pictures_attributes != nil
-                            #    product.product_pictures_attributes = product_pictures_attributes
-                            #end
 
                             
                             if product.save!
