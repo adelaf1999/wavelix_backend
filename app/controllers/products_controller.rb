@@ -472,7 +472,7 @@ class ProductsController < ApplicationController
 
                                 canUpdate = false
                                 @success = false
-                                @message = "Stock quantity must be greater than 0. If you want your product to no longer be available to customers, set product availaility off."
+                                @message = "Stock quantity must be a positive integer greater than or equal to zero"
                                 return
 
                             else
@@ -502,7 +502,7 @@ class ProductsController < ApplicationController
                                         @message = "Cannot set the product availability on unless the stock quantity is greater zero"
                                         return
 
-                                    else
+                                    elsif stock_quantity > 0
 
                                         product_available = true
 
