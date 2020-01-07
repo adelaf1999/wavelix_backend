@@ -74,4 +74,6 @@ Rails.application.routes.draw do
 
   patch '/update-product' => 'products#update_product'
 
+  post '/store-owns-product-check' => 'products#store_owns_product_check'
+
 end
