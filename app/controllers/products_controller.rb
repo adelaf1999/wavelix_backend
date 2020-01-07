@@ -499,7 +499,7 @@ class ProductsController < ApplicationController
 
                                         canUpdate = false
                                         @success = false
-                                        @message = "Cannot set the product availability on unless the stock quantity is zero"
+                                        @message = "Cannot set the product availability on unless the stock quantity is greater zero"
                                         return
 
                                     else
