@@ -466,7 +466,9 @@ class ProductsController < ApplicationController
 
                         if stock_quantity != nil
 
-                            if !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0
+                            # stock quantity can be zero only if product_available is false
+
+                            if !is_positive_integer?(stock_quantity.to_s)
 
                                 canUpdate = false
                                 @success = false
@@ -478,6 +480,46 @@ class ProductsController < ApplicationController
                                 stock_quantity = stock_quantity.to_i
 
                             end
+
+                        end
+
+                        if product_available != nil
+
+                            if product_available.instance_of?(String)
+
+                                product_available = product_available.downcase
+
+                                if product_available == "false"
+
+                                    product_available = false
+
+                                elsif  product_available == "true"
+
+                                    if stock_quantity == 0
+
+                                        canUpdate = false
+                                        @success = false
+                                        @message = "Cannot set the product availability on unless the stock quantity is zero"
+                                        return
+
+                                    else
+
+                                        product_available = true
+
+                                    end
+
+                                end
+
+
+                            else
+
+                                canUpdate = false
+                                @success = false
+                                @message = "error updating product"
+                                return
+
+                            end
+
 
                         end
 
@@ -523,53 +565,6 @@ class ProductsController < ApplicationController
 
 
 
-
-
-
-
-                        #if product_available != nil
-                        #
-                        #
-                        #    if product_available.instance_of?(String)
-                        #
-                        #        product_available.downcase!
-                        #
-                        #        if product_available == "true"
-                        #
-                        #            product_available = true
-                        #
-                        #        elsif product_available == "false"
-                        #
-                        #            product_available = false
-                        #
-                        #        else
-                        #
-                        #            canUpdate = false
-                        #            @success = false
-                        #            @message = "error updating product"
-                        #            return
-                        #
-                        #        end
-                        #
-                        #
-                        #
-                        #    elsif product_available != true && product_available != false
-                        #
-                        #        canUpdate = false
-                        #        @success = false
-                        #        @message = "error updating product"
-                        #        return
-                        #
-                        #
-                        #    end
-                        #
-                        #
-                        #end
-
-
-
-
-                        #
                         #if product_pictures != nil
                         #
                         #
