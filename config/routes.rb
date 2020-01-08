@@ -78,4 +78,7 @@ Rails.application.routes.draw do
 
   patch '/remove-product-image' => 'products#remove_product_image'
 
+  post '/import-products' => 'products#import_products'
+
+
 end

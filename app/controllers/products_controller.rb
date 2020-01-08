@@ -1,3 +1,4 @@
+require 'csv'
 class ProductsController < ApplicationController
 
     before_action :authenticate_user!
@@ -98,7 +99,7 @@ class ProductsController < ApplicationController
                     end
 
 
-                    if valid && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_main_picture_valid?(main_picture) )
+                    if valid && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture) )
 
                         valid = false
                         @success = false
@@ -477,7 +478,7 @@ class ProductsController < ApplicationController
 
                         end
 
-                        if main_picture != nil  && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_main_picture_valid?(main_picture))
+                        if main_picture != nil  && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
 
                             canUpdate = false
                             @success = false
@@ -766,7 +767,415 @@ class ProductsController < ApplicationController
 
     end
 
+
+    def import_products
+
+        if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+            category = store_user.categories.find_by(id: params[:category_id])
+
+            if category != nil
+
+               pictures = params[:pictures]
+
+               file = params[:file]
+
+               canImport = true
+
+                # validate file
+                #
+
+
+               if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
+
+                   canImport = false
+                   @success = false
+                   @message = "The file to import products must be of type csv."
+                   return
+
+               end
+
+               if  pictures == nil || !pictures.instance_of?(Array)
+
+                   canImport = false
+                   @success = false
+                   @message = "Upload pictures to continue"
+
+               end
+
+                # Even if the user might have uploaded extra pictures, or if there are some missing pictures,
+                #  or if there are some pictures of invalid type
+                #  proceed and try to make as much as valid products as possible
+                #  then you can report to the user how many products were imported
+                #  and the names of those that failed to import so he can re import them
+
+               if canImport
+
+                   canCreate = true
+
+                   csv_file = file.tempfile.open
+
+                   filepath = csv_file.path
+
+                   csv = CSV.read(filepath, headers: true, converters: :numeric)
+
+                   csv_header_map = get_csv_file_header_map(csv)
+
+                   # make sure all headers are present
+
+                   csv_header_map.values.each do |value|
+
+                       if value.empty?
+                           canCreate = false
+                           @success = false
+                           @message = "Make sure your csv file has all of the following headers: name, description, price, main picture and stock quantity"
+                           csv_file.close
+                           return
+                       end
+
+                   end
+
+                   if canCreate
+
+
+                       csv.each do |row|
+
+                           canSave = true
+
+
+                           name = row[ csv_header_map[:name] ]
+                           description = row[ csv_header_map[:description] ]
+                           price = row[ csv_header_map[:price] ]
+                           main_picture = get_uploaded_picture(pictures, row[ csv_header_map[:main_picture] ] )
+                           stock_quantity = row[ csv_header_map[:stock_quantity] ]
+
+                           if name == nil || name.length == 0
+                               canSave = false
+                           end
+
+                           if canSave && ( description == nil || description.length == 0 )
+                               canSave = false
+                           end
+
+                           if canSave &&   ( price == nil || !is_valid_price?(price.to_s) )
+                               canSave = false
+                           else
+                               price = price.to_d
+                           end
+
+                           if canSave &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+                               canSave = false
+                           end
+
+                           if canSave  && ( stock_quantity == nil || !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
+                               canSave = false
+                           else
+                               stock_quantity = stock_quantity.to_i
+                           end
+
+
+                           if canSave
+
+                               # All other columns add them to the product attributes
+
+                               # Make sure that the other headers are not the required headers
+
+                               #  or that they resemble that required headers in some way
+
+                               product_attributes = {}
+                               product_pictures = []
+                               product_pictures_attributes = {}
+
+                               required_headers = csv_header_map.values
+
+
+                               csv.headers.each do |header|
+
+                                   if header.include?("_pictures")
+
+
+                                       color = header.strip.split("_")[0].downcase
+
+                                       row_value = row[header]
+
+                                       if product_pictures_attributes[color] == nil && color.length > 0 && !row_value.to_s.empty?
+
+                                           if row_value.is_a?(String) && row_value.include?(",")
+
+                                               # row value is a list of color images
+
+                                               row_value = row_value.strip
+
+                                               picture_names = row_value.split(",")
+
+                                               pictures_name_list = []
+
+                                               picture_names.each do |picture_name|
+
+                                                   picture_name = picture_name.strip
+
+                                                   picture = get_uploaded_picture(pictures, picture_name)
+
+                                                   if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
+
+                                                       pictures_name_list.push(picture_name)
+                                                       product_pictures.push(picture)
+
+                                                   end
+
+
+                                               end
+
+                                               product_pictures_attributes[color] = pictures_name_list
+
+
+                                           end
+
+                                       end
+
+                                   else
+
+                                       if !required_headers.include?(header) &&
+                                           !header.include?("name") &&
+                                           !description_contains(header) &&
+                                           !price_contains(header) &&
+                                           !main_picture_contains(header) &&
+                                           !stock_quantity_contains(header)
+
+                                           row_value = row[ header ]
+
+                                           if row_value != nil
+
+
+                                               if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
+
+                                                   # makes sure product keys are unique
+
+                                                   if row_value.is_a?(String)
+
+                                                       # check if it is a list of values
+
+                                                       row_value = row_value.strip
+
+                                                       if row_value.include?(",") && row_value.match(/\s/) == nil
+
+                                                           # row value is a list
+
+                                                           row_value = row_value.split(",")
+
+
+                                                           header = header.downcase
+
+                                                           product_attributes[header] = row_value
+
+                                                       end
+
+
+                                                   else
+
+                                                       header = header.downcase
+
+                                                       product_attributes[header] = row_value
+
+                                                   end
+
+                                               end
+
+
+
+                                           end
+
+
+
+                                       end
+
+                                   end
+
+
+
+
+                               end
+
+                               product = Product.new
+
+                               product.name = name
+                               product.description = description
+                               product.price = price
+                               product.main_picture = main_picture
+                               product.category_id = category.id
+                               product.stock_quantity = stock_quantity
+
+                               if product_attributes.size > 0
+                                   product.product_attributes = product_attributes
+                               end
+
+                               if product_pictures_attributes.size > 0 && product_pictures.size > 0
+
+                                   product.product_pictures_attributes = product_pictures_attributes
+
+                                   product.product_pictures = product_pictures
+
+
+                               end
+
+
+                               product.save!
+
+
+                           end
+
+
+
+
+
+                       end
+
+                       @success = true
+
+                       products = []
+
+                       category.products.each do |product|
+                           products.push(product.to_json)
+                       end
+
+                       @products = products
+
+                       csv_file.close
+
+
+                   end
+
+
+
+
+
+
+               end
+
+
+
+
+
+
+            end
+
+
+        end
+
+    end
+
     private
+
+
+    def get_uploaded_picture(pictures, picture_name)
+
+
+        pictures.each do |picture|
+
+            if picture.original_filename == picture_name
+                return picture
+            end
+
+        end
+
+
+    end
+
+    def get_csv_file_header_map(csv)
+
+        header_map = {
+            name: '',
+            description: '',
+            price: '',
+            main_picture: '',
+            stock_quantity: ''
+        }
+
+        csv.headers.each do |header|
+
+            original_header = header
+
+            header = header.downcase
+
+            if header.include?("name") && header_map[:name].empty?
+                header_map[:name] = original_header
+            end
+
+            if description_contains(header) && header_map[:description].empty?
+                header_map[:description] = original_header
+            end
+
+            if price_contains(header) && header_map[:price].empty?
+                header_map[:price] = original_header
+            end
+
+
+            if main_picture_contains(header) && header_map[:main_picture].empty?
+
+                header_map[:main_picture] = original_header
+
+            end
+
+            if stock_quantity_contains(header) && header_map[:stock_quantity].empty?
+
+                header_map[:stock_quantity] = original_header
+
+            end
+
+
+        end
+
+        header_map
+
+
+    end
+
+
+
+    def description_contains(header)
+
+            header.include?("description") ||
+            header.include?("information")  ||
+            header.include?("info") ||
+            header.include?("about") ||
+            header.include?("detail")
+
+    end
+
+    def price_contains(header)
+
+            header.include?("price") ||
+            header.include?("cost")
+
+
+    end
+
+    def main_picture_contains(header)
+
+            header.include?("picture") ||
+            header.include?("image") ||
+            header.include?("photo") ||
+            header.include?("thumbnail")
+    end
+
+    def stock_quantity_contains(header)
+
+            header.include?("stock") ||
+            header.include?("quantity") ||
+            header.include?("qty")
+
+    end
+
+    def is_csv_file_valid?(file)
+
+        filename = file.original_filename.split(".")
+        extension = filename[filename.length - 1]
+        valid_extensions = ["csv"]
+        valid_extensions.include?(extension)
+
+
+    end
 
     def is_positive_integer?(arg)
      
@@ -799,9 +1208,9 @@ class ProductsController < ApplicationController
         end
     end
 
-    def is_main_picture_valid?(main_picture)
+    def is_picture_valid?(picture)
 
-        filename = main_picture.original_filename.split(".")
+        filename = picture.original_filename.split(".")
         extension = filename[filename.length - 1]
         valid_extensions = ["png" , "jpeg", "jpg", "gif"]
         valid_extensions.include?(extension)
