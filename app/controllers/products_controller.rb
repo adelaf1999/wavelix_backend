@@ -1037,13 +1037,13 @@ class ProductsController < ApplicationController
 
                        @success = true
 
-                       products = []
-
-                       category.products.each do |product|
-                           products.push(product.to_json)
-                       end
-
-                       @products = products
+                       #products = []
+                       #
+                       #category.products.each do |product|
+                       #    products.push(product.to_json)
+                       #end
+                       #
+                       #@products = products
 
                        csv_file.close
 
