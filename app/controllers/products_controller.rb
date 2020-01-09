@@ -777,14 +777,13 @@ class ProductsController < ApplicationController
 
             if category != nil
 
-               pictures = params[:pictures]
+               pictures = params[:product_pictures]
 
                file = params[:file]
 
                canImport = true
 
                 # validate file
-                #
 
 
                if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
@@ -892,78 +891,89 @@ class ProductsController < ApplicationController
 
                                csv.headers.each do |header|
 
-                                   if header.include?("_pictures")
+                                   if header != nil
+
+                                       if header.include?("_pictures")
 
 
-                                       color = header.strip.split("_")[0].downcase
+                                           color = header.strip.split("_")[0].downcase
 
-                                       row_value = row[header]
+                                           row_value = row[header]
 
-                                       if product_pictures_attributes[color] == nil && color.length > 0 && !row_value.to_s.empty?
+                                           if  row_value != nil && product_pictures_attributes[color] == nil && color.length > 0 && !row_value.to_s.empty?
 
-                                           if row_value.is_a?(String) && row_value.include?(",")
+                                               if row_value.is_a?(String) && row_value.include?(",")
 
-                                               # row value is a list of color images
+                                                   # row value is a list of color images
 
-                                               row_value = row_value.strip
+                                                   row_value = row_value.strip
 
-                                               picture_names = row_value.split(",")
+                                                   picture_names = row_value.split(",")
 
-                                               pictures_name_list = []
+                                                   pictures_name_list = []
 
-                                               picture_names.each do |picture_name|
+                                                   picture_names.each do |picture_name|
 
-                                                   picture_name = picture_name.strip
+                                                       picture_name = picture_name.strip
 
-                                                   picture = get_uploaded_picture(pictures, picture_name)
+                                                       picture = get_uploaded_picture(pictures, picture_name)
 
-                                                   if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
+                                                       if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
 
-                                                       pictures_name_list.push(picture_name)
-                                                       product_pictures.push(picture)
+                                                           pictures_name_list.push(picture_name)
+                                                           product_pictures.push(picture)
+
+                                                       end
+
 
                                                    end
+
+                                                   product_pictures_attributes[color] = pictures_name_list
 
 
                                                end
 
-                                               product_pictures_attributes[color] = pictures_name_list
-
-
                                            end
 
-                                       end
+                                       else
 
-                                   else
+                                           if !required_headers.include?(header) &&
+                                               !header.include?("name") &&
+                                               !description_contains(header) &&
+                                               !price_contains(header) &&
+                                               !main_picture_contains(header) &&
+                                               !stock_quantity_contains(header)
 
-                                       if !required_headers.include?(header) &&
-                                           !header.include?("name") &&
-                                           !description_contains(header) &&
-                                           !price_contains(header) &&
-                                           !main_picture_contains(header) &&
-                                           !stock_quantity_contains(header)
+                                               row_value = row[ header ]
 
-                                           row_value = row[ header ]
-
-                                           if row_value != nil
+                                               if row_value != nil
 
 
-                                               if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
+                                                   if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
 
-                                                   # makes sure product keys are unique
+                                                       # makes sure product keys are unique
 
-                                                   if row_value.is_a?(String)
+                                                       if row_value.is_a?(String)
 
-                                                       # check if it is a list of values
+                                                           # check if it is a list of values
 
-                                                       row_value = row_value.strip
+                                                           row_value = row_value.strip
 
-                                                       if row_value.include?(",") && row_value.match(/\s/) == nil
+                                                           if row_value.include?(",") && row_value.match(/\s/) == nil
 
-                                                           # row value is a list
+                                                               # row value is a list
 
-                                                           row_value = row_value.split(",")
+                                                               row_value = row_value.split(",")
 
+
+                                                               header = header.downcase
+
+                                                               product_attributes[header] = row_value
+
+                                                           end
+
+
+                                                       else
 
                                                            header = header.downcase
 
@@ -971,14 +981,9 @@ class ProductsController < ApplicationController
 
                                                        end
 
-
-                                                   else
-
-                                                       header = header.downcase
-
-                                                       product_attributes[header] = row_value
-
                                                    end
+
+
 
                                                end
 
@@ -986,12 +991,11 @@ class ProductsController < ApplicationController
 
                                            end
 
-
-
                                        end
 
-                                   end
 
+
+                                   end
 
 
 
@@ -1096,32 +1100,38 @@ class ProductsController < ApplicationController
 
             original_header = header
 
-            header = header.downcase
+            if header != nil
 
-            if header.include?("name") && header_map[:name].empty?
-                header_map[:name] = original_header
+                header = header.downcase
+
+                if header.include?("name") && header_map[:name].empty?
+                    header_map[:name] = original_header
+                end
+
+                if description_contains(header) && header_map[:description].empty?
+                    header_map[:description] = original_header
+                end
+
+                if price_contains(header) && header_map[:price].empty?
+                    header_map[:price] = original_header
+                end
+
+
+                if main_picture_contains(header) && header_map[:main_picture].empty?
+
+                    header_map[:main_picture] = original_header
+
+                end
+
+                if stock_quantity_contains(header) && header_map[:stock_quantity].empty?
+
+                    header_map[:stock_quantity] = original_header
+
+                end
+
             end
 
-            if description_contains(header) && header_map[:description].empty?
-                header_map[:description] = original_header
-            end
 
-            if price_contains(header) && header_map[:price].empty?
-                header_map[:price] = original_header
-            end
-
-
-            if main_picture_contains(header) && header_map[:main_picture].empty?
-
-                header_map[:main_picture] = original_header
-
-            end
-
-            if stock_quantity_contains(header) && header_map[:stock_quantity].empty?
-
-                header_map[:stock_quantity] = original_header
-
-            end
 
 
         end
