@@ -1170,14 +1170,22 @@ class ProductsController < ApplicationController
 
     def get_uploaded_picture(pictures, picture_name)
 
+        found_picture = false
 
         pictures.each do |picture|
 
             if picture.original_filename == picture_name
+                found_picture = true
                 return picture
             end
 
         end
+
+        if !found_picture
+            nil
+        end
+
+
 
 
     end
