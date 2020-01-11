@@ -813,9 +813,13 @@ class ProductsController < ApplicationController
 
                if canImport
 
-                   if isBase64 != nil && isBase64
+                   if isBase64 != nil
 
-                       pictures = decode_base64_pictures(pictures)
+                       isBase64 = eval(isBase64.downcase)
+
+                       if isBase64 == true
+                           pictures = decode_base64_pictures(pictures)
+                       end
 
                    end
 
