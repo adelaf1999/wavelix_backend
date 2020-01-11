@@ -785,7 +785,16 @@ class ProductsController < ApplicationController
 
                canImport = true
 
-                # validate file
+
+               if category.subcategories.length > 0
+
+                   canImport = false
+                   @success = false
+                   @message = "Cannot import products since category already has subcategories."
+
+                   return
+
+               end
 
 
                if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
