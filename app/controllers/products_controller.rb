@@ -1017,20 +1017,91 @@ class ProductsController < ApplicationController
 
                                                        if row_value.is_a?(String)
 
-                                                           # check if it is a list of values
-
                                                            row_value = row_value.strip
 
-                                                           if row_value.include?(",") && row_value.match(/\s/) == nil
 
-                                                               # row value is a list
 
-                                                               row_value = row_value.split(",")
+                                                           if row_value.include?(",")
 
+                                                               is_row_list = true
+
+                                                               row_value_array = row_value.split(",")
+
+                                                               row_value_array.each do |value|
+
+                                                                   value = value.strip
+
+                                                                   if value.include?(" ")
+
+                                                                       value_array = value.split(" ")
+
+                                                                       if value_array.size > 2
+
+                                                                           is_row_list = false
+
+                                                                           break
+
+                                                                       end
+
+                                                                   end
+
+
+                                                               end
+
+                                                               if is_row_list
+
+                                                                   header = header.downcase
+
+                                                                   product_attributes[header] = row_value_array
+
+                                                               end
+
+
+
+                                                           elsif row_value.include?("-") && !product_attributes.has_key?(header)
+
+                                                               is_row_list = true
+
+                                                               row_value_array = row_value.split("-")
+
+                                                               row_value_array.each do |value|
+
+                                                                   value = value.strip
+
+                                                                   if value.include?(" ")
+
+                                                                       value_array = value.split(" ")
+
+                                                                       if value_array.size > 2
+
+                                                                           is_row_list = false
+
+                                                                           break
+
+                                                                       end
+
+                                                                   end
+
+
+                                                               end
+
+                                                               if is_row_list
+
+                                                                   header = header.downcase
+
+                                                                   product_attributes[header] = row_value_array
+
+                                                               end
+
+                                                           end
+
+
+                                                           if !product_attributes.has_key?(header)
 
                                                                header = header.downcase
 
                                                                product_attributes[header] = row_value
+
 
                                                            end
 
