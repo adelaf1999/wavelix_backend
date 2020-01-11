@@ -178,6 +178,12 @@ class CategoriesController < ApplicationController
 
             if category != nil
 
+                if category.subcategories.length > 0
+                    @has_subcategories = true
+                else
+                    @has_subcategories = false
+                end
+
                 @success = true
 
             else

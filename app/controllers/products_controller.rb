@@ -292,15 +292,28 @@ class ProductsController < ApplicationController
 
             if category != nil
 
-                products = []
+                if category.subcategories.length > 0
 
-                category.products.order('name ASC').each do |product|
-                    products.push(product.to_json)
+                    # category has subcategories
+
+                    @success = false
+
+                else
+
+                    products = []
+
+                    category.products.order('name ASC').each do |product|
+                        products.push(product.to_json)
+                    end
+
+                    @success = true
+                    @products = products
+                    @category_name = category.name
+
+
                 end
 
-                @success = true
-                @products = products
-                @category_name = category.name
+
 
             else
 
