@@ -781,6 +781,8 @@ class ProductsController < ApplicationController
 
                file = params[:file]
 
+               isBase64 = params[:isBase64]
+
                canImport = true
 
                 # validate file
@@ -810,6 +812,12 @@ class ProductsController < ApplicationController
                 #  and the names of those that failed to import so he can re import them
 
                if canImport
+
+                   if isBase64 != nil && isBase64
+
+                       pictures = decode_base64_pictures(pictures)
+
+                   end
 
                    canCreate = true
 
@@ -863,9 +871,22 @@ class ProductsController < ApplicationController
                                price = price.to_d
                            end
 
-                           if canSave &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
-                               canSave = false
+
+                           if isBase64 != nil &&  isBase64
+
+                               if canSave && main_picture == nil
+                                   canSave = false
+                               end
+
+                           else
+
+                               if canSave &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+                                   canSave = false
+                               end
+
                            end
+
+
 
                            if canSave  && ( stock_quantity == nil || !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
                                canSave = false
@@ -918,12 +939,27 @@ class ProductsController < ApplicationController
 
                                                        picture = get_uploaded_picture(pictures, picture_name)
 
-                                                       if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
+                                                       if isBase64 != nil &&  isBase64
 
-                                                           pictures_name_list.push(picture_name)
-                                                           product_pictures.push(picture)
+                                                           if picture != nil
+
+                                                               pictures_name_list.push(picture_name)
+                                                               product_pictures.push(picture)
+
+                                                           end
+
+                                                       else
+
+                                                           if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
+
+                                                               pictures_name_list.push(picture_name)
+                                                               product_pictures.push(picture)
+
+                                                           end
 
                                                        end
+
+
 
 
                                                    end
@@ -1071,6 +1107,66 @@ class ProductsController < ApplicationController
 
     private
 
+    def decode_base64_pictures(pictures)
+
+        decoded_pictures = []
+
+        pictures.each do |pic|
+
+            pic = eval(pic)
+
+            if pic != nil && pic.instance_of?(Hash) && pic.size > 0
+
+                pic_name = pic[:name]
+                pic_type = pic[:type]
+                pic_uri = pic[:uri]
+
+                if pic_name != nil && pic_type != nil && pic_uri != nil
+
+                    pic_base64_uri_array = pic_uri.split(",")
+
+                    pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
+
+                    temp_pic = Tempfile.new(pic_name)
+                    temp_pic.binmode
+                    temp_pic.write Base64.decode64(pic_base64_uri)
+                    temp_pic.rewind
+
+                    pic_name_array = pic_name.split(".")
+                    extension = pic_name_array[pic_name_array.length - 1]
+                    valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
+                    if valid_extensions.include?(extension)
+
+                        pic_file = ActionDispatch::Http::UploadedFile.new({
+                                                                              tempfile: temp_pic,
+                                                                              type: pic_type,
+                                                                              filename: pic_name
+                                                                          })
+
+                        decoded_pictures.push(pic_file)
+
+
+                    end
+
+
+
+
+
+                end
+
+
+            end
+
+
+
+
+        end
+
+
+        decoded_pictures
+
+    end
 
     def get_uploaded_picture(pictures, picture_name)
 
