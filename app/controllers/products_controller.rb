@@ -23,7 +23,8 @@ class ProductsController < ApplicationController
                 :stock_quantity,
                 :product_attributes,
                 :product_pictures_attributes,
-                {product_pictures: []}
+                {product_pictures: []},
+                :isBase64
             )
 
             req_params.each do |p|
@@ -55,10 +56,16 @@ class ProductsController < ApplicationController
                 product_pictures_attributes = product_params[:product_pictures_attributes]
                 
                 product_pictures = product_params[:product_pictures]
+
+                isBase64 = product_params[:isBase64]
                 
                 category = store_user.categories.find_by(id: category_id)
 
+                if isBase64 != nil
 
+                    isBase64 = eval(isBase64)
+
+                end
 
                 if category != nil
 
@@ -99,15 +106,88 @@ class ProductsController < ApplicationController
                     end
 
 
-                    if valid && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture) )
+                    if isBase64 != nil && isBase64
 
-                        valid = false
-                        @success = false
-                        @message = "Make sure you uploaded an appropriate picture with valid extension."
 
-                        return
+                        if valid && main_picture != nil
+
+
+                            main_picture = eval(main_picture)
+
+                            if main_picture.instance_of?(Hash) && main_picture.size > 0
+
+
+                                pic_name = main_picture[:name]
+                                pic_type = main_picture[:type]
+                                pic_uri = main_picture[:uri]
+
+                                if pic_name != nil && pic_type != nil && pic_uri != nil
+
+                                    pic_base64_uri_array = pic_uri.split(",")
+
+                                    pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
+
+                                    temp_pic = Tempfile.new(pic_name)
+                                    temp_pic.binmode
+                                    temp_pic.write Base64.decode64(pic_base64_uri)
+                                    temp_pic.rewind
+
+                                    pic_name_array = pic_name.split(".")
+                                    extension = pic_name_array[pic_name_array.length - 1]
+                                    valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
+                                    if valid_extensions.include?(extension)
+
+                                        main_picture = ActionDispatch::Http::UploadedFile.new({
+                                                                                              tempfile: temp_pic,
+                                                                                              type: pic_type,
+                                                                                              filename: pic_name
+                                                                                          })
+                                    end
+
+                                end
+
+                            else
+
+                                valid = false
+                                @success = false
+                                @message = "Invalid main picture"
+
+                                return
+
+                            end
+
+
+                        else
+
+                            valid = false
+                            @success = false
+                            @message = "Upload a main picture for your product."
+
+                            return
+
+                        end
+
+
+
+                    else
+
+
+                        if valid && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture) )
+
+                            valid = false
+                            @success = false
+                            @message = "Make sure you uploaded an appropriate picture with valid extension."
+
+                            return
+
+                        end
+
 
                     end
+
+
+
 
                     if valid &&  ( !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
 
@@ -165,27 +245,38 @@ class ProductsController < ApplicationController
 
                     end
 
-                    # validate product pictures as neccesary
+                    # validate product pictures as necessary
 
                     if product_pictures != nil
 
+                        if isBase64 != nil && isBase64
 
-                        if valid && !are_product_pictures_valid?(product_pictures)
 
-                            valid = false
-                            @success = false
-                            @message = "Make sure you uploaded an appropriate pictures with valid extension."
-                            return
-
-                        else
+                            product_pictures = decode_base64_pictures(product_pictures)
 
                             product.product_pictures = product_pictures
 
+                        else
+
+
+                            if valid && !are_product_pictures_valid?(product_pictures)
+
+                                valid = false
+                                @success = false
+                                @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                                return
+
+                            else
+
+                                product.product_pictures = product_pictures
+
+                            end
+
+
                         end
 
+
                     end
-
-
                     
                     if product_pictures == nil &&  product_pictures_attributes != nil
 
@@ -1246,20 +1337,11 @@ class ProductsController < ApplicationController
 
                     end
 
-
-
-
-
                 end
-
 
             end
 
-
-
-
         end
-
 
         decoded_pictures
 
