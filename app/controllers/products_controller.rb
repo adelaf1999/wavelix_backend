@@ -145,6 +145,14 @@ class ProductsController < ApplicationController
                                                                                           })
                                     end
 
+                                else
+
+                                    valid = false
+                                    @success = false
+                                    @message = "Invalid main picture"
+                                    return
+
+
                                 end
 
                             else
