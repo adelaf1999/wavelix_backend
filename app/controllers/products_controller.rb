@@ -550,7 +550,6 @@ class ProductsController < ApplicationController
 
             product_id = params[:product_id]
 
-
             if category_id != nil && product_id != nil
 
 
@@ -578,7 +577,14 @@ class ProductsController < ApplicationController
                         main_picture = params[:main_picture]
                         product_pictures = params[:product_pictures]
                         product_pictures_attributes = params[:product_pictures_attributes]
+                        isBase64 = params[:isBase64]
+                        
 
+                        if isBase64 != nil
+
+                            isBase64 = eval(isBase64.downcase)
+
+                        end
 
 
                         if name != nil && name.length == 0
@@ -590,14 +596,85 @@ class ProductsController < ApplicationController
 
                         end
 
-                        if main_picture != nil  && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+                        if isBase64 != nil && isBase64
 
-                            canUpdate = false
-                            @success = false
-                            @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
-                            return
+
+                            if main_picture != nil
+
+                                main_picture = eval(main_picture)
+
+                                if main_picture.instance_of?(Hash) && main_picture.size > 0
+
+
+                                    pic_name = main_picture[:name]
+                                    pic_type = main_picture[:type]
+                                    pic_uri = main_picture[:uri]
+
+                                    if pic_name != nil && pic_type != nil && pic_uri != nil
+
+                                        pic_base64_uri_array = pic_uri.split(",")
+
+                                        pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
+
+                                        temp_pic = Tempfile.new(pic_name)
+                                        temp_pic.binmode
+                                        temp_pic.write Base64.decode64(pic_base64_uri)
+                                        temp_pic.rewind
+
+                                        pic_name_array = pic_name.split(".")
+                                        extension = pic_name_array[pic_name_array.length - 1]
+                                        valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
+                                        if valid_extensions.include?(extension)
+
+                                            main_picture = ActionDispatch::Http::UploadedFile.new({
+                                                                                                      tempfile: temp_pic,
+                                                                                                      type: pic_type,
+                                                                                                      filename: pic_name
+                                                                                                  })
+                                        end
+
+                                    else
+
+                                        canUpdate = false
+                                        @success = false
+                                        @message = "Invalid main picture"
+                                        return
+
+
+                                    end
+
+                                else
+
+                                    canUpdate = false
+                                    @success = false
+                                    @message = "Invalid main picture"
+                                    return
+
+                                end
+
+
+                            end
+
+
+
+                        else
+
+
+                            if main_picture != nil  && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+
+                                canUpdate = false
+                                @success = false
+                                @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
+                                return
+
+                            end
+
 
                         end
+
+
+
 
                         if price != nil
 
@@ -719,17 +796,30 @@ class ProductsController < ApplicationController
 
                         if product_pictures != nil
 
+                            if isBase64 != nil && isBase64
 
-                            if !are_product_pictures_valid?(product_pictures)
+                                product_pictures = decode_base64_pictures(product_pictures)
 
-                                canUpdate = false
-                                @success = false
-                                @message = "Make sure you uploaded an appropriate pictures with valid extension."
-                                return
+                            else
+
+
+                                if !are_product_pictures_valid?(product_pictures)
+
+                                    canUpdate = false
+                                    @success = false
+                                    @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                                    return
+
+                                end
+
 
                             end
 
+
                         end
+
+
+
 
 
                         if product_pictures == nil &&  product_pictures_attributes != nil
