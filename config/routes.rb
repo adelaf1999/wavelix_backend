@@ -85,4 +85,6 @@ Rails.application.routes.draw do
 
   get '/view-my-profile' => 'profile#view_my_profile'
 
+  post '/update-profile' => 'profile#update_profile'
+
 end

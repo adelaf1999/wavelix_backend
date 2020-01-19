@@ -23,5 +23,63 @@ class ProfileController < ApplicationController
 
   end
 
+  def update_profile
+
+    profile_picture = params[:profile_picture]
+
+    profile_bio = params[:profile_bio]
+
+    profile = current_user.profile
+
+    if profile_picture != nil && profile_picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(profile_picture)
+      profile.profile_picture = profile_picture
+    end
+
+
+    if profile_bio != nil
+
+      if profile_bio.empty?
+
+        profile.profile_bio = profile_bio
+
+      else
+
+        profile_bio = profile_bio.strip
+
+        num_bio_chars = profile_bio.chars.size
+
+        if num_bio_chars <= 250
+          profile.profile_bio = profile_bio
+        end
+
+      end
+
+    end
+
+    profile.save!
+
+
+    @updated_profile = profile.to_json
+
+
+  end
+
+  #def change_profile_settings
+  #
+  #end
+
+  private
+
+  def is_picture_valid?(picture)
+
+    filename = picture.original_filename.split(".")
+    extension = filename[filename.length - 1]
+    valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+    valid_extensions.include?(extension)
+
+  end
+
+
+
 
 end
