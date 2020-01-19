@@ -15,7 +15,17 @@ class User < ActiveRecord::Base
 
   enum user_type: { customer_user: 0, store_user: 1 }
 
+  has_one :profile
+
+  after_create :create_profile
+
   private
+
+  def create_profile
+
+    Profile.create!(user_id: self.id)
+
+  end
 
   def destroy_user_attributes
 
