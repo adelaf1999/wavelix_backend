@@ -87,4 +87,9 @@ Rails.application.routes.draw do
 
   post '/update-profile' => 'profile#update_profile'
 
+
+  # POST ROUTES
+
+  post '/create-post' => 'post#create'
+
 end

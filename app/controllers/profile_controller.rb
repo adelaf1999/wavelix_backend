@@ -7,12 +7,16 @@ class ProfileController < ApplicationController
     if current_user.store_user?
 
       @profile_data = {}
+
+      # store specific profile data
       store_user = StoreUser.find_by(store_id: current_user.id)
       @profile_data[:store_name] = store_user.store_name
       @profile_data[:store_address] = store_user.store_address
       @profile_data[:store_number] = store_user.store_number
+
+      # common profile data
       profile = current_user.profile
-      @profile_data[:profile] = profile
+      @profile_data[:profile] = get_profile(profile)
       @profile_data = @profile_data.to_json
 
 
@@ -58,8 +62,7 @@ class ProfileController < ApplicationController
 
     profile.save!
 
-
-    @updated_profile = profile.to_json
+    @updated_profile = get_profile(profile).to_json
 
 
   end
@@ -76,6 +79,22 @@ class ProfileController < ApplicationController
     extension = filename[filename.length - 1]
     valid_extensions = ["png" , "jpeg", "jpg", "gif"]
     valid_extensions.include?(extension)
+
+  end
+
+  def get_profile(profile)
+
+    profile_hash = eval(profile.to_json)
+    posts = []
+
+    profile.posts.each do |post|
+      posts.push(post)
+    end
+
+    profile_hash[:posts] = posts
+
+    profile_hash
+
 
   end
 

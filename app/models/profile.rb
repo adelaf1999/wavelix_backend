@@ -6,6 +6,6 @@ class Profile < ApplicationRecord
 
   mount_uploader :profile_picture, ImageUploader
 
-  # set limit profile bio to 150 characters
+  has_many :posts
 
 end
