@@ -1,4 +1,5 @@
 class PostController < ApplicationController
+  include ProfileHelper
 
   before_action :authenticate_user!
 
@@ -58,8 +59,12 @@ class PostController < ApplicationController
           #end
 
           if post.save!
+
             @success = true
             @message = "Successfully created post"
+            profile = current_user.profile
+            @posts = get_posts(profile).to_json
+
             return
           else
             @success = false

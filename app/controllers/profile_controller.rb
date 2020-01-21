@@ -1,4 +1,5 @@
 class ProfileController < ApplicationController
+  include ProfileHelper
 
   before_action :authenticate_user!
 
@@ -79,22 +80,6 @@ class ProfileController < ApplicationController
     extension = filename[filename.length - 1]
     valid_extensions = ["png" , "jpeg", "jpg", "gif"]
     valid_extensions.include?(extension)
-
-  end
-
-  def get_profile(profile)
-
-    profile_hash = eval(profile.to_json)
-    posts = []
-
-    profile.posts.each do |post|
-      posts.push(post)
-    end
-
-    profile_hash[:posts] = posts
-
-    profile_hash
-
 
   end
 
