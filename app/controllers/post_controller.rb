@@ -25,8 +25,14 @@ class PostController < ApplicationController
 
           post = Post.new
           post.profile_id = profile.id
-          post.media_type = get_media_file_type(media_file)
-          post.media_file = media_file
+          media_type = get_media_file_type(media_file)
+          post.media_type = media_type
+
+          if media_type == 0
+            post.image_file = media_file
+          else
+            post.video_file = media_file
+          end
 
           caption = params[:caption]
           #category_id = params[:category_id]

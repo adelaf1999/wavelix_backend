@@ -2,10 +2,13 @@ class Post < ApplicationRecord
 
   belongs_to :profile
 
-  validates_presence_of :profile_id, :media_type, :media_file
+  validates_presence_of :profile_id, :media_type
+
+  mount_uploader :image_file, ImageUploader
+
+  mount_uploader :video_file, VideoUploader
 
   enum media_type: { image: 0, video: 1 }
 
-  mount_uploader :media_file, MediaUploader
 
 end
