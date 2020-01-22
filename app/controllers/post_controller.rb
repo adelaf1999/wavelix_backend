@@ -18,9 +18,11 @@ class PostController < ApplicationController
         media_file = params[:media_file]
 
         if media_file == nil || !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
+
           @success = false
           @message = "Upload a media file with appropriate extension and try again"
           return
+
         else
 
           post = Post.new
@@ -28,15 +30,7 @@ class PostController < ApplicationController
           media_type = get_media_file_type(media_file)
           post.media_type = media_type
 
-          if media_type == 0
-            post.image_file = media_file
-          else
-            post.video_file = media_file
-          end
-
           caption = params[:caption]
-          #category_id = params[:category_id]
-          #product_id = params[:product_id]
 
           if caption != nil && caption.length > 0
 
@@ -44,39 +38,64 @@ class PostController < ApplicationController
 
           end
 
-          #if category_id != nil && product_id != nil
-          #
-          #  # make sure store owns the product
-          #
-          #  category = store_user.categories.find_by(id: category_id)
-          #
-          #  if category != nil
-          #
-          #    product = category.products.find_by(id: product_id)
-          #
-          #    if product != nil
-          #
-          #      post.product_id = product_id
-          #
-          #    end
-          #
-          #  end
-          #
-          #end
 
           if post.save!
 
             @success = true
-            @message = "Successfully created post"
-            profile = current_user.profile
-            @posts = get_posts(profile).to_json
 
-            return
+            if media_type == 0
+
+              post.image_file = media_file
+
+              if post.delay.save!
+
+                post.complete!
+
+              end
+
+
+            else
+
+              local_video = LocalVideo.new
+
+              local_video.video = media_file
+
+              if local_video.save!
+
+                post_id = post.id
+
+                local_video_id = local_video.id
+
+                Delayed::Job.enqueue(
+                    CompressVideoJob.new(post_id, local_video_id),
+                    queue: 'compress_video_queue',
+                    priority: 0
+                )
+
+                return
+
+              end
+
+
+            end
+
+
+
           else
+
             @success = false
             @message = "Error creating post"
             return
+
           end
+
+
+
+
+
+
+
+
 
 
         end

@@ -10,5 +10,7 @@ class Post < ApplicationRecord
 
   enum media_type: { image: 0, video: 1 }
 
+  enum status: { incomplete: 0, complete: 1 }
+
 
 end
