@@ -71,9 +71,35 @@ class PostController < ApplicationController
 
           else
 
+
+
+            video = FFMPEG::Movie.new(media_file.tempfile.path)
+
+            thumbnail_filename = "#{Time.now.to_i}.jpeg"
+
+            thumbnail_path = "#{Rails.root}/tmp/#{thumbnail_filename}"
+
+            video.screenshot(thumbnail_path, seek_time: 3)
+
+            thumbnail_tempfile = File.new(thumbnail_path)
+
+
+            video_thumbnail = ActionDispatch::Http::UploadedFile.new({
+                                                                  tempfile: thumbnail_tempfile,
+                                                                  type: 'image/jpeg',
+                                                                  filename: thumbnail_filename
+                                                              })
+
+            post.video_thumbnail = video_thumbnail
+
             if post.save!
 
+              File.delete(thumbnail_path) if File.exist?(thumbnail_path)
+
               @success = true
+
+              PostBroadcastJob.perform_later(current_user.id)
+
 
               local_video = LocalVideo.new
 

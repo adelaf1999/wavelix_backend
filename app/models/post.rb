@@ -8,6 +8,8 @@ class Post < ApplicationRecord
 
   mount_uploader :video_file, VideoUploader
 
+  mount_uploader :video_thumbnail, ImageUploader
+
   enum media_type: { image: 0, video: 1 }
 
   enum status: { incomplete: 0, complete: 1 }
