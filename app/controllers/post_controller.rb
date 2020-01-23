@@ -38,12 +38,11 @@ class PostController < ApplicationController
 
           end
 
+          if media_type == 0
 
-          if post.save!
+            # The user will wait till his image is uploaded and encoded
 
-            @success = true
-
-            if media_type == 0
+            if post.save!
 
               post.image_file = media_file
 
@@ -51,10 +50,26 @@ class PostController < ApplicationController
 
                 post.complete!
 
+                @success = true
+
+                return
+
               end
 
-
             else
+
+              @success = false
+              @message = "Error creating post"
+              return
+
+            end
+
+
+          else
+
+            if post.save!
+
+              @success = true
 
               local_video = LocalVideo.new
 
@@ -76,26 +91,15 @@ class PostController < ApplicationController
 
               end
 
+            else
+
+              @success = false
+              @message = "Error creating post"
+              return
 
             end
 
-
-
-          else
-
-            @success = false
-            @message = "Error creating post"
-            return
-
           end
-
-
-
-
-
-
-
-
 
 
         end
@@ -112,6 +116,26 @@ class PostController < ApplicationController
     else
 
     end
+
+  end
+
+  def get_pending_videos
+
+    profile = current_user.profile
+
+    posts = []
+
+    profile.posts.each do |post|
+
+      if post.video? && post.incomplete?
+
+        posts.push(post)
+
+      end
+
+    end
+
+    @pending_videos = posts.to_json
 
   end
 

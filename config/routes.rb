@@ -92,4 +92,6 @@ Rails.application.routes.draw do
 
   post '/create-post' => 'post#create'
 
+  get '/get-pending-videos' => 'post#get_pending_videos'
+
 end
