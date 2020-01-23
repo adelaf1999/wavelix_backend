@@ -1,14 +1,4 @@
 Rails.application.routes.draw do
-  mount_devise_token_auth_for 'User', controllers: {
-    confirmations: 'auth/users/confirmations',
-    unlocks: 'auth/users/unlocks',
-    passwords: 'auth/users/passwords'
-  },at: 'auth', :skip => [
-    :registrations,
-    :confirmations,
-    :sessions,
-    :unlocks
-  ]
 
   mount_devise_token_auth_for 'Customer', controllers: {
     registrations: 'auth/customers/registrations'
@@ -34,11 +24,23 @@ Rails.application.routes.draw do
     :registrations
   ]
 
+  mount_devise_token_auth_for 'User', controllers: {
+      confirmations: 'auth/users/confirmations',
+      unlocks: 'auth/users/unlocks',
+      passwords: 'auth/users/passwords',
+      sessions: 'auth/users/sessions'
+  },at: 'auth', :skip => [
+      :registrations,
+      :confirmations,
+      :unlocks,
+      :sessions
+  ]
+
   devise_scope :user do
     get '/auth/confirmation' => "auth/users/confirmations#show", as: :user_confirmation
     post '/auth/confirmation' => "auth/users/confirmations#create"
-    post '/auth/sign_in' => "devise_token_auth/sessions#create", as: :user_session 
-    delete '/auth/sign_out' => "devise_token_auth/sessions#destroy", as: :destroy_user_session
+    post '/auth/sign_in' => "auth/users/sessions#create", as: :user_session
+    delete '/auth/sign_out' => "auth/users/sessions#destroy", as: :destroy_user_session
     get '/auth/unlock' => "auth/users/unlocks#show", as: :user_unlock
     post '/auth/unlock' => "auth/users/unlocks#create"
   end
@@ -92,6 +94,5 @@ Rails.application.routes.draw do
 
   post '/create-post' => 'post#create'
 
-  get '/get-pending-videos' => 'post#get_pending_videos'
 
 end

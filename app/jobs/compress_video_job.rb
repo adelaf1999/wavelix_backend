@@ -1,4 +1,4 @@
-class CompressVideoJob < Struct.new(:post_id, :local_video_file_id)
+class CompressVideoJob < Struct.new(:post_id, :local_video_file_id, :user_id)
 
   def perform
 
@@ -19,6 +19,8 @@ class CompressVideoJob < Struct.new(:post_id, :local_video_file_id)
       post.complete!
 
       local_video_file.destroy
+
+      PostBroadcastJob.perform_later(user_id)
 
 
     end

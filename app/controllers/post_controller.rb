@@ -50,7 +50,11 @@ class PostController < ApplicationController
 
                 post.complete!
 
+
                 @success = true
+
+                PostBroadcastJob.perform_later(current_user.id)
+
 
                 return
 
@@ -81,8 +85,10 @@ class PostController < ApplicationController
 
                 local_video_id = local_video.id
 
+                user_id = current_user.id
+
                 Delayed::Job.enqueue(
-                    CompressVideoJob.new(post_id, local_video_id),
+                    CompressVideoJob.new(post_id, local_video_id, user_id),
                     queue: 'compress_video_queue',
                     priority: 0
                 )
@@ -119,25 +125,6 @@ class PostController < ApplicationController
 
   end
 
-  def get_pending_videos
-
-    profile = current_user.profile
-
-    posts = []
-
-    profile.posts.each do |post|
-
-      if post.video? && post.incomplete?
-
-        posts.push(post)
-
-      end
-
-    end
-
-    @pending_videos = posts.to_json
-
-  end
 
 
   private
