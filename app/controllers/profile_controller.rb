@@ -14,6 +14,7 @@ class ProfileController < ApplicationController
       @profile_data[:store_name] = store_user.store_name
       @profile_data[:store_address] = store_user.store_address
       @profile_data[:store_number] = store_user.store_number
+      @profile_data[:isVerified] = store_user.verified?
 
       # common profile data
       profile = current_user.profile
