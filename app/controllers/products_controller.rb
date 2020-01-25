@@ -399,6 +399,8 @@ class ProductsController < ApplicationController
 
                 else
 
+
+
                     products = []
 
                     category.products.order('name ASC').each do |product|
@@ -408,6 +410,9 @@ class ProductsController < ApplicationController
                     @success = true
                     @products = products
                     @category_name = category.name
+
+
+                    cookies.encrypted[:category_id] = category.id
 
 
                 end
@@ -1346,7 +1351,19 @@ class ProductsController < ApplicationController
                                end
 
 
-                               product.save!
+                               if product.save!
+
+                                   new_products = []
+
+                                   category.products.order('name ASC').each do |p|
+                                       new_products.push(p)
+                                   end
+
+                                   new_products = new_products.to_json
+
+                                   ActionCable.server.broadcast "category_#{category.id}_products_user_#{current_user.id}", {products: new_products}
+
+                               end
 
 
                            end
