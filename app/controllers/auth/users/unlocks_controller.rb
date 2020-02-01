@@ -39,30 +39,16 @@ module Auth
                 token = @resource.create_token
                 @resource.save!
                 yield @resource if block_given?
-        
-                # redirect_header_options = { unlock: true }
-                # redirect_headers = build_redirect_headers(token.token,
-                #                                           token.client,
-                #                                           redirect_header_options)
-                # redirect_to(@resource.build_auth_url(after_unlock_path_for(@resource),
-                #                                      redirect_headers))
 
-                if Rails.env.production?
-                  redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
-                else
-                  redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
-                end
+
+                redirect_to_web
 
               else
                 # render_show_error
                 if @resource.locked_at? == false
                     # already unlocked 
-                    
-                    if Rails.env.production?
-                      redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
-                    else
-                      redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
-                    end
+
+                    redirect_to_web
 
                 else
                    # redirect to 404 not found page or something went wrong page in the website
@@ -72,6 +58,19 @@ module Auth
             end
         
             private
+
+
+            def redirect_to_web
+
+              if Rails.env.production?
+                redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
+              else
+                redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
+              end
+
+            end
+
+
             def after_unlock_path_for(resource)
               #TODO: This should probably be a configuration option at the very least.
               '/'

@@ -9,41 +9,22 @@ module Auth
         
               if @resource.errors.empty?
                 yield @resource if block_given?
-        
-                redirect_header_options = { account_confirmation_success: true }
-        
-            #     if signed_in?(resource_name)
-                    
-            #       token = signed_in_resource.create_token
-        
-            #       redirect_headers = build_redirect_headers(token.token,
-            #                                                 token.client,
-            #                                                 redirect_header_options)
-        
-            #       redirect_to_link = signed_in_resource.build_auth_url(redirect_url, redirect_headers)
 
-            #     else
-            #       redirect_to_link = DeviseTokenAuth::Url.generate(redirect_url, redirect_header_options)
+                redirect_to_web
 
-            #    end
-        
-                redirect_to(redirect_url)
               else
+
                 # raise ActionController::RoutingError, 'Not Found'
                 # there is an error in the confirmation link
                 # or the user was already confirmed
 
                 if @resource.confirmed?
 
-                  if Rails.env.production?
-                    redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
-                  else
-                    redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
-                  end
+                  redirect_to_web
 
                     
                 else
-                     # redirect to 404 not found page or something went wront page in the website
+                     # redirect to 404 not found page or something went wrong page in the website
                 end
 
                
@@ -69,6 +50,8 @@ module Auth
             end
         
             protected
+
+
         
             def render_create_error_missing_email
               render_error(401, I18n.t('devise_token_auth.confirmations.missing_email'))
@@ -97,6 +80,16 @@ module Auth
                 :redirect_url,
                 DeviseTokenAuth.default_confirm_success_url
               )
+            end
+
+            def redirect_to_web
+
+              if Rails.env.production?
+                redirect_to(ENV.fetch("PRODUCTION_WEBSITE_URL"))
+              else
+                redirect_to(ENV.fetch("DEVELOPMENT_WEBSITE_URL"))
+              end
+
             end
         
           end
