@@ -15,7 +15,7 @@ class User < ActiveRecord::Base
 
   enum user_type: { customer_user: 0, store_user: 1 }
 
-  has_one :profile
+  has_one :profile, dependent: :destroy
 
   after_create :create_profile
 

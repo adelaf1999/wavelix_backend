@@ -19,7 +19,9 @@ class ProfileController < ApplicationController
       # common profile data
       profile = current_user.profile
       @profile_data[:profile] = get_profile(profile)
+      @profile_data[:follow_relationships] = get_follow_relationships
       @profile_data = @profile_data.to_json
+
 
 
     else
@@ -81,6 +83,52 @@ class ProfileController < ApplicationController
     extension = filename[filename.length - 1]
     valid_extensions = ["png" , "jpeg", "jpg", "gif"]
     valid_extensions.include?(extension)
+
+  end
+
+  def get_follow_relationships
+
+    follow = {}
+
+    following = []
+
+    followers = []
+
+    current_user.following_relationships.each do |following_relationship|
+
+      if following_relationship.active?
+
+        # get the following user name and profile picture (if they have one)
+
+        followed_user = User.find_by(id: following_relationship.followed_id)
+        username = followed_user.username
+        profile_picture_url = followed_user.profile.profile_picture.url
+        following.push({username: username, profile_picture_url: profile_picture_url})
+
+      end
+
+    end
+
+    current_user.follower_relationships.each do |follower_relationship|
+
+      if follower_relationship.active?
+
+        follower_user = User.find_by(id: follower_relationship.follower_id)
+        username = follower_user.username
+        profile_picture_url = follower_user.profile.profile_picture.url
+        followers.push({username: username, profile_picture_url: profile_picture_url})
+
+      end
+
+    end
+
+    follow[:following] = following
+    follow[:followers] = followers
+
+
+    follow
+
+
 
   end
 

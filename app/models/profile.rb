@@ -6,6 +6,6 @@ class Profile < ApplicationRecord
 
   mount_uploader :profile_picture, ImageUploader
 
-  has_many :posts
+  has_many :posts, dependent: :destroy
 
 end
