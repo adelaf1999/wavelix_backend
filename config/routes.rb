@@ -89,6 +89,7 @@ Rails.application.routes.draw do
 
   post '/update-profile' => 'profile#update_profile'
 
+  post '/search-follow' => 'profile#search_follow'
 
   # POST ROUTES
 

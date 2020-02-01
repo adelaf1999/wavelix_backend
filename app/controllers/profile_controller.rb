@@ -71,6 +71,93 @@ class ProfileController < ApplicationController
 
   end
 
+  def search_follow
+
+    search_follow_type = params[:search_follow_type]
+
+    search = params[:search]
+
+    if search_follow_type != nil && search != nil
+
+      search_follow_type = search_follow_type.to_i
+
+
+      if search_follow_type == 0
+
+        follows_list = current_user.followers.merge(current_user.follower_relationships.where(status: 1))
+
+      else
+
+        follows_list = current_user.following.merge(current_user.following_relationships.where(status: 1))
+
+      end
+
+      search_by_username = follows_list.where("username ILIKE ?", "%#{search}%")
+
+      new_follows_list = []
+
+      new_follows_list = new_follows_list + search_by_username.uniq
+
+      people = follows_list.where(user_type: 0)
+
+      people_ids = []
+
+      people.each do |person|
+        people_ids.push(person.id)
+      end
+
+      people = CustomerUser.where(customer_id: people_ids)
+
+      search_by_full_name =  people.where("full_name ILIKE ?", "%#{search}%")
+
+      search_by_full_name.each do |customer_user|
+
+        new_follows_list.push(User.find_by(id: customer_user.customer_id))
+
+      end
+
+      new_follows_list = new_follows_list.uniq
+
+      stores = follows_list.where(user_type: 1)
+
+      store_ids = []
+
+      stores.each do |store|
+
+        store_ids.push(store.id)
+
+      end
+
+      stores = StoreUser.where(store_id: store_ids)
+
+      search_by_store_name = stores.where("store_name ILIKE ?", "%#{search}%")
+
+      search_by_store_name.each do |store_user|
+
+        new_follows_list.push(User.find_by(id: store_user.store_id))
+
+      end
+
+      new_follows_list = new_follows_list.uniq
+
+      @search_results = []
+
+      new_follows_list.each do |item|
+
+        username = item.username
+        profile_picture_url = item.profile.profile_picture.url
+        @search_results.push({username: username, profile_picture_url: profile_picture_url})
+
+      end
+
+      @search_results = @search_results.to_json
+
+
+    end
+
+
+  end
+
   #def change_profile_settings
   #
   #end
