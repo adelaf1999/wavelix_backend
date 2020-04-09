@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_01_093912) do
+ActiveRecord::Schema.define(version: 2020_04_09_071609) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -79,6 +79,7 @@ ActiveRecord::Schema.define(version: 2020_02_01_093912) do
     t.text "video_file"
     t.integer "status", default: 0
     t.text "video_thumbnail"
+    t.boolean "is_story", default: false
   end
 
   create_table "products", force: :cascade do |t|

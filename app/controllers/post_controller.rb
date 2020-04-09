@@ -11,11 +11,13 @@ class PostController < ApplicationController
 
       if store_user.verified?
 
-        # can only create post if verified
+        # can only create post / story if verified
 
         profile = current_user.profile
 
         media_file = params[:media_file]
+
+        is_story = params[:is_story]
 
         if media_file == nil || !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
 
@@ -38,9 +40,22 @@ class PostController < ApplicationController
 
           end
 
+          if is_story != nil
+
+            is_story = eval(is_story.downcase)
+
+            if is_story
+
+              post.is_story = true
+
+            end
+
+          end
+
           if media_type == 0
 
             # The user will wait till his image is uploaded and encoded
+
 
             if post.save!
 
@@ -52,6 +67,11 @@ class PostController < ApplicationController
 
 
                 @success = true
+
+                if post.is_story
+                  Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
+                end
+
 
                 PostBroadcastJob.perform_later(current_user.id)
 

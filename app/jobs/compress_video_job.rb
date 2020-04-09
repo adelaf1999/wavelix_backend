@@ -20,6 +20,10 @@ class CompressVideoJob < Struct.new(:post_id, :local_video_file_id, :user_id)
 
       local_video_file.destroy
 
+      if post.is_story
+        Delayed::Job.enqueue(StoryJob.new(post_id, user_id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
+      end
+
       PostBroadcastJob.perform_later(user_id)
 
 
