@@ -156,6 +156,34 @@ class ProfileController < ApplicationController
 
   end
 
+  def change_profile_settings
+
+    privacy_on = params[:privacy_on]
+
+    profile = current_user.profile
+
+    if privacy_on != nil && current_user.customer_user?
+
+      privacy_on = eval(privacy_on.downcase)
+
+      if privacy_on
+
+        profile.privacy = 1
+
+      else
+
+        profile.privacy = 0
+
+      end
+
+    end
+
+    profile.save!
+
+
+
+  end
+
   #def change_profile_settings
   #
   #end

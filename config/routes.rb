@@ -91,6 +91,8 @@ Rails.application.routes.draw do
 
   post '/search-follow' => 'profile#search_follow'
 
+  post '/change-profile-settings' => 'profile#change_profile_settings'
+
   # POST ROUTES
 
   post '/create-post' => 'post#create'

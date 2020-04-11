@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_09_071609) do
+ActiveRecord::Schema.define(version: 2020_04_11_151707) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -100,7 +100,6 @@ ActiveRecord::Schema.define(version: 2020_04_09_071609) do
   create_table "profiles", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "privacy", default: 0
-    t.boolean "follower_system_visible", default: true
     t.text "profile_picture"
     t.string "profile_bio"
     t.datetime "created_at", precision: 6, null: false
