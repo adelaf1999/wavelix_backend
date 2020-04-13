@@ -101,5 +101,7 @@ Rails.application.routes.draw do
 
   post '/search-users' => 'search#search_users'
 
+  post '/search-stores' => 'search#search_stores'
+
 
 end
