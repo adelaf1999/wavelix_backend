@@ -97,5 +97,9 @@ Rails.application.routes.draw do
 
   post '/create-post' => 'post#create'
 
+  # SEARCH ROUTES
+
+  post '/search-users' => 'search#search_users'
+
 
 end
