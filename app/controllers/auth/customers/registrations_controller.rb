@@ -116,6 +116,7 @@ module  Auth
                 latitude = home_address[:latitude]
                 longitude = home_address[:longitude]
                 c = ISO3166::Country.new(country_code)
+                # To get country name: c.name
 
 
                 if full_name.length == 0
@@ -167,7 +168,7 @@ module  Auth
                     full_name: full_name,
                     date_of_birth: date_of_birth,
                     gender: gender,
-                    country_of_residence: c.name,
+                    country_of_residence: country_code,
                     home_address: home_address
                   )
 

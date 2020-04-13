@@ -114,6 +114,7 @@ module Auth
 
                     store_country_code = store_params[:store_country]
                     c = ISO3166::Country.new(store_country_code)
+                    # To get country name: c.name
 
                     store_address = eval(store_params[:store_address])
                     latitude = store_address[:latitude]
@@ -173,7 +174,7 @@ module Auth
                         store_name: store_name,
                         store_address: store_address,
                         store_number: store_number,
-                        store_country: c.name,
+                        store_country: store_country_code,
                         store_business_license: store_business_license
                       )
 
