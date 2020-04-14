@@ -78,26 +78,33 @@ class SearchController < ApplicationController
 
     street_name = params[:street_name]
 
+    limit = params[:limit]
+
     @results = []
 
-    if store_name != nil && country_code != nil
+    if store_name != nil && country_code != nil && limit != nil
 
       store_name = store_name.strip
 
       country = ISO3166::Country.new(country_code)
 
-      if store_name.length > 0 && country != nil
+      is_limit_valid = is_positive_integer?(limit)
+
+      if store_name.length > 0 && country != nil && is_limit_valid
+
+
+          limit = limit.to_i
 
           if current_user.store_user?
 
 
             if street_name != nil && street_name.length > 0
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
 
             else
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
 
             end
 
@@ -111,11 +118,11 @@ class SearchController < ApplicationController
 
             if street_name != nil && street_name.length > 0
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).limit(limit)
 
             else
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).limit(limit)
 
             end
 
@@ -159,6 +166,18 @@ class SearchController < ApplicationController
 
 
   private
+
+  def is_positive_integer?(arg)
+
+    res = /^(?<num>\d+)$/.match(arg)
+
+    if res == nil
+      false
+    else
+      true
+    end
+
+  end
 
   def calculate_distance(loc1, loc2)
 
