@@ -3,6 +3,7 @@ module Auth
     module Stores
 
         class RegistrationsController < DeviseTokenAuth::ApplicationController
+            include MoneyHelper
             before_action :validate_sign_up_params, only: :create
             skip_after_action :update_auth_header, only: [:create]
             
@@ -91,7 +92,7 @@ module Auth
 
                  valid = true
 
-                 req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license]
+                 req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license, :currency]
 
                  store_params = store_user_params
 
@@ -111,6 +112,7 @@ module Auth
                     store_name = store_params[:store_name]
                     store_number = store_params[:store_number]
                     store_business_license = store_params[:store_business_license]
+                    currency = store_params[:currency]
 
                     store_country_code = store_params[:store_country]
                     c = ISO3166::Country.new(store_country_code)
@@ -119,6 +121,7 @@ module Auth
                     store_address = eval(store_params[:store_address])
                     latitude = store_address[:latitude]
                     longitude = store_address[:longitude]
+
                    
 
                     if store_owner_full_name.length == 0
@@ -145,6 +148,11 @@ module Auth
                     if valid && !is_business_license_valid?(store_business_license)
                         valid = false
                     end
+
+                    if valid && !is_currency_valid?(currency)
+                      valid = false
+                    end
+
 
                     if valid && latitude != nil
                       latitude = latitude.to_d
@@ -175,7 +183,8 @@ module Auth
                         store_address: store_address,
                         store_number: store_number,
                         store_country: store_country_code,
-                        store_business_license: store_business_license
+                        store_business_license: store_business_license,
+                        currency: currency
                       )
 
 

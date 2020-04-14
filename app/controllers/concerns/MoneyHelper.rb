@@ -9,4 +9,12 @@ module MoneyHelper
 
   end
 
+  def is_currency_valid?(code)
+
+    currencies = get_currencies
+
+    currencies.include?(code)
+
+  end
+
 end

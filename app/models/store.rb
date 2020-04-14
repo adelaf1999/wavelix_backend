@@ -11,7 +11,7 @@ class Store < User
     private
 
     def reject_store_user(attributes)
-        attributes['store_owner_full_name'].blank? || attributes['store_owner_work_number'].blank? || attributes['store_name'].blank? || attributes['store_address'].blank? || attributes['store_number'].blank? || attributes['store_country'].blank? || attributes['store_business_license'].blank?
+        attributes['store_owner_full_name'].blank? || attributes['store_owner_work_number'].blank? || attributes['store_name'].blank? || attributes['store_address'].blank? || attributes['store_number'].blank? || attributes['store_country'].blank? || attributes['store_business_license'].blank? || attributes['currency'].blank?
     end
 
     def set_user_type
