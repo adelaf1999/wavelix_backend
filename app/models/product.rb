@@ -14,6 +14,12 @@ class Product < ApplicationRecord
 
    serialize :product_pictures_attributes, Hash
 
+   def currency
+
+     category.store_user.currency
+
+   end
+
    def decrement_stock_quantity(amount)
         # amount must be an integer
        if is_positive_integer?(amount.to_s)
