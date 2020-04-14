@@ -76,6 +76,8 @@ class SearchController < ApplicationController
 
     country_code = params[:country_code]
 
+    street_name = params[:street_name]
+
     @results = []
 
     if store_name != nil && country_code != nil
@@ -88,7 +90,17 @@ class SearchController < ApplicationController
 
           if current_user.store_user?
 
-            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
+
+            if street_name != nil && street_name.length > 0
+
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
+
+            else
+
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
+
+            end
+
 
 
             store_user = StoreUser.find_by(store_id: current_user.id)
@@ -97,7 +109,17 @@ class SearchController < ApplicationController
 
           else
 
-            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code)
+            if street_name != nil && street_name.length > 0
+
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code)
+
+            else
+
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code)
+
+            end
+
+
 
             customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
@@ -119,7 +141,8 @@ class SearchController < ApplicationController
                               username: user.username,
                               country: store.store_country,
                               name: store.store_name,
-                              distance: distance
+                              distance: distance,
+                              street_name: store.street_name
                           })
           end
 
