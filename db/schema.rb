@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_04_11_151707) do
+ActiveRecord::Schema.define(version: 2020_04_14_125145) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -118,6 +118,7 @@ ActiveRecord::Schema.define(version: 2020_04_11_151707) do
     t.integer "store_id"
     t.text "store_address", null: false
     t.integer "status", default: 0
+    t.string "street_name"
   end
 
   create_table "users", force: :cascade do |t|
