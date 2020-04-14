@@ -72,19 +72,23 @@ class SearchController < ApplicationController
 
     # Only verified stores appear in searches
 
-    search = params[:search]
+    store_name = params[:store_name]
+
+    country_code = params[:country_code]
 
     @results = []
 
-    if search != nil
+    if store_name != nil && country_code != nil
 
-      search = search.strip
+      store_name = store_name.strip
 
-      if search.length > 0
+      country = ISO3166::Country.new(country_code)
+
+      if store_name.length > 0 && country != nil
 
           if current_user.store_user?
 
-            stores = StoreUser.all.where("store_name ILIKE ?", "%#{search}%" ).where(status: 1).where.not(store_id: current_user.id)
+            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
 
 
             store_user = StoreUser.find_by(store_id: current_user.id)
@@ -93,7 +97,7 @@ class SearchController < ApplicationController
 
           else
 
-            stores = StoreUser.all.where("store_name ILIKE ?", "%#{search}%" ).where(status: 1)
+            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code)
 
             customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
