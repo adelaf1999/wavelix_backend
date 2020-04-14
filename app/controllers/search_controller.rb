@@ -164,6 +164,104 @@ class SearchController < ApplicationController
 
   end
 
+  def search_products
+
+    # Products must be from verified stores and they must be available products
+
+    # Store users should not see their own products in the search
+
+
+    product_name = params[:product_name]
+
+    country_code = params[:country_code]
+
+    @results = []
+
+    if product_name != nil  && country_code != nil
+
+
+      country = ISO3166::Country.new(country_code)
+
+      if product_name.length > 0 && country != nil
+
+        if current_user.store_user?
+
+          current_store_address = StoreUser.find_by(store_id: current_user.id).store_address
+
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
+
+          all_products.each do |product|
+
+            store_user = StoreUser.find_by(id: product.category.store_user_id)
+
+            if store_user.verified? && store_user.store_id != current_user.id && store_user.store_country == country_code
+
+              distance = calculate_distance(current_store_address, store_user.store_address)
+
+              @results.push(
+                  {
+                      name: product.name,
+                      store_name: store_user.store_name,
+                      picture: product.main_picture.url,
+                      distance: distance,
+                      product_id: product.id
+                  }
+              )
+
+            end
+
+          end
+
+
+        else
+
+
+          customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+          current_customer_address = customer_user.home_address
+
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
+
+          all_products.each do |product|
+
+            store_user = StoreUser.find_by(id: product.category.store_user_id)
+
+            if store_user.verified? && store_user.store_country == country_code
+
+              distance = calculate_distance(current_customer_address, store_user.store_address)
+
+              @results.push(
+                  {
+                      name: product.name,
+                      store_name: store_user.store_name,
+                      picture: product.main_picture.url,
+                      distance: distance,
+                      product_id: product.id
+                  }
+              )
+
+            end
+
+          end
+
+
+
+
+        end
+
+
+      end
+
+
+
+
+    end
+
+
+
+
+  end
+
 
   private
 
