@@ -1,5 +1,7 @@
 class SearchController < ApplicationController
 
+  include MoneyHelper
+
   before_action :authenticate_user!
 
   def search_users
@@ -175,14 +177,17 @@ class SearchController < ApplicationController
 
     country_code = params[:country_code]
 
+    base_currency = params[:base_currency]
+
     @results = []
 
-    if product_name != nil  && country_code != nil
+    if product_name != nil  && country_code != nil && base_currency != nil
 
 
       country = ISO3166::Country.new(country_code)
 
-      if product_name.length > 0 && country != nil
+
+      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency)
 
         if current_user.store_user?
 
@@ -198,13 +203,27 @@ class SearchController < ApplicationController
 
               distance = calculate_distance(current_store_address, store_user.store_address)
 
+              if product.currency == base_currency
+
+                price = product.price
+
+              else
+
+                exchange_rates = get_exchange_rate # currency is the base currency, in this case USD
+
+                price = product.price / exchange_rates[product.currency.to_sym]
+
+              end
+
               @results.push(
                   {
                       name: product.name,
                       store_name: store_user.store_name,
                       picture: product.main_picture.url,
                       distance: distance,
-                      product_id: product.id
+                      product_id: product.id,
+                      price: price,
+                      currency: base_currency
                   }
               )
 
@@ -230,13 +249,27 @@ class SearchController < ApplicationController
 
               distance = calculate_distance(current_customer_address, store_user.store_address)
 
+              if product.currency == base_currency
+
+                price = product.price
+
+              else
+
+                exchange_rates = get_exchange_rate # currency is the base currency, in this case USD
+
+                price = product.price / exchange_rates[product.currency.to_sym]
+
+              end
+
               @results.push(
                   {
                       name: product.name,
                       store_name: store_user.store_name,
                       picture: product.main_picture.url,
                       distance: distance,
-                      product_id: product.id
+                      product_id: product.id,
+                      price: price,
+                      currency: base_currency
                   }
               )
 
@@ -264,6 +297,25 @@ class SearchController < ApplicationController
 
 
   private
+
+
+  def get_exchange_rate
+
+    # Temporary method till we add fixer.io api just for development purposes
+
+    # Assumes base to be USD and returns conversion rates for LBP, EUR and GBP
+
+    # Products can be in currency LBP, EUR, GBP and USD
+
+    {
+        base: 'USD',
+        LBP: 1506.14,
+        EUR: 0.92,
+        GBP: 0.80
+    }
+
+
+  end
 
   def is_positive_integer?(arg)
 
