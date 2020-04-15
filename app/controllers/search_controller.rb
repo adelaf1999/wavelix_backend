@@ -234,7 +234,9 @@ class SearchController < ApplicationController
 
           sort_by_price = params[:sort_by_price]
 
-          if sort_by_price != nil && sort_by_price.length > 0
+          sort_by_distance = params[:sort_by_distance]
+
+          if sort_by_price != nil && sort_by_price.length > 0 && sort_by_distance == nil
 
             sort_by_price = sort_by_price.downcase.strip
 
@@ -248,6 +250,24 @@ class SearchController < ApplicationController
               @results = @results.sort_by { |hsh| hsh[:price] }.reverse!
 
             end
+
+
+          elsif sort_by_distance != nil && sort_by_distance.length > 0 && sort_by_price == nil
+
+
+            sort_by_distance = sort_by_distance.downcase.strip
+
+            if sort_by_distance == 'asc'
+
+              @results = @results.sort_by { |hsh| hsh[:distance] }
+
+            elsif sort_by_distance == 'desc'
+
+              @results = @results.sort_by { |hsh| hsh[:distance] }.reverse!
+
+
+            end
+
 
           end
 
@@ -299,8 +319,9 @@ class SearchController < ApplicationController
 
 
           sort_by_price = params[:sort_by_price]
+          sort_by_distance = params[:sort_by_distance]
 
-          if sort_by_price != nil && sort_by_price.length > 0
+          if sort_by_price != nil && sort_by_price.length > 0 && sort_by_distance == nil
 
             sort_by_price = sort_by_price.downcase.strip
 
@@ -315,7 +336,28 @@ class SearchController < ApplicationController
 
             end
 
+
+          elsif sort_by_distance != nil && sort_by_distance.length > 0 && sort_by_price == nil
+
+
+            sort_by_distance = sort_by_distance.downcase.strip
+
+            if sort_by_distance == 'asc'
+
+              @results = @results.sort_by { |hsh| hsh[:distance] }
+
+            elsif sort_by_distance == 'desc'
+
+              @results = @results.sort_by { |hsh| hsh[:distance] }.reverse!
+
+
+            end
+
+
           end
+
+
+
 
 
 
