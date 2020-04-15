@@ -236,40 +236,7 @@ class SearchController < ApplicationController
 
           sort_by_distance = params[:sort_by_distance]
 
-          if sort_by_price != nil && sort_by_price.length > 0 && sort_by_distance == nil
-
-            sort_by_price = sort_by_price.downcase.strip
-
-            if sort_by_price == 'asc'
-
-              @results = @results.sort_by { |hsh| hsh[:price] }
-
-            elsif sort_by_price == 'desc'
-
-
-              @results = @results.sort_by { |hsh| hsh[:price] }.reverse!
-
-            end
-
-
-          elsif sort_by_distance != nil && sort_by_distance.length > 0 && sort_by_price == nil
-
-
-            sort_by_distance = sort_by_distance.downcase.strip
-
-            if sort_by_distance == 'asc'
-
-              @results = @results.sort_by { |hsh| hsh[:distance] }
-
-            elsif sort_by_distance == 'desc'
-
-              @results = @results.sort_by { |hsh| hsh[:distance] }.reverse!
-
-
-            end
-
-
-          end
+          @results = sort_products(sort_by_price, sort_by_distance, @results)
 
 
         else
@@ -319,45 +286,10 @@ class SearchController < ApplicationController
 
 
           sort_by_price = params[:sort_by_price]
+
           sort_by_distance = params[:sort_by_distance]
 
-          if sort_by_price != nil && sort_by_price.length > 0 && sort_by_distance == nil
-
-            sort_by_price = sort_by_price.downcase.strip
-
-            if sort_by_price == 'asc'
-
-              @results = @results.sort_by { |hsh| hsh[:price] }
-
-            elsif sort_by_price == 'desc'
-
-
-              @results = @results.sort_by { |hsh| hsh[:price] }.reverse!
-
-            end
-
-
-          elsif sort_by_distance != nil && sort_by_distance.length > 0 && sort_by_price == nil
-
-
-            sort_by_distance = sort_by_distance.downcase.strip
-
-            if sort_by_distance == 'asc'
-
-              @results = @results.sort_by { |hsh| hsh[:distance] }
-
-            elsif sort_by_distance == 'desc'
-
-              @results = @results.sort_by { |hsh| hsh[:distance] }.reverse!
-
-
-            end
-
-
-          end
-
-
-
+          @results = sort_products(sort_by_price, sort_by_distance, @results)
 
 
 
@@ -378,6 +310,49 @@ class SearchController < ApplicationController
 
 
   private
+
+  def sort_products(sort_by_price, sort_by_distance, results)
+
+    if sort_by_price != nil && sort_by_price.length > 0 && sort_by_distance == nil
+
+      sort_by_price = sort_by_price.downcase.strip
+
+      if sort_by_price == 'asc'
+
+        results = results.sort_by { |hsh| hsh[:price] }
+
+      elsif sort_by_price == 'desc'
+
+
+        results = results.sort_by { |hsh| hsh[:price] }.reverse!
+
+      end
+
+
+    elsif sort_by_distance != nil && sort_by_distance.length > 0 && sort_by_price == nil
+
+
+      sort_by_distance = sort_by_distance.downcase.strip
+
+      if sort_by_distance == 'asc'
+
+        results = results.sort_by { |hsh| hsh[:distance] }
+
+      elsif sort_by_distance == 'desc'
+
+        results = results.sort_by { |hsh| hsh[:distance] }.reverse!
+
+
+      end
+
+
+    end
+
+    results
+
+
+
+  end
 
 
   def get_exchange_rate
