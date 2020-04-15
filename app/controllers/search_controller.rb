@@ -203,29 +203,7 @@ class SearchController < ApplicationController
 
               distance = calculate_distance(current_store_address, store_user.store_address)
 
-              if product.currency == base_currency
-
-                price = product.price
-
-              else
-
-                exchange_rates = get_exchange_rate # currency is the base currency, in this case USD
-
-                price = product.price / exchange_rates[product.currency.to_sym]
-
-              end
-
-              @results.push(
-                  {
-                      name: product.name,
-                      store_name: store_user.store_name,
-                      picture: product.main_picture.url,
-                      distance: distance,
-                      product_id: product.id,
-                      price: price,
-                      currency: base_currency
-                  }
-              )
+              @results = add_product(product, store_user, base_currency, distance, @results)
 
             end
 
@@ -256,29 +234,8 @@ class SearchController < ApplicationController
 
               distance = calculate_distance(current_customer_address, store_user.store_address)
 
-              if product.currency == base_currency
+              @results = add_product(product, store_user, base_currency, distance, @results)
 
-                price = product.price
-
-              else
-
-                exchange_rates = get_exchange_rate # currency is the base currency, in this case USD
-
-                price = product.price / exchange_rates[product.currency.to_sym]
-
-              end
-
-              @results.push(
-                  {
-                      name: product.name,
-                      store_name: store_user.store_name,
-                      picture: product.main_picture.url,
-                      distance: distance,
-                      product_id: product.id,
-                      price: price,
-                      currency: base_currency
-                  }
-              )
 
             end
 
@@ -310,6 +267,39 @@ class SearchController < ApplicationController
 
 
   private
+
+  def add_product(product, store_user, base_currency, distance, results)
+
+
+    if product.currency == base_currency
+
+      price = product.price
+
+    else
+
+      exchange_rates = get_exchange_rate # currency is the base currency, in this case USD
+
+      price = product.price / exchange_rates[product.currency.to_sym]
+
+    end
+
+    results.push(
+        {
+            name: product.name,
+            store_name: store_user.store_name,
+            picture: product.main_picture.url,
+            distance: distance,
+            product_id: product.id,
+            price: price,
+            currency: base_currency
+        }
+    )
+
+    results
+
+
+
+  end
 
   def sort_products(sort_by_price, sort_by_distance, results)
 
