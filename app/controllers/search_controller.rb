@@ -232,6 +232,26 @@ class SearchController < ApplicationController
           end
 
 
+          sort_by_price = params[:sort_by_price]
+
+          if sort_by_price != nil && sort_by_price.length > 0
+
+            sort_by_price = sort_by_price.downcase.strip
+
+            if sort_by_price == 'asc'
+
+              @results = @results.sort_by { |hsh| hsh[:price] }
+
+            elsif sort_by_price == 'desc'
+
+
+              @results = @results.sort_by { |hsh| hsh[:price] }.reverse!
+
+            end
+
+          end
+
+
         else
 
 
@@ -277,6 +297,25 @@ class SearchController < ApplicationController
 
           end
 
+
+          sort_by_price = params[:sort_by_price]
+
+          if sort_by_price != nil && sort_by_price.length > 0
+
+            sort_by_price = sort_by_price.downcase.strip
+
+            if sort_by_price == 'asc'
+
+              @results = @results.sort_by { |hsh| hsh[:price] }
+
+            elsif sort_by_price == 'desc'
+
+
+              @results = @results.sort_by { |hsh| hsh[:price] }.reverse!
+
+            end
+
+          end
 
 
 
