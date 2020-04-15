@@ -179,21 +179,27 @@ class SearchController < ApplicationController
 
     base_currency = params[:base_currency]
 
+    limit = params[:limit]
+
     @results = []
 
-    if product_name != nil  && country_code != nil && base_currency != nil
+    if product_name != nil  && country_code != nil && base_currency != nil && limit != nil
 
 
       country = ISO3166::Country.new(country_code)
 
+      is_limit_valid = is_positive_integer?(limit)
 
-      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency)
+
+      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency) && is_limit_valid
+
+        limit = limit.to_i
 
         if current_user.store_user?
 
           current_store_address = StoreUser.find_by(store_id: current_user.id).store_address
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true).limit(limit)
 
           all_products.each do |product|
 
@@ -224,7 +230,7 @@ class SearchController < ApplicationController
 
           current_customer_address = customer_user.home_address
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true).limit(limit)
 
           all_products.each do |product|
 
