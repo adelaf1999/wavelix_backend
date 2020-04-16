@@ -80,33 +80,30 @@ class SearchController < ApplicationController
 
     street_name = params[:street_name]
 
-    limit = params[:limit]
 
     @results = []
 
-    if store_name != nil && country_code != nil && limit != nil
+    if store_name != nil && country_code != nil
 
       store_name = store_name.strip
 
       country = ISO3166::Country.new(country_code)
 
-      is_limit_valid = is_positive_integer?(limit)
 
-      if store_name.length > 0 && country != nil && is_limit_valid
+      if store_name.length > 0 && country != nil
 
 
-          limit = limit.to_i
 
           if current_user.store_user?
 
 
             if street_name != nil && street_name.length > 0
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
 
             else
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id)
 
             end
 
@@ -120,11 +117,11 @@ class SearchController < ApplicationController
 
             if street_name != nil && street_name.length > 0
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).limit(limit)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code)
 
             else
 
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).limit(limit)
+              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code)
 
             end
 
@@ -179,27 +176,23 @@ class SearchController < ApplicationController
 
     base_currency = params[:base_currency]
 
-    limit = params[:limit]
 
     @results = []
 
-    if product_name != nil  && country_code != nil && base_currency != nil && limit != nil
+    if product_name != nil  && country_code != nil && base_currency != nil
 
 
       country = ISO3166::Country.new(country_code)
 
-      is_limit_valid = is_positive_integer?(limit)
 
+      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency)
 
-      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency) && is_limit_valid
-
-        limit = limit.to_i
 
         if current_user.store_user?
 
           current_store_address = StoreUser.find_by(store_id: current_user.id).store_address
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true).limit(limit)
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
 
           all_products.each do |product|
 
@@ -230,7 +223,7 @@ class SearchController < ApplicationController
 
           current_customer_address = customer_user.home_address
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true).limit(limit)
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
 
           all_products.each do |product|
 
