@@ -176,29 +176,34 @@ class SearchController < ApplicationController
 
     base_currency = params[:base_currency]
 
+    limit = params[:limit]
 
     @results = []
 
-    if product_name != nil  && country_code != nil && base_currency != nil
+    if product_name != nil  && country_code != nil && base_currency != nil && limit != nil
 
 
       country = ISO3166::Country.new(country_code)
 
+      is_limit_valid = is_limit_valid?(limit)
 
-      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency)
+
+      if product_name.length > 0 && country != nil && is_currency_valid?(base_currency) && is_limit_valid
+
+        limit = limit.to_i
 
 
         if current_user.store_user?
 
           current_store_address = StoreUser.find_by(store_id: current_user.id).store_address
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true, store_country: country_code).limit(limit)
 
           all_products.each do |product|
 
             store_user = StoreUser.find_by(id: product.category.store_user_id)
 
-            if store_user.verified? && store_user.store_id != current_user.id && store_user.store_country == country_code
+            if store_user.verified? && store_user.store_id != current_user.id
 
               distance = calculate_distance(current_store_address, store_user.store_address)
 
@@ -223,13 +228,13 @@ class SearchController < ApplicationController
 
           current_customer_address = customer_user.home_address
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true)
+          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true, store_country: country_code).limit(limit)
 
           all_products.each do |product|
 
             store_user = StoreUser.find_by(id: product.category.store_user_id)
 
-            if store_user.verified? && store_user.store_country == country_code
+            if store_user.verified?
 
               distance = calculate_distance(current_customer_address, store_user.store_address)
 
@@ -362,11 +367,11 @@ class SearchController < ApplicationController
 
   end
 
-  def is_positive_integer?(arg)
+  def is_limit_valid?(arg)
 
     res = /^(?<num>\d+)$/.match(arg)
 
-    if res == nil
+    if res == nil || res == 0
       false
     else
       true
