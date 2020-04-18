@@ -14,11 +14,8 @@ class Product < ApplicationRecord
 
    serialize :product_pictures_attributes, Hash
 
-   def currency
+   before_create :add_store_attributes
 
-     category.store_user.currency
-
-   end
 
    def decrement_stock_quantity(amount)
         # amount must be an integer
@@ -120,6 +117,18 @@ class Product < ApplicationRecord
    end
 
    private
+
+   def add_store_attributes
+
+     store_user = Category.find_by(id: self.category_id).store_user
+
+     self.currency = store_user.currency
+
+     self.store_country = store_user.store_country
+
+   end
+
+
 
    def find_image_index(images, image_name)
 
