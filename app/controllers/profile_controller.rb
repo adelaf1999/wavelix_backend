@@ -3,6 +3,135 @@ class ProfileController < ApplicationController
 
   before_action :authenticate_user!
 
+  def view_user_profile
+
+    # store user can only be viewed if verified
+
+    # customer user can be viewed based on privacy settings and on following status
+
+    profile = Profile.find_by(id: params[:profile_id])
+
+    if profile != nil && profile.id != current_user.profile.id
+
+      user = profile.user
+
+      is_following = current_user.following?(user)
+
+      user_type = user.user_type
+
+      if user.customer_user?
+
+        @profile_data = {}
+
+
+        username = user.username
+        profile_picture = profile.profile_picture.url
+        profile_bio = profile.profile_bio
+        is_private = profile.private_account?
+
+        # Common data when user profile is public/private
+        @success = true
+        @profile_data[:is_following] = is_following
+        @profile_data[:user_type] = user_type
+        @profile_data[:username] = username
+        @profile_data[:profile_picture] = profile_picture
+        @profile_data[:profile_bio] = profile_bio
+        @profile_data[:is_private] = is_private
+
+        if profile.public_account? || (profile.private_account? && is_following)
+
+
+          profile_posts = get_complete_profile_posts(profile)
+          story_posts = get_complete_story_posts(profile)
+          follow_relationships = get_follow_relationships(user)
+
+          @profile_data[:profile_posts] = profile_posts
+          @profile_data[:story_posts] = story_posts
+          @profile_data[:follow_relationships] = follow_relationships
+
+        else
+
+          follow_relationships = get_follow_relationships(user)
+
+          followers = follow_relationships[:followers]
+
+          following = follow_relationships[:following]
+
+          placeholder_followers = []
+
+          placeholder_following = []
+
+          for i in 1..followers.count do
+
+            placeholder_followers.push("placeholder#{i}")
+
+          end
+
+          for i in 1..following.count do
+
+            placeholder_following.push("placeholder#{i}")
+
+          end
+
+          follow_relationships[:followers] = placeholder_followers
+
+          follow_relationships[:following] = placeholder_following
+
+          @profile_data[:follow_relationships] = follow_relationships
+
+
+
+
+        end
+
+      else
+
+        store_user = StoreUser.find_by(store_id: user.id)
+
+        if store_user.verified?
+
+          @profile_data = {}
+          @success = true
+
+          username = user.username
+          follow_relationships = get_follow_relationships(user)
+          profile_picture = profile.profile_picture.url
+          profile_bio = profile.profile_bio
+          profile_posts = get_complete_profile_posts(profile)
+          story_posts = get_complete_story_posts(profile)
+          store_name = store_user.store_name
+
+          @profile_data[:is_following] = is_following
+          @profile_data[:user_type] = user_type
+          @profile_data[:username] = username
+          @profile_data[:profile_picture] = profile_picture
+          @profile_data[:profile_bio] = profile_bio
+          @profile_data[:profile_posts] = profile_posts
+          @profile_data[:story_posts] = story_posts
+          @profile_data[:follow_relationships] = follow_relationships
+          @profile_data[:store_name] = store_name
+
+
+
+
+        else
+
+          @success = false
+        end
+
+
+      end
+
+
+    else
+
+      @success = false
+
+    end
+
+
+  end
+
   def view_my_profile
 
     @profile_data = {}
@@ -22,7 +151,7 @@ class ProfileController < ApplicationController
 
     @profile_data[:profile] = get_profile(profile)
 
-    @profile_data[:follow_relationships] = get_follow_relationships
+    @profile_data[:follow_relationships] = get_follow_relationships(current_user)
 
     @profile_data = @profile_data.to_json # at end convert to json
 
@@ -190,6 +319,43 @@ class ProfileController < ApplicationController
 
   private
 
+
+  def get_complete_story_posts(profile)
+
+    story_posts = []
+
+    profile.posts.each do |post|
+
+      if post.complete? && post.is_story
+
+        story_posts.push(post)
+
+      end
+
+    end
+
+    story_posts.to_json
+
+  end
+
+  def get_complete_profile_posts(profile)
+
+    profile_posts = []
+
+    profile.posts.each do |post|
+
+      if post.complete? && !post.is_story
+
+        profile_posts.push(post)
+
+      end
+
+    end
+
+    profile_posts.to_json
+
+  end
+
   def is_picture_valid?(picture)
 
     filename = picture.original_filename.split(".")
@@ -199,7 +365,7 @@ class ProfileController < ApplicationController
 
   end
 
-  def get_follow_relationships
+  def get_follow_relationships(user)
 
     follow = {}
 
@@ -207,7 +373,7 @@ class ProfileController < ApplicationController
 
     followers = []
 
-    current_user.following_relationships.each do |following_relationship|
+    user.following_relationships.each do |following_relationship|
 
       if following_relationship.active?
 
@@ -222,7 +388,7 @@ class ProfileController < ApplicationController
 
     end
 
-    current_user.follower_relationships.each do |follower_relationship|
+    user.follower_relationships.each do |follower_relationship|
 
       if follower_relationship.active?
 
