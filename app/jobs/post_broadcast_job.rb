@@ -19,6 +19,9 @@ class PostBroadcastJob < ApplicationJob
 
     ActionCable.server.broadcast "post_channel_#{user_id}", {posts: @posts}
 
+    ActionCable.server.broadcast "profile_channel_#{profile.id}", {posts: @posts}
+
+
 
   end
 
