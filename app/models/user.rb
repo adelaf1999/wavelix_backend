@@ -26,6 +26,31 @@ class User < ActiveRecord::Base
   has_many :following, through: :following_relationships, source: :followed
   has_many :followers, through: :follower_relationships, source: :follower
 
+  def accept_follow_request(other)
+
+    follower_relationship = Follow.find_by(follower_id: other.id)
+
+    if follower_relationship != nil && follower_relationship.inactive?
+
+      follower_relationship.active!
+
+      true
+
+    else
+
+      false
+
+    end
+
+
+  end
+
+  def follow_requests
+
+    self.follower_relationships.where(status: 0)
+
+  end
+
   def follow(other)
 
     # To follow a store it must be verified
@@ -33,7 +58,7 @@ class User < ActiveRecord::Base
     # If their account is not public create a request to follow
     # A store cannot follow anyone if its not verified
 
-    if other.id != self.id
+    if other.id != self.id && !following?(other)
 
       if self.store_user?
 
@@ -43,6 +68,10 @@ class User < ActiveRecord::Base
 
           create_following_relationship(other)
 
+        else
+
+          false
+
         end
 
       else
@@ -50,6 +79,11 @@ class User < ActiveRecord::Base
         create_following_relationship(other)
 
       end
+
+
+    else
+
+      false
 
 
     end
@@ -85,6 +119,9 @@ class User < ActiveRecord::Base
 
       if other_store.verified?
         following_relationships.create!(followed_id: other.id)
+        true
+      else
+        false
       end
 
     else
@@ -93,8 +130,10 @@ class User < ActiveRecord::Base
 
       if other_profile.public_account?
         following_relationships.create!(followed_id: other.id)
+        true
       else
         following_relationships.create!(followed_id: other.id, status: 0)
+        true
       end
 
 
