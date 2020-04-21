@@ -111,6 +111,8 @@ Rails.application.routes.draw do
 
   post '/follow-user' => 'follow#follow'
 
+  post '/unfollow-user' => 'follow#unfollow'
+
 
 
 

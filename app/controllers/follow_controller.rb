@@ -20,6 +20,24 @@ class FollowController < ApplicationController
 
   end
 
+  def unfollow
+
+    profile = Profile.find_by(id: params[:profile_id])
+
+    if profile != nil
+
+      user = profile.user
+
+      @success = current_user.unfollow(user)
+
+    else
+
+      @success = false
+
+    end
+
+  end
+
 
 
 

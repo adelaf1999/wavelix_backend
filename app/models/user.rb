@@ -100,6 +100,12 @@ class User < ActiveRecord::Base
 
       other_following_relationship.destroy
 
+      true
+
+    else
+
+      false
+
     end
 
   end
