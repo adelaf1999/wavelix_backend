@@ -18,6 +18,10 @@ class ProfileChannel < ApplicationCable::Channel
 
           stream_from "profile_channel_#{profile.id}"
 
+        else
+
+          reject
+
         end
 
       else
@@ -27,6 +31,10 @@ class ProfileChannel < ApplicationCable::Channel
         if store_user.verified?
 
           stream_from "profile_channel_#{profile.id}"
+
+        else
+
+          reject
 
         end
 
