@@ -231,6 +231,18 @@ class ProfileController < ApplicationController
 
             return
 
+          elsif user.store_user?
+
+            store_user = StoreUser.find_by(store_id: user.id)
+
+            if store_user.unverified?
+
+              @success = false
+
+              return
+
+            end
+
           end
 
         else
