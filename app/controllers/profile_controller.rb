@@ -17,6 +17,8 @@ class ProfileController < ApplicationController
 
       is_following = current_user.following?(user)
 
+      is_private = profile.private_account?
+
       user_type = user.user_type
 
       if user.customer_user?
@@ -27,7 +29,7 @@ class ProfileController < ApplicationController
         username = user.username
         profile_picture = profile.profile_picture.url
         profile_bio = profile.profile_bio
-        is_private = profile.private_account?
+
 
         # Common data when user profile is public/private
         @success = true
@@ -102,6 +104,7 @@ class ProfileController < ApplicationController
           store_name = store_user.store_name
 
           @profile_data[:is_following] = is_following
+          @profile_data[:is_private] = is_private
           @profile_data[:user_type] = user_type
           @profile_data[:username] = username
           @profile_data[:profile_picture] = profile_picture

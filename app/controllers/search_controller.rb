@@ -56,7 +56,7 @@ class SearchController < ApplicationController
 
           profile = user.profile
 
-          @results.push({ profile_picture: profile.profile_picture.url, username: user.username })
+          @results.push({ profile_picture: profile.profile_picture.url, username: user.username, profile_id: profile.id })
 
         end
 
@@ -152,7 +152,8 @@ class SearchController < ApplicationController
                               country: store.store_country,
                               name: store.store_name,
                               distance: distance,
-                              street_name: store.street_name
+                              street_name: store.street_name,
+                              profile_id: profile.id
                           })
           end
 
