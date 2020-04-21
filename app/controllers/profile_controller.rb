@@ -207,18 +207,84 @@ class ProfileController < ApplicationController
 
     search = params[:search]
 
+    profile_id = params[:profile_id]
+
     if search_follow_type != nil && search != nil
 
       search_follow_type = search_follow_type.to_i
 
 
+      if profile_id != nil
+
+
+        profile = Profile.find_by(id: profile_id)
+
+        if profile != nil && current_user.profile.id != profile.id
+
+          user = profile.user
+
+          is_following = current_user.following?(user)
+
+          if user.customer_user? && !is_following && profile.private_account?
+
+            @success = false
+
+            return
+
+          end
+
+        else
+
+          @success = false
+
+          return
+
+        end
+
+
+      end
+
+
+
+
+
       if search_follow_type == 0
 
-        follows_list = current_user.followers.merge(current_user.follower_relationships.where(status: 1))
+        profile = Profile.find_by(id: profile_id)
+
+
+        if profile != nil
+
+          user = profile.user
+
+          follows_list = user.followers.merge(user.follower_relationships.where(status: 1))
+
+        else
+
+          follows_list = current_user.followers.merge(current_user.follower_relationships.where(status: 1))
+
+        end
+
+
+
 
       else
 
-        follows_list = current_user.following.merge(current_user.following_relationships.where(status: 1))
+        profile = Profile.find_by(id: profile_id)
+
+        if profile != nil
+
+          user = profile.user
+
+          follows_list = user.following.merge(user.following_relationships.where(status: 1))
+
+
+        else
+
+          follows_list = current_user.following.merge(current_user.following_relationships.where(status: 1))
+
+        end
+
 
       end
 
@@ -281,6 +347,8 @@ class ProfileController < ApplicationController
       end
 
       @search_results = @search_results.to_json
+
+      @success = true
 
 
     end
