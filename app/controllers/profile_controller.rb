@@ -391,9 +391,13 @@ class ProfileController < ApplicationController
 
       end
 
+      profile.save!
+
+      ActionCable.server.broadcast "privacy_channel_#{profile.id}", {is_private: profile.private_account?}
+
     end
 
-    profile.save!
+
 
 
 
