@@ -111,6 +111,7 @@ class User < ActiveRecord::Base
   end
 
   def following?(other)
+    # can be active or inactive
     following.include?(other)
   end
 

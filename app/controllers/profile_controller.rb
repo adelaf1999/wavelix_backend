@@ -15,7 +15,29 @@ class ProfileController < ApplicationController
 
       user = profile.user
 
-      is_following = current_user.following?(user)
+
+      following_relationship = current_user.following_relationships.find_by(followed_id: user.id)
+
+      if following_relationship != nil
+
+        if following_relationship.active?
+
+          is_following = true
+
+        else
+
+          is_following = false
+
+        end
+
+
+      else
+
+        is_following = false
+
+      end
+
+
 
       is_private = profile.private_account?
 
@@ -80,6 +102,14 @@ class ProfileController < ApplicationController
           follow_relationships[:followers] = placeholder_followers
 
           follow_relationships[:following] = placeholder_following
+
+          follower_relationship = user.follower_relationships.find_by(follower_id: current_user.id)
+
+          if follower_relationship != nil && follower_relationship.inactive?
+
+            @profile_data[:is_requested] = true
+
+          end
 
           @profile_data[:follow_relationships] = follow_relationships
 
@@ -381,6 +411,8 @@ class ProfileController < ApplicationController
 
       privacy_on = eval(privacy_on.downcase)
 
+      was_private = profile.private_account?
+
       if privacy_on
 
         profile.privacy = 1
@@ -388,6 +420,20 @@ class ProfileController < ApplicationController
       else
 
         profile.privacy = 0
+
+        if was_private
+
+          # Profile was private and now its not so accept all follower requests automatically
+
+          current_user.follower_relationships.each do |follower_relationship|
+
+            follower_relationship.active!
+
+          end
+
+
+        end
+
 
       end
 
@@ -454,53 +500,6 @@ class ProfileController < ApplicationController
     valid_extensions.include?(extension)
 
   end
-
-  def get_follow_relationships(user)
-
-    follow = {}
-
-    following = []
-
-    followers = []
-
-    user.following_relationships.each do |following_relationship|
-
-      if following_relationship.active?
-
-        # get the following user name and profile picture (if they have one)
-
-        followed_user = User.find_by(id: following_relationship.followed_id)
-        username = followed_user.username
-        profile_picture_url = followed_user.profile.profile_picture.url
-        following.push({username: username, profile_picture_url: profile_picture_url})
-
-      end
-
-    end
-
-    user.follower_relationships.each do |follower_relationship|
-
-      if follower_relationship.active?
-
-        follower_user = User.find_by(id: follower_relationship.follower_id)
-        username = follower_user.username
-        profile_picture_url = follower_user.profile.profile_picture.url
-        followers.push({username: username, profile_picture_url: profile_picture_url})
-
-      end
-
-    end
-
-    follow[:following] = following
-    follow[:followers] = followers
-
-
-    follow
-
-
-
-  end
-
 
 
 

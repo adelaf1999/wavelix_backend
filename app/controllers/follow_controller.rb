@@ -1,5 +1,7 @@
 class FollowController < ApplicationController
 
+  include ProfileHelper
+
   before_action :authenticate_user!
 
   def follow
@@ -11,6 +13,20 @@ class FollowController < ApplicationController
       user = profile.user
 
       @success = current_user.follow(user)
+
+      if @success
+
+        is_public = profile.public_account?
+
+        if is_public
+
+          @follow_relationships = get_follow_relationships(user)
+
+        end
+
+
+
+      end
 
     else
 
