@@ -4,25 +4,54 @@ class FollowController < ApplicationController
 
   before_action :authenticate_user!
 
+  def set_follow_request_status
+
+
+    follow_request = current_user.follow_requests.find_by(id: params[:request_id])
+
+    status = params[:status]
+
+    if follow_request != nil && status != nil
+
+      if is_positive_integer?(status)
+
+        status = status.to_i
+
+        if status == 0
+
+          follow_request.destroy!
+
+          @follow_requests = get_current_user_follow_requests
+
+
+
+        elsif status == 1
+
+          follow_request.active!
+
+          @follow_requests = get_current_user_follow_requests
+
+
+        end
+
+
+
+      end
+
+
+
+    end
+
+
+  end
+
   def get_follow_requests
 
     if current_user.customer_user?
 
       follow_requests = current_user.follow_requests
 
-      @follow_requests = []
-
-      follow_requests.each do |request|
-
-        follower = User.find_by(id: request.follower_id)
-
-        @follow_requests.push({
-                                  username: follower.username,
-                                  profile_picture: follower.profile.profile_picture.url,
-                                  request_id: request.id
-                              })
-
-      end
+      @follow_requests = get_current_user_follow_requests
 
     end
 
@@ -172,6 +201,41 @@ class FollowController < ApplicationController
       @success = false
 
     end
+
+  end
+
+  private
+
+
+  def is_positive_integer?(arg)
+
+    res = /^(?<num>\d+)$/.match(arg)
+
+    if res == nil
+      false
+    else
+      true
+    end
+
+  end
+
+  def get_current_user_follow_requests
+
+    follow_requests = []
+
+    current_user.follow_requests.each do |request|
+
+      follower = User.find_by(id: request.follower_id)
+
+      follow_requests.push({
+                                username: follower.username,
+                                profile_picture: follower.profile.profile_picture.url,
+                                request_id: request.id
+                            })
+
+    end
+
+    follow_requests
 
   end
 
