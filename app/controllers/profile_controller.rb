@@ -180,6 +180,11 @@ class ProfileController < ApplicationController
       @profile_data[:store_address] = store_user.store_address
       @profile_data[:store_number] = store_user.store_number
       @profile_data[:isVerified] = store_user.verified?
+
+    else
+
+      @profile_data[:follow_requests] = get_user_follow_requests(current_user)
+
     end
 
     # common profile data
