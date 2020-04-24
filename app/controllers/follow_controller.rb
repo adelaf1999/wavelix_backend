@@ -4,6 +4,30 @@ class FollowController < ApplicationController
 
   before_action :authenticate_user!
 
+  def get_follow_requests
+
+    if current_user.customer_user?
+
+      follow_requests = current_user.follow_requests
+
+      @follow_requests = []
+
+      follow_requests.each do |request|
+
+        follower = User.find_by(id: request.follower_id)
+
+        @follow_requests.push({
+                                  username: follower.username,
+                                  profile_picture: follower.profile.profile_picture.url,
+                                  request_id: request.id
+                              })
+
+      end
+
+    end
+
+  end
+
   def cancel_follow_request
 
     profile = Profile.find_by(id: params[:profile_id])
