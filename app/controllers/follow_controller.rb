@@ -21,7 +21,7 @@ class FollowController < ApplicationController
 
           follow_request.destroy!
 
-          @follow_requests = get_current_user_follow_requests
+          @follow_requests = get_user_follow_requests(current_user)
 
 
 
@@ -29,7 +29,7 @@ class FollowController < ApplicationController
 
           follow_request.active!
 
-          @follow_requests = get_current_user_follow_requests
+          @follow_requests = get_user_follow_requests(current_user)
 
 
         end
@@ -42,18 +42,6 @@ class FollowController < ApplicationController
 
     end
 
-
-  end
-
-  def get_follow_requests
-
-    if current_user.customer_user?
-
-      follow_requests = current_user.follow_requests
-
-      @follow_requests = get_current_user_follow_requests
-
-    end
 
   end
 
@@ -216,26 +204,6 @@ class FollowController < ApplicationController
     else
       true
     end
-
-  end
-
-  def get_current_user_follow_requests
-
-    follow_requests = []
-
-    current_user.follow_requests.each do |request|
-
-      follower = User.find_by(id: request.follower_id)
-
-      follow_requests.push({
-                                username: follower.username,
-                                profile_picture: follower.profile.profile_picture.url,
-                                request_id: request.id
-                            })
-
-    end
-
-    follow_requests
 
   end
 

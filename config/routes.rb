@@ -115,8 +115,6 @@ Rails.application.routes.draw do
 
   post '/cancel-follow-request' => 'follow#cancel_follow_request'
 
-  get '/get-follow-requests' => 'follow#get_follow_requests'
-
   post '/set-follow-request-status' => 'follow#set_follow_request_status'
 
 

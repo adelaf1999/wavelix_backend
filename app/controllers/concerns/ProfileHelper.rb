@@ -1,5 +1,26 @@
 module ProfileHelper
 
+  def get_user_follow_requests(user)
+
+    follow_requests = []
+
+    user.follow_requests.each do |request|
+
+      follower = User.find_by(id: request.follower_id)
+
+      follow_requests.push({
+                               username: follower.username,
+                               profile_picture: follower.profile.profile_picture.url,
+                               request_id: request.id
+                           })
+
+    end
+
+    follow_requests
+
+  end
+
+
   def get_follow_relationships(user)
 
     follow = {}
