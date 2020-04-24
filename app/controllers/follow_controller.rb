@@ -4,6 +4,47 @@ class FollowController < ApplicationController
 
   before_action :authenticate_user!
 
+  def cancel_follow_request
+
+    profile = Profile.find_by(id: params[:profile_id])
+
+    if profile != nil
+
+      user = profile.user
+
+      follower_relationship = user.follower_relationships.find_by(follower_id: current_user.id)
+
+      if follower_relationship != nil
+
+        if follower_relationship.inactive?
+
+          follower_relationship.destroy!
+
+          @success = true
+
+        else
+
+          @success = false
+
+        end
+
+
+
+      else
+
+        @success = false
+
+      end
+
+    else
+
+      @success = false
+
+
+    end
+
+  end
+
   def follow
 
     profile = Profile.find_by(id: params[:profile_id])

@@ -113,6 +113,8 @@ Rails.application.routes.draw do
 
   post '/unfollow-user' => 'follow#unfollow'
 
+  post '/cancel-follow-request' => 'follow#cancel_follow_request'
+
 
 
 
