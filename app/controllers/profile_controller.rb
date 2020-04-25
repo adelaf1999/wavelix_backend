@@ -37,6 +37,19 @@ class ProfileController < ApplicationController
 
       end
 
+      if current_user.store_user?
+
+        store_user = StoreUser.find_by(store_id: current_user.id)
+
+        if store_user.unverified?
+
+          @current_store_unverified = true
+
+        end
+
+
+      end
+
 
 
       is_private = profile.private_account?
