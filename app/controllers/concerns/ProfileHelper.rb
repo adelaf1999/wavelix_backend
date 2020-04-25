@@ -16,6 +16,8 @@ module ProfileHelper
 
     end
 
+    follow_requests = follow_requests.sort_by { |hsh| hsh[:username] }
+
     follow_requests
 
   end
