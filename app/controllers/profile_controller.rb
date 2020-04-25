@@ -436,6 +436,8 @@ class ProfileController < ApplicationController
 
           end
 
+          @follow_relationships = get_follow_relationships(current_user)
+
 
         end
 
