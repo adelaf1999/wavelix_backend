@@ -23,13 +23,15 @@ class FollowController < ApplicationController
 
           @follow_requests = get_user_follow_requests(current_user)
 
-
+          @follow_relationships = get_follow_relationships(current_user)
 
         elsif status == 1
 
           follow_request.active!
 
           @follow_requests = get_user_follow_requests(current_user)
+
+          @follow_relationships = get_follow_relationships(current_user)
 
 
         end
