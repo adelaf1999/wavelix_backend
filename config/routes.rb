@@ -117,6 +117,10 @@ Rails.application.routes.draw do
 
   post '/set-follow-request-status' => 'follow#set_follow_request_status'
 
+  # Comment Routes
+
+  post '/create-comment' => 'comment#create'
+
 
 
 
