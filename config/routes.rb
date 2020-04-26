@@ -121,6 +121,10 @@ Rails.application.routes.draw do
 
   post '/create-comment' => 'comment#create'
 
+  # Like Routes
+
+  post '/create-like' => 'likes#create'
+
 
 
 
