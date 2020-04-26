@@ -14,5 +14,9 @@ class Post < ApplicationRecord
 
   enum status: { incomplete: 0, complete: 1 }
 
+  has_many :comments
+
+  has_many :likes
+
 
 end
