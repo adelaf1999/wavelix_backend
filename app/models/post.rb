@@ -23,6 +23,8 @@ class Post < ApplicationRecord
 
     attributes = {}
 
+    attributes[:id] = self.id
+
     attributes[:profile_id] = self.profile_id
 
     attributes[:caption] = self.caption
