@@ -15,7 +15,7 @@ class StoryJob < Struct.new(:post_id, :user_id)
       posts = []
 
       profile.posts.each do |post|
-        posts.push(post)
+        posts.push(post.get_attributes)
       end
 
       @posts = posts.to_json

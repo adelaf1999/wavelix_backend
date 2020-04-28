@@ -74,7 +74,7 @@ module ProfileHelper
     posts = []
 
     profile.posts.each do |post|
-      posts.push(post)
+      posts.push(post.get_attributes)
     end
 
     profile = profile.to_json
@@ -88,16 +88,5 @@ module ProfileHelper
 
   end
 
-  def get_posts(profile)
-
-    posts = []
-
-    profile.posts.each do |post|
-      posts.push(post)
-    end
-
-    posts
-
-  end
 
 end

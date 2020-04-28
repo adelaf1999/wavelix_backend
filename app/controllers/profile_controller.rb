@@ -484,7 +484,7 @@ class ProfileController < ApplicationController
 
       if post.complete? && post.is_story
 
-        story_posts.push(post)
+        story_posts.push(post.get_attributes)
 
       end
 
@@ -502,7 +502,7 @@ class ProfileController < ApplicationController
 
       if post.complete? && !post.is_story
 
-        profile_posts.push(post)
+        profile_posts.push(post.get_attributes)
 
       end
 

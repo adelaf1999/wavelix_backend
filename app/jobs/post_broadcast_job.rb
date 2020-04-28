@@ -12,7 +12,7 @@ class PostBroadcastJob < ApplicationJob
     posts = []
 
     profile.posts.each do |post|
-      posts.push(post)
+      posts.push(post.get_attributes)
     end
 
     @posts = posts.to_json

@@ -19,7 +19,7 @@ class Post < ApplicationRecord
   has_many :likes
 
 
-  def json_attributes
+  def get_attributes
 
     attributes = {}
 
@@ -93,7 +93,7 @@ class Post < ApplicationRecord
 
     attributes[:comments] = comments
 
-    attributes.to_json
+    attributes
 
   end
 
