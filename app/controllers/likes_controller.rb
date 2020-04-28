@@ -2,6 +2,35 @@ class LikesController < ApplicationController
 
   before_action :authenticate_user!
 
+
+  def destroy
+
+    post = Post.find_by(id: params[:post_id])
+
+    if post != nil
+
+      like = post.likes.find_by(liker_id: current_user.id)
+
+      if like != nil
+
+        like.destroy!
+
+        @success = true
+
+        current_user_profile = current_user.profile
+
+        post_profile = post.profile
+
+        send_posts(current_user_profile, post_profile)
+
+
+      end
+
+    end
+
+
+  end
+
   def create
 
     # unverified stores cannot like
@@ -30,33 +59,7 @@ class LikesController < ApplicationController
 
             post_profile = post.profile
 
-            if current_user_profile.id == post_profile.id
-
-              posts = []
-
-              current_user_profile.posts.each do |p|
-                posts.push(p.get_attributes)
-              end
-
-              @posts = posts.to_json
-
-              ActionCable.server.broadcast "post_channel_#{current_user.id}", {posts: @posts}
-
-            else
-
-
-              posts = []
-
-              post_profile.posts.each do |p|
-                posts.push(p.get_attributes)
-              end
-
-              @posts = posts.to_json
-
-              ActionCable.server.broadcast "profile_channel_#{post_profile.id}", {posts: @posts}
-
-
-            end
+            send_posts(current_user_profile, post_profile)
 
 
           else
@@ -82,6 +85,12 @@ class LikesController < ApplicationController
 
           @success = true
 
+          current_user_profile = current_user.profile
+
+          post_profile = post.profile
+
+          send_posts(current_user_profile, post_profile)
+
         else
 
           @success = false
@@ -95,6 +104,42 @@ class LikesController < ApplicationController
     else
 
       @success = false
+
+
+    end
+
+  end
+
+
+  private
+
+
+  def send_posts(current_user_profile, post_profile)
+
+    if current_user_profile.id == post_profile.id
+
+      posts = []
+
+      current_user_profile.posts.each do |p|
+        posts.push(p.get_attributes)
+      end
+
+      @posts = posts.to_json
+
+      ActionCable.server.broadcast "post_channel_#{current_user.id}", {posts: @posts}
+
+    else
+
+
+      posts = []
+
+      post_profile.posts.each do |p|
+        posts.push(p.get_attributes)
+      end
+
+      @posts = posts.to_json
+
+      ActionCable.server.broadcast "profile_channel_#{post_profile.id}", {posts: @posts}
 
 
     end

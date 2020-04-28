@@ -125,6 +125,8 @@ Rails.application.routes.draw do
 
   post '/create-like' => 'likes#create'
 
+  post '/destroy-like' => 'likes#destroy'
+
 
 
 
