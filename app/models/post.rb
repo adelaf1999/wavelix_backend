@@ -70,7 +70,7 @@ class Post < ApplicationRecord
 
     comments = []
 
-    self.comments.each do |comment|
+    self.comments.order(created_at: :desc).each do |comment|
 
       author = User.find_by(id: comment.author_id)
 
