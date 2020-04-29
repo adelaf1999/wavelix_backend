@@ -70,12 +70,21 @@ class LikesController < ApplicationController
 
               else
 
-                @success = true
+                if following_relationship.active?
 
-                Like.create!(post_id: post.id, liker_id: current_user.id)
+                  @success = true
+
+                  Like.create!(post_id: post.id, liker_id: current_user.id)
 
 
-                send_posts(current_user_profile, post_profile)
+                  send_posts(current_user_profile, post_profile)
+
+                else
+
+                  @success = false
+
+                end
+
 
 
               end
