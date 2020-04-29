@@ -37,6 +37,8 @@ class CommentController < ApplicationController
 
           Comment.create!(post_id: post.id, author_id: current_user.id, text: text)
 
+          @success = true
+
         end
 
 
