@@ -35,6 +35,8 @@ class LikesController < ApplicationController
 
     # unverified stores cannot like
 
+    # cannot like posts of private account unless following them
+
     # can like once and only once
 
     post = Post.find_by(id: params[:post_id])
