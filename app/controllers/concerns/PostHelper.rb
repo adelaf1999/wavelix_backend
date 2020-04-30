@@ -7,7 +7,7 @@ module PostHelper
 
     posts = []
 
-    profile.posts.each do |p|
+    profile.posts.order(created_at: :desc).each do |p|
       posts.push(p.get_attributes)
     end
 
@@ -28,7 +28,7 @@ module PostHelper
 
       posts = []
 
-      current_user_profile.posts.each do |p|
+      current_user_profile.posts.order(created_at: :desc).each do |p|
         posts.push(p.get_attributes)
       end
 
@@ -41,7 +41,7 @@ module PostHelper
 
       posts = []
 
-      post_profile.posts.each do |p|
+      post_profile.posts.order(created_at: :desc).each do |p|
         posts.push(p.get_attributes)
       end
 

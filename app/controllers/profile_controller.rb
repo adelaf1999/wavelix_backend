@@ -480,7 +480,7 @@ class ProfileController < ApplicationController
 
     story_posts = []
 
-    profile.posts.each do |post|
+    profile.posts.order(created_at: :desc).each do |post|
 
       if post.complete? && post.is_story
 
@@ -498,7 +498,7 @@ class ProfileController < ApplicationController
 
     profile_posts = []
 
-    profile.posts.each do |post|
+    profile.posts.order(created_at: :desc).each do |post|
 
       if post.complete? && !post.is_story
 

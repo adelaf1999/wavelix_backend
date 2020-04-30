@@ -14,7 +14,7 @@ class StoryJob < Struct.new(:post_id, :user_id)
 
       posts = []
 
-      profile.posts.each do |post|
+      profile.posts.order(created_at: :desc).each do |post|
         posts.push(post.get_attributes)
       end
 

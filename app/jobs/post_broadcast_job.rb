@@ -11,7 +11,7 @@ class PostBroadcastJob < ApplicationJob
 
     posts = []
 
-    profile.posts.each do |post|
+    profile.posts.order(created_at: :desc).each do |post|
       posts.push(post.get_attributes)
     end
 
