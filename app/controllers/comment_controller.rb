@@ -10,7 +10,7 @@ class CommentController < ApplicationController
 
     post = Post.find_by(id: params[:post_id])
 
-    if comment != nil && post != nil && !post.is_story
+    if comment != nil && post != nil
 
       current_user_profile = current_user.profile
 
@@ -77,11 +77,13 @@ class CommentController < ApplicationController
 
     # unverified stores cannot comment
 
+    # can only comment on profile posts
+
     post = Post.find_by(id: params[:post_id])
 
     text = params[:text]
 
-    if post != nil && text != nil
+    if post != nil && text != nil && !post.is_story
 
       text = text.strip
 
