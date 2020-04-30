@@ -20,12 +20,16 @@ class CommentController < ApplicationController
 
         @success = true
 
+        comment.destroy!
+
         send_my_posts
 
 
       elsif comment.author_id == current_user.id && comment.post_id == post.id
 
         @success = true
+
+        comment.destroy!
 
         post_profile = post.profile
 
@@ -133,36 +137,7 @@ class CommentController < ApplicationController
 
   def create_comment(current_user_profile, post_profile, post_user, post, text)
 
-
-    if post_profile.private_account?
-
-      following_relationship = current_user.following_relationships.find_by(followed_id: post_user.id)
-
-      if following_relationship.nil?
-
-        @success = false
-
-      else
-
-        if following_relationship.active?
-
-          @success = true
-
-          Comment.create!(post_id: post.id, author_id: current_user.id, text: text)
-
-          send_posts(current_user_profile, post_profile)
-
-        else
-
-          @success = false
-
-        end
-
-
-
-      end
-
-    else
+    if current_user_profile.id == post_profile.id
 
       @success = true
 
@@ -170,8 +145,52 @@ class CommentController < ApplicationController
 
       send_posts(current_user_profile, post_profile)
 
+    else
+
+      if post_profile.private_account?
+
+        following_relationship = current_user.following_relationships.find_by(followed_id: post_user.id)
+
+        if following_relationship.nil?
+
+          @success = false
+
+        else
+
+          if following_relationship.active?
+
+            @success = true
+
+            Comment.create!(post_id: post.id, author_id: current_user.id, text: text)
+
+            send_posts(current_user_profile, post_profile)
+
+          else
+
+            @success = false
+
+          end
+
+
+
+        end
+
+      else
+
+        @success = true
+
+        Comment.create!(post_id: post.id, author_id: current_user.id, text: text)
+
+        send_posts(current_user_profile, post_profile)
+
+
+      end
+
 
     end
+
+
+
 
 
   end
