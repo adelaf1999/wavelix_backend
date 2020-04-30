@@ -80,13 +80,14 @@ class Post < ApplicationRecord
 
 
       comments.push({
-                      post_id: comment.post_id,
-                      author_id: comment.author_id,
-                      text: comment.text,
-                      created_at: comment.created_at,
-                      updated_at: comment.updated_at,
-                      author_username: author_username,
-                      author_profile_picture: author_profile_picture
+                        post_id: comment.post_id,
+                        author_id: comment.author_id,
+                        text: comment.text,
+                        created_at: comment.created_at,
+                        updated_at: comment.updated_at,
+                        author_username: author_username,
+                        author_profile_picture: author_profile_picture,
+                        id: comment.id
                     })
 
     end

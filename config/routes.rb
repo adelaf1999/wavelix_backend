@@ -123,6 +123,8 @@ Rails.application.routes.draw do
 
   post '/create-comment' => 'comment#create'
 
+  post '/destroy-comment' => 'comment#destroy'
+
   # Like Routes
 
   post '/create-like' => 'likes#create'

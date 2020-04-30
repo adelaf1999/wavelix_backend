@@ -4,6 +4,71 @@ class CommentController < ApplicationController
 
   before_action :authenticate_user!
 
+  def destroy
+
+    comment = Comment.find_by(id: params[:comment_id])
+
+    post = Post.find_by(id: params[:post_id])
+
+    if comment != nil && post != nil
+
+      current_user_profile = current_user.profile
+
+      if current_user_profile.posts.find_by(id: post.id) != nil && comment.post_id == post.id
+
+        # The current user owns the post and therefore can delete the comment
+
+        @success = true
+
+        send_my_posts
+
+
+      elsif comment.author_id == current_user.id && comment.post_id == post.id
+
+        @success = true
+
+        post_profile = post.profile
+
+        post_user = post_profile.user
+
+        posts = []
+
+        post_profile.posts.order(created_at: :desc).each do |p|
+          posts.push(p.get_attributes)
+        end
+
+        @posts = posts.to_json
+
+        ActionCable.server.broadcast "post_channel_#{post_user.id}", {posts: @posts}
+
+        ActionCable.server.broadcast "profile_channel_#{post_profile.id}", {posts: @posts}
+
+
+
+      else
+
+
+        @success = false
+
+
+      end
+
+
+
+
+    else
+
+
+      @success = false
+
+
+    end
+
+
+
+
+  end
+
   def create
 
     # unverified stores cannot comment
