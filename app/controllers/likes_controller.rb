@@ -39,11 +39,11 @@ class LikesController < ApplicationController
 
     # cannot like posts of private account unless following them
 
-    # can like once and only once
+    # can like once and only once profile posts only
 
     post = Post.find_by(id: params[:post_id])
 
-    if post != nil
+    if post != nil && !post.is_story
 
       if current_user.store_user?
 

@@ -10,7 +10,7 @@ class CommentController < ApplicationController
 
     post = Post.find_by(id: params[:post_id])
 
-    if comment != nil && post != nil
+    if comment != nil && post != nil && !post.is_story
 
       current_user_profile = current_user.profile
 
