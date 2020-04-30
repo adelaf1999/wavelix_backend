@@ -101,6 +101,8 @@ Rails.application.routes.draw do
 
   post '/edit-profile-post' => 'post#edit_profile_post'
 
+  post '/destroy-post' => 'post#destroy'
+
   # SEARCH ROUTES
 
   post '/search-users' => 'search#search_users'

@@ -7,6 +7,37 @@ class PostController < ApplicationController
   before_action :authenticate_user!
 
 
+  def destroy
+
+    # can destroy profile / story post
+
+    profile = current_user.profile
+
+    post = profile.posts.find_by(id: params[:post_id])
+
+    if post != nil
+
+      post.destroy!
+
+      @success = true
+
+      send_my_posts
+
+    else
+
+      # post deleted or doest not belong to current user
+
+      @success = false
+
+      send_my_posts
+
+
+    end
+
+
+  end
+
+
   def edit_profile_post
 
     profile = current_user.profile
