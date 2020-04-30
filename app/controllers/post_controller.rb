@@ -1,7 +1,49 @@
 class PostController < ApplicationController
+
   include ProfileHelper
 
+  include PostHelper
+
   before_action :authenticate_user!
+
+
+  def edit_profile_post
+
+    profile = current_user.profile
+
+    post = profile.posts.find_by(id: params[:post_id])
+
+    if post != nil && !post.is_story
+
+      # can edit caption (if added)
+
+      caption = params[:caption]
+
+      if caption != nil
+
+        caption = caption.strip
+
+        post.update!(caption: caption)
+
+      end
+
+      @success = true
+
+      send_my_posts
+
+
+    else
+
+      # post deleted or doest not belong to current_user profile
+
+      @success = false
+
+      send_my_posts
+
+    end
+
+
+  end
 
   def create
 

@@ -99,6 +99,8 @@ Rails.application.routes.draw do
 
   post '/create-post' => 'post#create'
 
+  post '/edit-profile-post' => 'post#edit_profile_post'
+
   # SEARCH ROUTES
 
   post '/search-users' => 'search#search_users'
