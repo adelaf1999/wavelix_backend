@@ -438,16 +438,8 @@ class ProductsController < ApplicationController
 
                         product.remove_image(image_name)
 
-                        @product_pictures = []
-
-                        product.product_pictures.each do |picture|
-
-                            @product_pictures.push({
-                                                       uri: picture.url,
-                                                       image_name: picture.file.filename
-                                                   })
-
-                        end
+                        @product_pictures = product.get_images
+                        
 
                     end
 
@@ -481,7 +473,6 @@ class ProductsController < ApplicationController
 
                     @success = true
                     @product = product.to_json
-                    @color_images = product.get_colors_images_map.to_json
 
 
                 else
