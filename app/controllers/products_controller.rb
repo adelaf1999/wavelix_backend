@@ -22,7 +22,6 @@ class ProductsController < ApplicationController
                 :category_id, 
                 :stock_quantity,
                 :product_attributes,
-                :product_pictures_attributes,
                 {product_pictures: []},
                 :isBase64
             )
@@ -52,8 +51,6 @@ class ProductsController < ApplicationController
                 stock_quantity = product_params[:stock_quantity]
                 
                 product_attributes = product_params[:product_attributes]
-                
-                product_pictures_attributes = product_params[:product_pictures_attributes]
                 
                 product_pictures = product_params[:product_pictures]
 
@@ -285,58 +282,10 @@ class ProductsController < ApplicationController
 
 
                     end
-                    
-                    if product_pictures == nil &&  product_pictures_attributes != nil
 
-                        valid = false
-                        @success = false
-                        @message = "Upload product pictures to continue"
-                        return
-
-                    elsif product_pictures != nil && product_pictures_attributes == nil
-
-                        valid = false
-                        @success = false
-                        @message = "State the product pictures attributes to continue"
-                        return
-
-                    elsif product_pictures != nil && product_pictures_attributes != nil
-
-
-                        product_pictures_filenames = []
-
-                        product_pictures.each do |picture|
-
-                            # include the picture extension
-                            product_pictures_filenames.push(picture.original_filename)
-
-                        end
-
-
-                        if valid && !are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
-
-                            valid = false
-                            @success = false
-                            @message = "Error uploading product pictures"
-                            return
-
-
-                        else
-
-                            product_pictures_attributes = eval(product_pictures_attributes)
-
-                            product.product_pictures_attributes = product_pictures_attributes
-
-                        end
-
-                        
-
-                    end
 
 
                     if valid
-
-                      
 
                        product.name = name
                        product.description = description
@@ -345,7 +294,6 @@ class ProductsController < ApplicationController
                        product.category_id = category_id
                        product.stock_quantity = stock_quantity.to_i
 
-                       
 
                        if product.save
 
