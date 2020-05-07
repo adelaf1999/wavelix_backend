@@ -529,7 +529,6 @@ class ProductsController < ApplicationController
                         product_attributes = params[:product_attributes]
                         main_picture = params[:main_picture]
                         product_pictures = params[:product_pictures]
-                        product_pictures_attributes = params[:product_pictures_attributes]
                         isBase64 = params[:isBase64]
                         
 
@@ -753,6 +752,15 @@ class ProductsController < ApplicationController
 
                                 product_pictures = decode_base64_pictures(product_pictures)
 
+                                if product.product_pictures.size > 0
+                                    # there exists pictures
+                                    product.product_pictures += product_pictures
+                                else
+                                    product.product_pictures = product_pictures
+                                end
+
+
+
                             else
 
 
@@ -763,93 +771,26 @@ class ProductsController < ApplicationController
                                     @message = "Make sure you uploaded an appropriate pictures with valid extension."
                                     return
 
-                                end
-
-
-                            end
-
-
-                        end
-
-
-
-
-
-                        if product_pictures == nil &&  product_pictures_attributes != nil
-
-                            canUpdate = false
-                            @success = false
-                            @message = "Upload product pictures to continue"
-                            return
-
-                        elsif product_pictures != nil && product_pictures_attributes == nil
-
-                            canUpdate = false
-                            @success = false
-                            @message = "State the product pictures attributes to continue"
-                            return
-
-                        elsif product_pictures != nil && product_pictures_attributes != nil
-
-
-                            product_pictures_filenames = []
-
-                            product_pictures.each do |picture|
-
-                                # include the picture extension
-                                product_pictures_filenames.push(picture.original_filename)
-
-                            end
-
-
-                            if !are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
-
-                                canUpdate = false
-                                @success = false
-                                @message = "Error uploading product pictures"
-                                return
-
-
-                            else
-
-                                product_pictures_attributes = eval(product_pictures_attributes)
-
-                                if product.product_pictures.size > 0
-                                    # there exists pictures
-                                    product.product_pictures += product_pictures
                                 else
-                                    product.product_pictures = product_pictures
-                                end
 
-                                if product.product_pictures_attributes.size > 0
-
-                                    product_pictures_attributes.keys.each do |key|
-
-                                        if product.product_pictures_attributes.has_key?(key)
-
-                                            product.product_pictures_attributes[key] += product_pictures_attributes[key]
-
-                                        else
-
-                                            product.product_pictures_attributes[key] = product_pictures_attributes[key]
-
-                                        end
-
+                                    if product.product_pictures.size > 0
+                                        # there exists pictures
+                                        product.product_pictures += product_pictures
+                                    else
+                                        product.product_pictures = product_pictures
                                     end
 
-                                else
-
-                                    product.product_pictures_attributes = product_pictures_attributes
 
                                 end
-
 
 
                             end
 
 
-
                         end
+
+
+
 
 
                         if canUpdate
@@ -890,7 +831,6 @@ class ProductsController < ApplicationController
                                 @success = true
                                 @message = "Updated product"
                                 @product = product.to_json
-                                @color_images = product.get_colors_images_map.to_json
 
                                 return
 
@@ -1589,78 +1529,6 @@ class ProductsController < ApplicationController
         end
 
         valid
-
-    end
-
-    def are_product_pictures_attributes_valid?(product_pictures_filenames, product_pictures_attributes)
-
-        begin
-
-            product_pictures_attributes = eval(product_pictures_attributes)
-        
-            if product_pictures_attributes.instance_of?(Hash) && product_pictures_attributes.length > 0
-        
-                attributes_valid = true
-        
-                product_pictures_attributes.values().each do |attribute|
-        
-                    if attributes_valid
-
-
-                        if !attribute.instance_of?(Array) && !attribute.instance_of?(String) 
-                            attributes_valid = false
-                            break
-
-                        else
-
-                            if attribute.instance_of?(String) && !product_pictures_filenames.include?(attribute)
-
-                                attributes_valid = false
-                                break
-
-                            else
-
-                                attribute.each do |filename|
-
-                                    if !product_pictures_filenames.include?(filename)
-
-                                         attributes_valid = false
-                                         break
-
-                                    end
-
-                                end
-
-
-
-                            end
-
-
-
-                        end
-        
-                    else
-        
-                        break
-        
-                    end
-        
-                end
-        
-        
-                attributes_valid
-        
-            else
-        
-                false
-        
-            end
-        
-          rescue  SyntaxError, NameError
-        
-            false
-        
-        end
 
     end
 
