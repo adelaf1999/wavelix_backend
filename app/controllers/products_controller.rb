@@ -439,7 +439,7 @@ class ProductsController < ApplicationController
                         product.remove_image(image_name)
 
                         @product_pictures = product.get_images
-                        
+
 
                     end
 

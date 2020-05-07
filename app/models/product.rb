@@ -11,8 +11,7 @@ class Product < ApplicationRecord
    serialize :product_attributes, Hash
 
    serialize :product_pictures, Array
-
-   serialize :product_pictures_attributes, Hash
+   
 
    before_create :add_store_attributes
 
