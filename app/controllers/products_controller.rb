@@ -1073,8 +1073,6 @@ class ProductsController < ApplicationController
 
                                product_attributes = {}
                                product_pictures = []
-                               product_pictures_attributes = {}
-
                                required_headers = csv_header_map.values
 
 
@@ -1082,24 +1080,17 @@ class ProductsController < ApplicationController
 
                                    if header != nil
 
-                                       if header.include?("_pictures")
-
-
-                                           color = header.strip.split("_")[0].downcase
+                                       if is_csv_pictures_header?(header)
 
                                            row_value = row[header]
 
-                                           if  row_value != nil && product_pictures_attributes[color] == nil && color.length > 0 && !row_value.to_s.empty?
+                                           if row_value != nil && !row_value.to_s.empty?
 
                                                if row_value.is_a?(String) && row_value.include?(",")
-
-                                                   # row value is a list of color images
 
                                                    row_value = row_value.strip
 
                                                    picture_names = row_value.split(",")
-
-                                                   pictures_name_list = []
 
                                                    picture_names.each do |picture_name|
 
@@ -1111,7 +1102,6 @@ class ProductsController < ApplicationController
 
                                                            if picture != nil
 
-                                                               pictures_name_list.push(picture_name)
                                                                product_pictures.push(picture)
 
                                                            end
@@ -1120,7 +1110,6 @@ class ProductsController < ApplicationController
 
                                                            if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
 
-                                                               pictures_name_list.push(picture_name)
                                                                product_pictures.push(picture)
 
                                                            end
@@ -1128,12 +1117,7 @@ class ProductsController < ApplicationController
                                                        end
 
 
-
-
                                                    end
-
-                                                   product_pictures_attributes[color] = pictures_name_list
-
 
                                                end
 
@@ -1289,12 +1273,9 @@ class ProductsController < ApplicationController
                                    product.product_attributes = product_attributes
                                end
 
-                               if product_pictures_attributes.size > 0 && product_pictures.size > 0
-
-                                   product.product_pictures_attributes = product_pictures_attributes
+                               if product_pictures.size > 0
 
                                    product.product_pictures = product_pictures
-
 
                                end
 
@@ -1487,7 +1468,15 @@ class ProductsController < ApplicationController
 
     end
 
+    def is_csv_pictures_header?(header)
 
+        header.include?("pictures") ||
+            header.include?("images") ||
+            header.include?("photos") ||
+            header.include?("pics") ||
+            header.include?("imgs")
+
+    end
 
     def description_contains(header)
 
