@@ -83,33 +83,15 @@ class Product < ApplicationRecord
 
    end
 
-   def remove_image(image_name, color_name)
+   def remove_image(image_name)
 
      # image index is the image index in the product_pictures array
-
-     color_name = color_name.to_sym
 
      # Remove Image from product pictures
 
      deleted_image = self.product_pictures.delete_at(find_image_index(self.product_pictures, image_name) || self.product_pictures.length)
 
      deleted_image.try(:remove!)
-
-     # Remove Image from product pictures attributes
-
-     image_names = self.product_pictures_attributes[color_name]
-
-     if image_names.length == 1
-
-       self.product_pictures_attributes.delete(color_name)
-
-     else
-
-       image_names.delete_at(image_names.index(image_name) || image_names.length)
-
-       self.product_pictures_attributes[color_name] = image_names
-
-     end
 
      self.save
 

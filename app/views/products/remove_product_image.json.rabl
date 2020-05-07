@@ -1,3 +1,3 @@
-if @color_images != nil
-    node(:color_images) { @color_images  }
+if @product_pictures != nil
+    node(:product_pictures) { @product_pictures  }
 end

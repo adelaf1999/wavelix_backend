@@ -434,12 +434,20 @@ class ProductsController < ApplicationController
 
                     image_name = params[:image_name]
 
-                    color_name = params[:color_name]
+                    if image_name != nil && image_name.length > 0
 
-                    if image_name != nil && image_name.length > 0 && color_name != nil && color_name.length > 0
+                        product.remove_image(image_name)
 
-                        product.remove_image(image_name, color_name)
-                        @color_images = product.get_colors_images_map.to_json
+                        @product_pictures = []
+
+                        product.product_pictures.each do |picture|
+
+                            @product_pictures.push({
+                                                       uri: picture.url,
+                                                       image_name: picture.file.filename
+                                                   })
+
+                        end
 
                     end
 
