@@ -438,7 +438,7 @@ class ProductsController < ApplicationController
 
                         product.remove_image(image_name)
 
-                        @product_pictures = product.get_images
+                        @product_pictures = product.get_images.to_json
 
 
                     end
@@ -473,6 +473,7 @@ class ProductsController < ApplicationController
 
                     @success = true
                     @product = product.to_json
+                    @product_pictures = product.get_images.to_json
 
 
                 else
@@ -830,6 +831,7 @@ class ProductsController < ApplicationController
                                 @success = true
                                 @message = "Updated product"
                                 @product = product.to_json
+                                @product_pictures = product.get_images.to_json
 
                                 return
 
