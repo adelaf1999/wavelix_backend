@@ -14,9 +14,9 @@ class Post < ApplicationRecord
 
   enum status: { incomplete: 0, complete: 1 }
 
-  has_many :comments
+  has_many :comments, :dependent => :delete_all
 
-  has_many :likes
+  has_many :likes, :dependent => :delete_all
 
 
   def get_attributes
