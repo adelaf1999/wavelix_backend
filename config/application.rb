@@ -52,7 +52,7 @@ module TheProductLand
 
     # config.action_cable.disable_request_forgery_protection = true
 
-    config.action_cable.allowed_request_origins = ['localhost:19006', ENV.fetch("DEVELOPMENT_WEBSITE_URL")]
+    config.action_cable.allowed_request_origins = ['http://localhost:19006', ENV.fetch("DEVELOPMENT_WEBSITE_URL")]
 
 
     # config.action_cable.allowed_request_origins = ['https://rubyonrails.com', %r{http://ruby.*}]
