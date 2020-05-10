@@ -16,6 +16,29 @@ class Product < ApplicationRecord
    before_create :add_store_attributes
 
 
+   def can_buy?(user)
+
+     # Stores cannot buy products
+
+     # Product cannot be bought if stock quantity is 0 or is not available
+
+     # Customer cannot buy product if its not in his country
+
+
+     if user.store_user? || self.stock_quantity == 0 || !self.product_available
+
+       false
+
+     elsif user.customer_user?
+
+       customer = CustomerUser.find_by(customer_id: user.id)
+
+       customer.country_of_residence == self.store_country
+
+     end
+
+   end
+
    def decrement_stock_quantity(amount)
         # amount must be an integer
        if is_positive_integer?(amount.to_s)
@@ -28,11 +51,13 @@ class Product < ApplicationRecord
 
                 stock_quantity = self.stock_quantity - amount
 
-                if stock_quantity == 0
-                    self.update!(product_available: false, stock_quantity: stock_quantity )
-                else
-                    self.update!(stock_quantity: stock_quantity)
-                end
+                self.update!(stock_quantity: stock_quantity)
+
+                # if stock_quantity == 0
+                #     self.update!(product_available: false, stock_quantity: stock_quantity )
+                # else
+                #     self.update!(stock_quantity: stock_quantity)
+                # end
 
             end
        

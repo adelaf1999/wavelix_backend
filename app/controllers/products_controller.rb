@@ -3,6 +3,80 @@ class ProductsController < ApplicationController
 
     before_action :authenticate_user!
 
+    def show
+
+        product = Product.find_by(id: params[:product_id])
+
+        if product != nil
+
+            # A product can be viewed by the store that owns this product or any other store
+
+            # The product will be shown even if its stock quantity is 0 and will be marked as out of stock
+
+            # The product wont be shown only if its not available
+
+            if product.product_available
+
+                @success = true
+
+                @can_buy = product.can_buy?(current_user)
+
+                @product_pictures = []
+
+                @product_pictures.push(product.main_picture)
+
+                @product_pictures += product.product_pictures
+
+                @product = product.to_json
+
+                @product_options = {}
+
+                @product_details = {}
+
+                product.product_attributes.each do |key, value|
+
+                    if value.instance_of?(Array)
+
+                        @product_options[key] = value
+
+                    else
+
+                      @product_details[key] = value
+
+                    end
+
+                end
+
+                @store = {}
+
+                store_user = product.category.store_user
+                store_profile = store_user.store.profile
+
+                @store[:name] = store_user.store_name
+                @store[:logo] = store_profile.profile_picture.url
+                @store[:profile_id] = store_profile.id
+
+
+
+
+
+            else
+
+              @success = false
+
+            end
+
+
+
+        else
+
+          @success = false
+
+        end
+
+
+    end
+
     def create
 
         if current_user.store_user?

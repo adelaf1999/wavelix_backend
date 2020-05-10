@@ -82,6 +82,8 @@ Rails.application.routes.draw do
 
   post '/import-products' => 'products#import_products'
 
+  post '/view-product' => 'products#show'
+
 
   # PROFILE ROUTES
 
