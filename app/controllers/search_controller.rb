@@ -172,7 +172,7 @@ class SearchController < ApplicationController
 
     # Products must be from verified stores and they must be available products
 
-    # Store users should not see their own products in the search
+    # Store users can see their own products in search
 
 
     product_name = params[:product_name]
@@ -208,7 +208,7 @@ class SearchController < ApplicationController
 
             store_user = StoreUser.find_by(id: product.category.store_user_id)
 
-            if store_user.verified? && store_user.store_id != current_user.id
+            if store_user.verified?
 
               distance = calculate_distance(current_store_address, store_user.store_address)
 
