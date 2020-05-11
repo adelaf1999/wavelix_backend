@@ -50,11 +50,13 @@ class ProductsController < ApplicationController
                 @store = {}
 
                 store_user = product.category.store_user
-                store_profile = store_user.store.profile
+                store = store_user.store
+                store_profile = store.profile
 
                 @store[:name] = store_user.store_name
                 @store[:logo] = store_profile.profile_picture.url
                 @store[:profile_id] = store_profile.id
+                @store[:username] = store.username
 
 
 
