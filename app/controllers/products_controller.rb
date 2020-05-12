@@ -47,6 +47,8 @@ class ProductsController < ApplicationController
 
                         if value.instance_of?(Array)
 
+                            value.prepend('Select option')
+
                             @product_options[key] = value
 
                         else
