@@ -24,6 +24,8 @@ class Product < ApplicationRecord
 
      # Customer cannot buy product if its not in his country
 
+     # Customers can only buy products from verified stores
+
 
      if user.store_user? || self.stock_quantity == 0 || !self.product_available
 
@@ -31,9 +33,22 @@ class Product < ApplicationRecord
 
      elsif user.customer_user?
 
-       customer = CustomerUser.find_by(customer_id: user.id)
+       customer_user = CustomerUser.find_by(customer_id: user.id)
 
-       customer.country_of_residence == self.store_country
+       store_user = self.category.store_user
+
+
+       if store_user.verified?
+
+         customer_user.country_of_residence == self.store_country
+
+       else
+
+         false
+
+       end
+
+
 
      end
 

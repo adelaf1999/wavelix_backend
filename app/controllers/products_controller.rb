@@ -15,49 +15,64 @@ class ProductsController < ApplicationController
 
             # The product wont be shown only if its not available
 
+            # Can only view products of verified stores
+
             if product.product_available
 
-                @success = true
+                store_user = product.category.store_user
 
-                @can_buy = product.can_buy?(current_user)
+                store = store_user.store
 
-                @product_pictures = []
+                store_profile = store.profile
 
-                @product_pictures.push(product.main_picture)
+                if store_user.verified?
 
-                @product_pictures += product.product_pictures
+                    @success = true
 
-                @product = product.to_json
+                    @can_buy = product.can_buy?(current_user)
 
-                @product_options = {}
+                    @product_pictures = []
 
-                @product_details = {}
+                    @product_pictures.push(product.main_picture)
 
-                product.product_attributes.each do |key, value|
+                    @product_pictures += product.product_pictures
 
-                    if value.instance_of?(Array)
+                    @product = product.to_json
 
-                        @product_options[key] = value
+                    @product_options = {}
 
-                    else
+                    @product_details = {}
 
-                      @product_details[key] = value
+                    product.product_attributes.each do |key, value|
+
+                        if value.instance_of?(Array)
+
+                            @product_options[key] = value
+
+                        else
+
+                            @product_details[key] = value
+
+                        end
 
                     end
 
+                    @store = {}
+
+
+
+                    @store[:name] = store_user.store_name
+                    @store[:logo] = store_profile.profile_picture.url
+                    @store[:profile_id] = store_profile.id
+                    @store[:username] = store.username
+
+
+
+                else
+
+                  @success = false
+
                 end
-
-                @store = {}
-
-                store_user = product.category.store_user
-                store = store_user.store
-                store_profile = store.profile
-
-                @store[:name] = store_user.store_name
-                @store[:logo] = store_profile.profile_picture.url
-                @store[:profile_id] = store_profile.id
-                @store[:username] = store.username
-
 
 
 
