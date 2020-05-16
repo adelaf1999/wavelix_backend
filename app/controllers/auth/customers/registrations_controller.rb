@@ -5,6 +5,7 @@ module  Auth
         class RegistrationsController < DeviseTokenAuth::ApplicationController
             before_action :validate_sign_up_params, only: :create
             skip_after_action :update_auth_header, only: [:create]
+            include RegistrationHelper
             
             
         
@@ -160,22 +161,30 @@ module  Auth
 
                   country_code = results.first.country_code
 
-                  @resource.customer_user = CustomerUser.new(
-                    full_name: full_name,
-                    date_of_birth: date_of_birth,
-                    gender: gender,
-                    country: country_code,
-                    home_address: home_address
-                  )
+                  if !is_country_blocked?(country_code)
 
-                  if building_name != nil && building_name.length > 0
-                    @resource.customer_user.building_name = building_name
+
+                    @resource.customer_user = CustomerUser.new(
+                        full_name: full_name,
+                        date_of_birth: date_of_birth,
+                        gender: gender,
+                        country: country_code,
+                        home_address: home_address
+                    )
+
+                    if building_name != nil && building_name.length > 0
+                      @resource.customer_user.building_name = building_name
+                    end
+
+                    if apartment_floor != nil && apartment_floor.to_s.length > 0 && is_positive_integer?(apartment_floor.to_s)
+                      apartment_floor = apartment_floor.to_i
+                      @resource.customer_user.apartment_floor = apartment_floor
+                    end
+
+
                   end
 
-                  if apartment_floor != nil && apartment_floor.to_s.length > 0 && is_positive_integer?(apartment_floor.to_s)
-                    apartment_floor = apartment_floor.to_i
-                    @resource.customer_user.apartment_floor = apartment_floor
-                  end
+
 
                 end
 
