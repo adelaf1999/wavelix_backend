@@ -85,14 +85,14 @@ module  Auth
         
 
             def customer_user_params
-              params.permit(:full_name, :date_of_birth, :gender, :country_of_residence, :home_address, :building_name, :apartment_floor)
+              params.permit(:full_name, :date_of_birth, :gender, :country_code, :home_address, :building_name, :apartment_floor)
             end
 
             def validate_customer_user_params
 
               valid = true
 
-              req_params = [:full_name, :date_of_birth, :country_of_residence, :gender, :home_address ]
+              req_params = [:full_name, :date_of_birth, :country_code, :gender, :home_address ]
 
               customer_params = customer_user_params
 
@@ -111,7 +111,7 @@ module  Auth
                 full_name = customer_params[:full_name]
                 date_of_birth = customer_params[:date_of_birth]
                 gender = customer_params[:gender].downcase
-                country_code = customer_params[:country_of_residence]
+                country_code = customer_params[:country_code]
                 home_address = eval(customer_params[:home_address])
                 latitude = home_address[:latitude]
                 longitude = home_address[:longitude]
@@ -168,7 +168,7 @@ module  Auth
                     full_name: full_name,
                     date_of_birth: date_of_birth,
                     gender: gender,
-                    country_of_residence: country_code,
+                    country: country_code,
                     home_address: home_address
                   )
 

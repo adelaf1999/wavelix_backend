@@ -40,7 +40,7 @@ class Product < ApplicationRecord
 
        if store_user.verified?
 
-         customer_user.country_of_residence == self.store_country
+         customer_user.country == self.store_country
 
        else
 
