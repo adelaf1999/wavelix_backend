@@ -85,14 +85,14 @@ module  Auth
         
 
             def customer_user_params
-              params.permit(:full_name, :date_of_birth, :gender, :country_code, :home_address, :building_name, :apartment_floor)
+              params.permit(:full_name, :date_of_birth, :gender, :home_address, :building_name, :apartment_floor)
             end
 
             def validate_customer_user_params
 
               valid = true
 
-              req_params = [:full_name, :date_of_birth, :country_code, :gender, :home_address ]
+              req_params = [:full_name, :date_of_birth, :gender, :home_address ]
 
               customer_params = customer_user_params
 
@@ -111,12 +111,9 @@ module  Auth
                 full_name = customer_params[:full_name]
                 date_of_birth = customer_params[:date_of_birth]
                 gender = customer_params[:gender].downcase
-                country_code = customer_params[:country_code]
                 home_address = eval(customer_params[:home_address])
                 latitude = home_address[:latitude]
                 longitude = home_address[:longitude]
-                c = ISO3166::Country.new(country_code)
-                # To get country name: c.name
 
 
                 if full_name.length == 0
@@ -127,16 +124,11 @@ module  Auth
                   valid = false
                 end
 
-              
 
                 if valid && gender != "male" && gender != "female" && gender != "other"
                   valid = false
                 end
 
-                
-                if valid && (c == nil || country_code == "IL")
-                  valid = false
-                end
 
                 if valid && latitude != nil
                   latitude = latitude.to_d
@@ -154,15 +146,19 @@ module  Auth
                     valid = false
                 end
 
+
                 building_name = customer_params[:building_name]
                 apartment_floor = customer_params[:apartment_floor]
 
-                
 
                 if valid
 
                   home_address[:latitude] = latitude
                   home_address[:longitude] = longitude
+
+                  results = Geocoder.search([latitude, longitude])
+
+                  country_code = results.first.country_code
 
                   @resource.customer_user = CustomerUser.new(
                     full_name: full_name,
