@@ -3,6 +3,7 @@ module Auth
     module Stores
 
         class RegistrationsController < DeviseTokenAuth::ApplicationController
+            include RegistrationHelper
             include MoneyHelper
             before_action :validate_sign_up_params, only: :create
             skip_after_action :update_auth_header, only: [:create]
@@ -84,7 +85,7 @@ module Auth
             end
         
             def store_user_params
-                params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license, :currency)
+                params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number,  :store_business_license, :currency)
             end
 
             def validate_store_user_params
@@ -92,7 +93,7 @@ module Auth
 
                  valid = true
 
-                 req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license, :currency]
+                 req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_business_license, :currency]
                  
 
                  store_params = store_user_params
@@ -115,8 +116,8 @@ module Auth
                     store_business_license = store_params[:store_business_license]
                     currency = store_params[:currency]
 
-                    store_country_code = store_params[:store_country]
-                    c = ISO3166::Country.new(store_country_code)
+                    # store_country_code = store_params[:store_country]
+                    # c = ISO3166::Country.new(store_country_code)
                     # To get country name: c.name
 
                     store_address = eval(store_params[:store_address])
@@ -142,9 +143,9 @@ module Auth
                         valid = false
                     end
 
-                    if valid && (c == nil || store_country_code == "IL")
-                      valid = false
-                    end
+                    # if valid && (c == nil || store_country_code == "IL")
+                    #   valid = false
+                    # end
 
                     if valid && !is_business_license_valid?(store_business_license)
                         valid = false
@@ -176,21 +177,28 @@ module Auth
                       store_address[:latitude] = latitude
                       store_address[:longitude] = longitude
 
+                      results = Geocoder.search([latitude, longitude])
 
-                      @resource.store_user = StoreUser.new(
-                        store_owner_full_name: store_owner_full_name,
-                        store_owner_work_number: store_owner_work_number,
-                        store_name: store_name,
-                        store_address: store_address,
-                        store_number: store_number,
-                        store_country: store_country_code,
-                        store_business_license: store_business_license,
-                        currency: currency
-                      )
+                      country_code = results.first.country_code
+
+                      if !is_country_blocked?(country_code)
 
 
+                        @resource.store_user = StoreUser.new(
+                            store_owner_full_name: store_owner_full_name,
+                            store_owner_work_number: store_owner_work_number,
+                            store_name: store_name,
+                            store_address: store_address,
+                            store_number: store_number,
+                            store_country: country_code,
+                            store_business_license: store_business_license,
+                            currency: currency
+                        )
 
 
+                      end
+
+                      
                     end
 
                     
