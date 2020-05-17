@@ -84,7 +84,7 @@ module Auth
             end
         
             def store_user_params
-                params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license)
+                params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license, :currency)
             end
 
             def validate_store_user_params
@@ -93,6 +93,7 @@ module Auth
                  valid = true
 
                  req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_country, :store_business_license, :currency]
+                 
 
                  store_params = store_user_params
 
