@@ -135,6 +135,10 @@ Rails.application.routes.draw do
 
   post '/destroy-like' => 'likes#destroy'
 
+  # Currencies Routes
+
+  get '/get-currencies' => 'currencies#currencies'
+
 
 
 
