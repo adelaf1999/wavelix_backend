@@ -1,6 +1,6 @@
 class Order < ApplicationRecord
 
-  enum status: {canceled: -1, pending: 0, ongoing: 1, complete: 2}
+  enum status: {canceled: 0, pending: 1, ongoing: 2, complete: 3}
   serialize :delivery_location, Hash
 
   belongs_to :driver
