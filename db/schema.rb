@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_16_114056) do
+ActiveRecord::Schema.define(version: 2020_05_18_120700) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -59,6 +59,15 @@ ActiveRecord::Schema.define(version: 2020_05_16_114056) do
     t.index ["priority", "run_at"], name: "delayed_jobs_priority"
   end
 
+  create_table "drivers", force: :cascade do |t|
+    t.boolean "driver_mode_on", default: false
+    t.integer "customer_id", null: false
+    t.text "current_location", null: false
+    t.string "country", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "follows", force: :cascade do |t|
     t.integer "follower_id"
     t.integer "followed_id"
@@ -81,6 +90,20 @@ ActiveRecord::Schema.define(version: 2020_05_16_114056) do
     t.text "video", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.text "products", null: false, array: true
+    t.text "drivers_confirmed", default: [], array: true
+    t.decimal "delivery_price", default: "0.0"
+    t.string "delivery_currency", default: "USD"
+    t.integer "driver_id"
+    t.integer "status", default: 0
+    t.text "delivery_location", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.integer "store_user_id", null: false
+    t.integer "customer_user_id", null: false
   end
 
   create_table "posts", force: :cascade do |t|

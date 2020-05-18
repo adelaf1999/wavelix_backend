@@ -3,6 +3,7 @@ class Customer < User
 
     before_create :set_user_type
     has_one :customer_user
+    has_one :driver
     validates_presence_of :customer_user
     accepts_nested_attributes_for :customer_user,
                                   allow_destroy: true,

@@ -5,6 +5,7 @@ class StoreUser < ApplicationRecord
     serialize :store_address, Hash
     has_many :categories
     enum status: {unverified: 0, verified: 1}
+    has_many :orders
     after_create :save_street_name
    
 
