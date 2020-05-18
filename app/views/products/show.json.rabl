@@ -18,10 +18,11 @@ if @product_details != nil
     node(:product_details) { @product_details }
 end
 
-if @can_buy != nil
-    node(:can_buy) { @can_buy }
-end
 
 if @store != nil
     node(:store) { @store }
+end
+
+if @customer_country  != nil
+    node(:customer_country) { @customer_country  }
 end

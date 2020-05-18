@@ -29,7 +29,6 @@ class ProductsController < ApplicationController
 
                     @success = true
 
-                    @can_buy = product.can_buy?(current_user)
 
                     @product_pictures = []
 
@@ -67,6 +66,13 @@ class ProductsController < ApplicationController
                     @store[:logo] = store_profile.profile_picture.url
                     @store[:profile_id] = store_profile.id
                     @store[:username] = store.username
+
+                    if current_user.customer_user?
+
+                        customer_user = CustomerUser.find_by(customer_id: current_user.id)
+                        @customer_country = customer_user.country
+
+                    end
 
 
 
