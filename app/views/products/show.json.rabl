@@ -26,3 +26,7 @@ end
 if @customer_country  != nil
     node(:customer_country) { @customer_country  }
 end
+
+if @home_address != nil
+    node(:home_address) { @home_address }
+end

@@ -71,6 +71,7 @@ class ProductsController < ApplicationController
 
                         customer_user = CustomerUser.find_by(customer_id: current_user.id)
                         @customer_country = customer_user.country
+                        @home_address = customer_user.home_address
 
                     end
 
