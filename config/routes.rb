@@ -139,6 +139,12 @@ Rails.application.routes.draw do
 
   get '/get-currencies' => 'currencies#currencies'
 
+  # Order Routes
+
+  post '/checkout' => 'order#checkout'
+
+
+
 
 
 
