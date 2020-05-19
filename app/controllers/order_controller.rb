@@ -10,7 +10,7 @@ class OrderController < ApplicationController
 
     #  {0: PRODUCT_NOT_AVAILABLE, 1: OUT_OF_STOCK_ERROR, 2: QUANTITY_ORDERED_GT_STOCK_QUANTITY}
 
-    # { 3: DELIVERY_LOCATION_OUTSIDE_STORE_COUNTRY, 4: EMPTY_PRODUCT_OPTIONS }
+    # { 3: DELIVERY_LOCATION_OUTSIDE_STORE_COUNTRY }
 
     if current_user.customer_user?
 
@@ -50,54 +50,7 @@ class OrderController < ApplicationController
 
 
                 product_options = params[:product_options]
-
-
-                has_product_options = has_product_options?(product)
-
-
-                if has_product_options
-
-
-                  if product_options.nil?
-
-
-                    @success = false
-
-                    @error_code = 4
-
-                    @product = product.to_json
-
-                    @product_options = get_product_options(product)
-
-                    return
-
-
-                  else
-
-                    product_options = eval(product_options)
-
-                    if product_options.size == 0
-
-
-                      @success = false
-
-                      @error_code = 4
-
-                      @product = product.to_json
-
-                      @product_options = get_product_options(product)
-
-                      return
-
-
-                    end
-
-                  end
-
-
-                end
-
-
+                
 
                 delivery_location = params[:delivery_location]
 
@@ -256,49 +209,6 @@ class OrderController < ApplicationController
   private
 
 
-  def has_product_options?(product)
-
-    has_product_options = false
-
-
-    product.product_attributes.values.each do |value|
-
-      if value.instance_of?(Array)
-
-        has_product_options = true
-
-        break
-
-      end
-
-    end
-
-    has_product_options
-
-  end
-
-
-  def get_product_options(product)
-
-
-    product_options = {}
-
-    product.product_attributes.each do |key, value|
-
-      if value.instance_of?(Array)
-
-        value.prepend('Select option')
-
-        product_options[key] = value
-
-      end
-
-    end
-
-    product_options
-
-
-  end
 
   def is_number?(arg)
 
