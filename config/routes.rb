@@ -143,6 +143,8 @@ Rails.application.routes.draw do
 
   post '/checkout' => 'order#checkout'
 
+  post '/validate-delivery-location' => 'order#validate_delivery_location'
+
 
 
 

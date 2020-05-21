@@ -4,6 +4,117 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def validate_delivery_location
+
+
+    if current_user.customer_user?
+
+
+      delivery_location = params[:delivery_location]
+
+      product = Product.find_by(id: params[:product_id])
+
+
+      if delivery_location != nil && product != nil
+
+
+        delivery_location = eval(delivery_location)
+
+        store_user = product.category.store_user
+
+        if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+          latitude = delivery_location[:latitude]
+
+          longitude = delivery_location[:longitude]
+
+          if latitude != nil && longitude != nil
+
+            if is_number?(latitude) && is_number?(longitude)
+
+
+              latitude = latitude.to_d
+
+              longitude = longitude.to_d
+
+
+              # Make sure delivery location is in store country
+
+              geo_location = Geocoder.search([latitude, longitude])
+
+
+              if geo_location.size > 0
+
+                geo_location_country_code = geo_location.first.country_code
+
+                if geo_location_country_code == product.store_country
+
+                  distance = calculate_distance_km(delivery_location, store_user.store_address )
+
+                  if distance <= 100
+
+                    @success = true
+
+
+                    if distance > 25
+
+                      @delivery_options = { 1 => 'Exclusive Delivery' }
+
+
+                    else
+
+
+                      @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+
+                    end
+
+
+                  else
+
+                    @success = false
+                    @message = 'Delivery location outside deliverable zone'
+
+                  end
+
+
+
+
+                else
+
+                  @success = false
+                  @message = 'Delivery location outside store country'
+
+                end
+
+
+              else
+
+                @success = false
+                @message = 'Delivery location outside deliverable zone'
+
+              end
+
+
+
+
+
+
+            end
+
+          end
+
+
+        end
+
+
+      end
+
+    end
+
+
+  end
+
+
   def checkout
 
     # error_codes

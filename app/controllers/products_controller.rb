@@ -66,6 +66,7 @@ class ProductsController < ApplicationController
                     @store[:logo] = store_profile.profile_picture.url
                     @store[:profile_id] = store_profile.id
                     @store[:username] = store.username
+                    @store[:location] = store_user.store_address
 
                     if current_user.customer_user?
 
