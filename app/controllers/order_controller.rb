@@ -10,134 +10,177 @@ class OrderController < ApplicationController
 
     #  {0: PRODUCT_NOT_AVAILABLE, 1: OUT_OF_STOCK_ERROR, 2: QUANTITY_ORDERED_GT_STOCK_QUANTITY}
 
-    # { 3: DELIVERY_LOCATION_OUTSIDE_STORE_COUNTRY }
+    # { 3: DELIVERY_LOCATION_OUTSIDE_STORE_COUNTRY, 4: STORE_OUTSIDE_DELIVERY_ZONE, 5: STANDARD_DELIVERY_UNAVAILABLE }
 
     if current_user.customer_user?
 
-      product = Product.find_by(id: params[:product_id])
+      valid = true
 
-      customer_user = CustomerUser.find_by(customer_id: current_user.id)
-
-      if product != nil
-
-        store_user = product.category.store_user
-
-        if store_user.verified? && customer_user.country == product.store_country
-
-          quantity = params[:quantity]
+      req_params = [:product_id, :quantity, :delivery_location, :order_type]
 
 
-          if !product.product_available
+      req_params.each do |p|
 
-            @success = false
-            @error_code = 0
-            @product = product.to_json
+        if params[p] == nil || params[p].empty?
 
-          elsif product.stock_quantity == 0
+          valid = false
 
-            @success = false
-            @error_code = 1
-            @product = product.to_json
+          break
 
-          else
+        end
+
+      end
 
 
-            if quantity != nil && !quantity.empty?
+      if valid
+
+        product = Product.find_by(id: params[:product_id])
+
+        customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+        if product != nil
+
+          store_user = product.category.store_user
+
+          if store_user.verified? && customer_user.country == product.store_country
+
+
+            if !product.product_available
+
+              @success = false
+              @error_code = 0
+              @product = product.to_json
+
+            elsif product.stock_quantity == 0
+
+              @success = false
+              @error_code = 1
+              @product = product.to_json
+
+            else
+
+              quantity = params[:quantity]
 
               if is_quantity_valid?(quantity, product)
 
                 quantity = quantity.to_i
 
-
                 product_options = params[:product_options]
-                
 
-                delivery_location = params[:delivery_location]
+                delivery_location = eval(params[:delivery_location])
 
+                if delivery_location.instance_of?(Hash)
 
-                if delivery_location != nil && !delivery_location.empty?
+                  latitude = delivery_location[:latitude]
 
-                  delivery_location = eval(delivery_location)
+                  longitude = delivery_location[:longitude]
 
-
-                  if delivery_location.instance_of?(Hash)
-
-
-                    latitude = delivery_location[:latitude]
-
-                    longitude = delivery_location[:longitude]
-
-                    if latitude != nil && longitude != nil
+                  if latitude != nil && longitude != nil
 
 
-                      if is_number?(latitude) && is_number?(longitude)
-
-                        latitude = latitude.to_d
-
-                        longitude = longitude.to_d
-
-                        # Make sure delivery location is in store country
-
-                        geo_location = Geocoder.search([latitude, longitude])
-
-                        geo_location_country_code = geo_location.first.country_code
-
-                        if geo_location_country_code == product.store_country
-
-                          # The stock quantity will be decremented after an order is created
-
-                          # If the order was pending after 15 minutes the stock quantity will be re-incremented
-
-                          # And the order will be marked canceled
-
-                          # Also when user cancels order quantity gets re-incremented too
+                    if is_number?(latitude) && is_number?(longitude)
 
 
-                          ordered_product = {
-                              id: product.id,
-                              quantity: quantity,
-                              price: product.price,
-                              currency: product.currency,
-                              product_options: product_options,
-                              name: product.name
-                          }
+                      latitude = latitude.to_d
 
-                          order = Order.create!(
-                              products: [ordered_product],
-                              delivery_location: delivery_location,
-                              store_user_id: store_user.id,
-                              customer_user_id: customer_user.id,
-                              country: geo_location_country_code
-                          )
+                      longitude = longitude.to_d
 
-                          stock_quantity = product.stock_quantity - quantity
+                      # Make sure delivery location is in store country
 
-                          product.update!(stock_quantity: stock_quantity)
+                      geo_location = Geocoder.search([latitude, longitude])
+
+                      geo_location_country_code = geo_location.first.country_code
+
+                      if geo_location_country_code == product.store_country
+
+                        # Store can be upto 100 KM from delivery location
+
+                        store_location = store_user.store_address
+
+                        distance = calculate_distance_km(delivery_location, store_location )
+
+                        if distance <= 100
+
+                          order_type = params[:order_type]
+
+                          if is_order_type_valid?(order_type)
+
+                            order_type = order_type.to_i
 
 
-                          Delayed::Job.enqueue(OrderJob.new(order.id), queue: 'order_check_queue', priority: 0, run_at: 15.minutes.from_now)
+                            if order_type == 0 && distance > 25
+
+                              # Standard delivery is only available if delivery location is within 25 KM of the store
+
+                              @success = false
+                              @error_code = 5
+                              @product = product.to_json
 
 
-                          @success = true
+                            else
 
-                          @order = order.to_json
+                              ordered_product = {
+                                  id: product.id,
+                                  quantity: quantity,
+                                  price: product.price,
+                                  currency: product.currency,
+                                  product_options: product_options,
+                                  name: product.name
+                              }
 
+                              order = Order.create!(
+                                  products: [ordered_product],
+                                  delivery_location: delivery_location,
+                                  store_user_id: store_user.id,
+                                  customer_user_id: customer_user.id,
+                                  country: geo_location_country_code,
+                                  order_type: order_type
+                              )
+
+                              stock_quantity = product.stock_quantity - quantity
+
+                              product.update!(stock_quantity: stock_quantity)
+
+
+                              Delayed::Job.enqueue(OrderJob.new(order.id), queue: 'order_check_queue', priority: 0, run_at: 15.minutes.from_now)
+
+
+                              @success = true
+
+                              @order = order.to_json
+
+
+                            end
+
+                            
+                          else
+
+                            @success = false
+
+                          end
 
                         else
 
+
                           @success = false
-                          @error_code = 3
+                          @error_code = 4
                           @product = product.to_json
 
                         end
 
 
+
+
                       else
 
-
                         @success = false
+                        @error_code = 3
+                        @product = product.to_json
+
 
                       end
+
+
 
                     else
 
@@ -153,8 +196,6 @@ class OrderController < ApplicationController
                   end
 
 
-
-
                 else
 
                   @success = false
@@ -164,22 +205,25 @@ class OrderController < ApplicationController
 
 
 
-
               else
+
 
                 @success = false
                 @error_code = 2
                 @product = product.to_json
 
+
               end
 
 
-            else
-
-              @success = false
-
             end
 
+
+
+          else
+
+
+            @success = false
 
           end
 
@@ -188,14 +232,18 @@ class OrderController < ApplicationController
 
           @success = false
 
-
         end
+
+
 
       else
 
         @success = false
 
+
       end
+
+
 
     else
 
@@ -208,6 +256,47 @@ class OrderController < ApplicationController
 
   private
 
+
+  def is_order_type_valid?(order_type)
+
+
+    res = /^(?<num>\d+)$/.match(order_type)
+
+    if res == nil
+
+      false
+
+    else
+
+      order_type = order_type.to_i
+
+      order_type == 0 || order_type == 1
+
+    end
+
+
+  end
+
+
+  def calculate_distance_km(loc1, loc2)
+
+    rad_per_deg = Math::PI/180  # PI / 180
+    rkm = 6371                  # Earth radius in kilometers
+    rm = rkm * 1000             # Radius in meters
+
+    dlat_rad = (loc2[:latitude]-loc1[:latitude]) * rad_per_deg  # Delta, converted to rad
+    dlon_rad = (loc2[:longitude]-loc1[:longitude]) * rad_per_deg
+
+
+    lat1_rad = loc1[:latitude] * rad_per_deg
+    lat2_rad = loc2[:latitude] * rad_per_deg
+
+    a = Math.sin(dlat_rad/2)**2 + Math.cos(lat1_rad) * Math.cos(lat2_rad) * Math.sin(dlon_rad/2)**2
+    c = 2 * Math::atan2(Math::sqrt(a), Math::sqrt(1-a))
+
+    (rm * c) / 1000.0 # Delta in KM
+
+  end
 
 
   def is_number?(arg)
@@ -226,7 +315,7 @@ class OrderController < ApplicationController
 
     else
 
-      quantity = quantity.to_d
+      quantity = quantity.to_i
 
       if quantity == 0
 
