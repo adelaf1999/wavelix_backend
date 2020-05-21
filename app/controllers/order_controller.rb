@@ -119,6 +119,12 @@ class OrderController < ApplicationController
 
                             else
 
+                              # The stock quantity of the product will be decremented after an order is created
+
+                              # If the order was till pending after 15 minutes the stock quantity of the product will be
+
+                              # re-incremented and the order will be marked canceled
+
                               ordered_product = {
                                   id: product.id,
                                   quantity: quantity,
@@ -152,7 +158,7 @@ class OrderController < ApplicationController
 
                             end
 
-                            
+
                           else
 
                             @success = false
