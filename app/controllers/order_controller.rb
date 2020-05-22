@@ -176,7 +176,23 @@ class OrderController < ApplicationController
 
                 quantity = quantity.to_i
 
-                product_options = params[:product_options]
+                product_options = params[:product_options] # optional can be nil/empty
+
+                if product_options != nil && !product_options.empty?
+
+                  product_options = eval(product_options)
+
+                  if !product_options.instance_of?(Hash) || product_options.size == 0
+
+                    product_options = nil
+
+                  end
+
+                else
+
+                  product_options = nil
+
+                end
 
                 delivery_location = eval(params[:delivery_location])
 
@@ -200,103 +216,141 @@ class OrderController < ApplicationController
 
                       geo_location = Geocoder.search([latitude, longitude])
 
-                      geo_location_country_code = geo_location.first.country_code
+                      if geo_location.size > 0
 
-                      if geo_location_country_code == product.store_country
+                        geo_location_country_code = geo_location.first.country_code
 
-                        # Store can be upto 100 KM from delivery location
+                        if geo_location_country_code == product.store_country
 
-                        store_location = store_user.store_address
+                          # Store can be upto 100 KM from delivery location
 
-                        distance = calculate_distance_km(delivery_location, store_location )
+                          store_location = store_user.store_address
 
-                        if distance <= 100
-
-                          order_type = params[:order_type]
-
-                          if is_order_type_valid?(order_type)
-
-                            order_type = order_type.to_i
+                          distance = calculate_distance_km(delivery_location, store_location )
 
 
-                            if order_type == 0 && distance > 25
+                          if distance <= 100
 
-                              # Standard delivery is only available if delivery location is within 25 KM of the store
+                            order_type = params[:order_type]
 
-                              @success = false
-                              @error_code = 5
-                              @product = product.to_json
+                            if is_order_type_valid?(order_type)
+
+                              order_type = order_type.to_i
+
+
+                              if order_type == 0 && distance > 25
+
+                                # Standard delivery is only available if delivery location is within 25 KM of the store
+
+                                @success = false
+                                @error_code = 5
+                                @product = product.to_json
+
+
+                              else
+
+                                # The stock quantity of the product will be decremented after an order is created
+
+                                # If the order was till pending after 15 minutes the stock quantity of the product will be
+
+                                # re-incremented and the order will be marked canceled
+
+
+
+                                ordered_product = {
+                                    id: product.id,
+                                    quantity: quantity,
+                                    price: product.price,
+                                    currency: product.currency,
+                                    product_options: product_options,
+                                    name: product.name
+                                }
+
+
+                                order = Order.new
+
+                                order.products = [ordered_product]
+                                order.delivery_location = delivery_location
+                                order.store_user_id = store_user.id
+                                order.customer_user_id = customer_user.id
+                                order.country = geo_location_country_code
+                                order.order_type = order_type
+
+                                if order.save!
+
+                                  @success = true
+
+                                  @order = {}
+
+                                  @order[:id] = order.id
+
+                                  @order[:products] = order.products
+
+                                  @order[:created_at] = order.created_at
+
+                                  @order[:updated_at] = order.updated_at
+
+                                  @order[:order_type] = order.order_type
+
+
+
+                                  stock_quantity = product.stock_quantity - quantity
+
+                                  product.update!(stock_quantity: stock_quantity)
+
+
+                                  Delayed::Job.enqueue(OrderJob.new(order.id), queue: 'order_check_queue', priority: 0, run_at: 15.minutes.from_now)
+
+
+
+                                else
+
+
+                                  @success = false
+
+                                end
+
+
+
+
+
+                              end
 
 
                             else
 
-                              # The stock quantity of the product will be decremented after an order is created
-
-                              # If the order was till pending after 15 minutes the stock quantity of the product will be
-
-                              # re-incremented and the order will be marked canceled
-
-                              ordered_product = {
-                                  id: product.id,
-                                  quantity: quantity,
-                                  price: product.price,
-                                  currency: product.currency,
-                                  product_options: product_options,
-                                  name: product.name
-                              }
-
-                              order = Order.create!(
-                                  products: [ordered_product],
-                                  delivery_location: delivery_location,
-                                  store_user_id: store_user.id,
-                                  customer_user_id: customer_user.id,
-                                  country: geo_location_country_code,
-                                  order_type: order_type
-                              )
-
-                              stock_quantity = product.stock_quantity - quantity
-
-                              product.update!(stock_quantity: stock_quantity)
-
-
-                              Delayed::Job.enqueue(OrderJob.new(order.id), queue: 'order_check_queue', priority: 0, run_at: 15.minutes.from_now)
-
-
-                              @success = true
-
-                              @order = order.to_json
-
+                              @success = false
 
                             end
 
-
                           else
 
+
                             @success = false
+                            @error_code = 4
+                            @product = product.to_json
 
                           end
 
+
+
+
                         else
 
-
                           @success = false
-                          @error_code = 4
+                          @error_code = 3
                           @product = product.to_json
 
+
                         end
-
-
 
 
                       else
 
                         @success = false
-                        @error_code = 3
-                        @product = product.to_json
 
 
                       end
-
 
 
                     else
