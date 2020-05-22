@@ -1,6 +1,6 @@
 class Driver < ApplicationRecord
 
-  belongs_to :customer, touch: true
+  belongs_to :customer_user, touch: true
   before_create :get_driver_country
   serialize :current_location, Hash
   has_many :orders
