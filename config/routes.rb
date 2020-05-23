@@ -145,7 +145,9 @@ Rails.application.routes.draw do
 
   post '/validate-delivery-location' => 'order#validate_delivery_location'
 
+  # Cart Routes
 
+  post '/add-cart' => 'cart#add'
 
 
 
