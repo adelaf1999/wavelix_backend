@@ -3,7 +3,7 @@ class CartController < ApplicationController
   before_action :authenticate_user!
 
 
-  def get_cart_items
+  def get_cart_bundles
 
     if current_user.customer_user?
 
@@ -13,85 +13,66 @@ class CartController < ApplicationController
 
       cookies.encrypted[:cart_id] = cart.id
 
-      @cart_items = {}
+      @cart_bundles = []
 
-      cart.cart_items.each do |cart_item|
+      cart.cart_bundles.each do |cart_bundle|
 
-        product = Product.find_by(id: cart_item.product_id)
+        cart_items = []
 
-        if product != nil
+        cart_bundle.cart_items.each do |cart_item|
 
-          if !product.product_available || product.stock_quantity == 0
+          product = Product.find_by(id: cart_item.product_id)
 
-            cart_item.destroy!
+          if product != nil
 
-          else
+            if !product.product_available || product.stock_quantity == 0
 
-            if cart_item.quantity > product.stock_quantity
-
-              cart_item.update!(quantity: product.stock_quantity)
-
-            end
-
-
-            store_user = product.category.store_user
-
-            store_user_id = cart_item.store_user_id
-
-            if @cart_items[store_user_id] == nil
-
-              store_profile = store_user.store.profile
-
-              @cart_items[store_user_id] = {
-                  :store_name => store_user.store_name,
-                  :store_logo => store_profile.profile_picture.url,
-                  :cart_items => [
-                      {
-                          :cart_item_id => cart_item.id,
-                          :product_name => product.name,
-                          :quantity => cart_item.quantity,
-                          :stock_quantity => product.stock_quantity,
-                          :product_options => cart_item.product_options,
-                          :delivery_location => cart_item.delivery_location,
-                          :oder_type => cart_item.order_type,
-                          :picture => product.main_picture.url
-
-                      }
-                  ]
-              }
+              cart_item.destroy!
 
             else
 
-              cart_items = @cart_items[store_user_id][:cart_items]
+              if cart_item.quantity > product.stock_quantity
 
-              cart_items.push({ :cart_item_id => cart_item.id,
-                                :product_name => product.name,
-                                :quantity => cart_item.quantity,
-                                :stock_quantity => product.stock_quantity,
-                                :product_options => cart_item.product_options,
-                                :delivery_location => cart_item.delivery_location,
-                                :oder_type => cart_item.order_type,
-                                :picture => product.main_picture.url
+                cart_item.update!(quantity: product.stock_quantity)
+
+              end
+
+              cart_items.push({
+                                  product_name: product.name,
+                                  quantity: cart_item.quantity,
+                                  stock_quantity: product.stock_quantity,
+                                  product_options: cart_item.product_options,
+                                  picture: product.main_picture.url,
+                                  cart_item_id: cart_item.id
                               })
-
-
-              @cart_items[store_user_id][:cart_items] = cart_items
-
 
             end
 
+          else
 
+            cart_item.destroy!
 
           end
 
-        else
-
-          cart_item.destroy!
-
         end
+
+        store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
+        store_profile = store_user.store.profile
+
+        @cart_bundles.push({
+                               cart_bundle_id: cart_bundle.id,
+                               delivery_location: cart_bundle.delivery_location,
+                               order_type: cart_bundle.order_type,
+                               cart_items: cart_items,
+                               store_name: store_user.store_name,
+                               store_logo: store_profile.profile_picture.url
+                           })
+
 
 
       end
+
+
 
     end
 
@@ -109,53 +90,82 @@ class CartController < ApplicationController
 
       if product != nil
 
-        quantity = params[:quantity]
+        if customer_user.country == product.store_country
 
-        if quantity != nil
+          quantity = params[:quantity]
 
-          res = /^(?<num>\d+)$/.match(quantity)
+          if quantity != nil
 
-          if res == nil || quantity.to_i == 0
+            res = /^(?<num>\d+)$/.match(quantity)
 
-            @success = false
+            if res == nil || quantity.to_i == 0
 
-          else
+              @success = false
 
-            quantity = quantity.to_i
+            else
 
-            product_options = params[:product_options] # optional can be nil/empty
+              quantity = quantity.to_i
 
-            if product_options != nil && !product_options.empty?
+              product_options = params[:product_options] # optional can be nil/empty
 
-              product_options = eval(product_options)
+              if product_options != nil && !product_options.empty?
 
-              if !product_options.instance_of?(Hash) || product_options.size == 0
+                product_options = eval(product_options)
+
+                if !product_options.instance_of?(Hash) || product_options.size == 0
+
+                  product_options = nil
+
+                end
+
+              else
 
                 product_options = nil
 
               end
 
-            else
+              @success = true
 
-              product_options = nil
+              store_user = product.category.store_user
+
+
+              cart_bundle = CartBundle.find_by(store_user_id: store_user.id)
+
+              if cart_bundle == nil
+
+
+                new_cart_bundle = CartBundle.create!(cart_id: cart.id, store_user_id: store_user.id)
+
+                CartItem.create!(
+                    cart_bundle_id: new_cart_bundle.id,
+                    product_id: product.id,
+                    quantity: quantity,
+                    product_options: product_options
+                )
+
+              else
+
+                CartItem.create!(
+                    cart_bundle_id: cart_bundle.id,
+                    product_id: product.id,
+                    quantity: quantity,
+                    product_options: product_options
+                )
+
+
+              end
+
+              # send cart item to cart channel
 
             end
 
-            @success = true
 
-            store_user = product.category.store_user
+          else
 
-            CartItem.create!(
-                cart_id: cart.id,
-                product_id: product.id,
-                quantity: quantity,
-                product_options: product_options,
-                store_user_id: store_user.id
-            )
-
-            # send cart item to cart channel
+            @success = false
 
           end
+
 
 
         else
