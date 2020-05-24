@@ -11,6 +11,8 @@ class CartController < ApplicationController
 
       cart = customer_user.cart
 
+      cookies.encrypted[:cart_id] = cart.id
+
       @cart_items = {}
 
       cart.cart_items.each do |cart_item|
