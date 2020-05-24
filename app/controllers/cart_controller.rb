@@ -2,6 +2,58 @@ class CartController < ApplicationController
 
   before_action :authenticate_user!
 
+  def delete_cart_item
+
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      cart = customer_user.cart
+
+      cart_bundle = cart.cart_bundles.find_by(id: params[:cart_bundle_id])
+
+      if cart_bundle != nil
+
+        cart_item = cart_bundle.cart_items.find_by(id: params[:cart_item_id])
+
+        if cart_item != nil
+
+
+          if cart_bundle.cart_items.size == 1
+
+            cart_bundle.destroy!
+
+          else
+
+            cart_item.destroy!
+
+          end
+
+          @success = true
+
+          @cart_bundles = customer_cart_bundles(cart)
+
+          ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
 
   def get_cart_bundles
 
@@ -13,65 +65,7 @@ class CartController < ApplicationController
 
       cookies.encrypted[:cart_id] = cart.id
 
-      @cart_bundles = []
-
-      cart.cart_bundles.each do |cart_bundle|
-
-        cart_items = []
-
-        cart_bundle.cart_items.each do |cart_item|
-
-          product = Product.find_by(id: cart_item.product_id)
-
-          if product != nil
-
-            if !product.product_available || product.stock_quantity == 0
-
-              cart_item.destroy!
-
-            else
-
-              if cart_item.quantity > product.stock_quantity
-
-                cart_item.update!(quantity: product.stock_quantity)
-
-              end
-
-              cart_items.push({
-                                  product_name: product.name,
-                                  quantity: cart_item.quantity,
-                                  stock_quantity: product.stock_quantity,
-                                  product_options: cart_item.product_options,
-                                  picture: product.main_picture.url,
-                                  cart_item_id: cart_item.id
-                              })
-
-            end
-
-          else
-
-            cart_item.destroy!
-
-          end
-
-        end
-
-        store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
-        store_profile = store_user.store.profile
-
-        @cart_bundles.push({
-                               cart_bundle_id: cart_bundle.id,
-                               delivery_location: cart_bundle.delivery_location,
-                               order_type: cart_bundle.order_type,
-                               cart_items: cart_items,
-                               store_name: store_user.store_name,
-                               store_logo: store_profile.profile_picture.url
-                           })
-
-
-
-      end
-
+      @cart_bundles = customer_cart_bundles(cart)
 
 
     end
@@ -155,7 +149,11 @@ class CartController < ApplicationController
 
               end
 
-              # send cart item to cart channel
+
+              @cart_bundles = customer_cart_bundles(cart)
+
+              ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
+
 
             end
 
@@ -184,6 +182,75 @@ class CartController < ApplicationController
 
 
     end
+
+  end
+
+
+  private
+
+  def customer_cart_bundles(cart)
+
+    cart_bundles = []
+
+    cart.cart_bundles.each do |cart_bundle|
+
+      cart_items = []
+
+      cart_bundle.cart_items.each do |cart_item|
+
+        product = Product.find_by(id: cart_item.product_id)
+
+        if product != nil
+
+          if !product.product_available || product.stock_quantity == 0
+
+            cart_item.destroy!
+
+          else
+
+            if cart_item.quantity > product.stock_quantity
+
+              cart_item.update!(quantity: product.stock_quantity)
+
+            end
+
+            cart_items.push({
+                                product_name: product.name,
+                                quantity: cart_item.quantity,
+                                stock_quantity: product.stock_quantity,
+                                product_options: cart_item.product_options,
+                                picture: product.main_picture.url,
+                                cart_item_id: cart_item.id
+                            })
+
+          end
+
+        else
+
+          cart_item.destroy!
+
+        end
+
+      end
+
+      store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
+      store_profile = store_user.store.profile
+
+      cart_bundles.push({
+                             cart_bundle_id: cart_bundle.id,
+                             delivery_location: cart_bundle.delivery_location,
+                             order_type: cart_bundle.order_type,
+                             cart_items: cart_items,
+                             store_name: store_user.store_name,
+                             store_logo: store_profile.profile_picture.url
+                         })
+
+
+
+    end
+
+    cart_bundles
+
 
   end
 
