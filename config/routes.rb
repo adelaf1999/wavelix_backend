@@ -149,6 +149,8 @@ Rails.application.routes.draw do
 
   post '/add-cart' => 'cart#add'
 
+  get '/get-cart-items' => 'cart#get_cart_items'
+
 
 
 
