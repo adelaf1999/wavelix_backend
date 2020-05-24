@@ -38,8 +38,11 @@ class CartController < ApplicationController
 
             if @cart_items[store_user_id] == nil
 
+              store_profile = store_user.store.profile
+
               @cart_items[store_user_id] = {
                   :store_name => store_user.store_name,
+                  :store_logo => store_profile.profile_picture.url,
                   :cart_items => [
                       {
                           :cart_item_id => cart_item.id,
