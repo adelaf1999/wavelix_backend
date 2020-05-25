@@ -496,7 +496,8 @@ class CartController < ApplicationController
                             order_type: cart_bundle.order_type,
                             cart_items: cart_items,
                             store_name: store_user.store_name,
-                            store_logo: store_profile.profile_picture.url
+                            store_logo: store_profile.profile_picture.url,
+                            store_location: store_user.store_address
                         })
 
 
