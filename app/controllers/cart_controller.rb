@@ -315,6 +315,8 @@ class CartController < ApplicationController
 
       @cart_bundles = customer_cart_bundles(cart)
 
+      @home_address = customer_user.home_address
+
 
     end
 
