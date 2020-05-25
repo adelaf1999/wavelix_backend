@@ -5,7 +5,7 @@ class CartController < ApplicationController
   include OrderHelper
 
 
-  def set_cart_bundle_location
+  def validate_cart_bundle_location
 
     # error_codes
 
@@ -21,76 +21,56 @@ class CartController < ApplicationController
 
       if cart_bundle != nil
 
+        delivery_location = params[:delivery_location]
 
-        if cart_bundle.delivery_location.nil? || cart_bundle.delivery_location.empty?
+        if delivery_location != nil
 
-          delivery_location = params[:delivery_location]
+          delivery_location = eval(delivery_location)
 
-          if delivery_location != nil
+          if delivery_location.instance_of?(Hash) && !delivery_location.empty?
 
-            delivery_location = eval(delivery_location)
+            latitude = delivery_location[:latitude]
 
-            if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+            longitude = delivery_location[:longitude]
 
-              latitude = delivery_location[:latitude]
+            if latitude != nil && longitude != nil
 
-              longitude = delivery_location[:longitude]
+              if is_number?(latitude) && is_number?(longitude)
 
-              if latitude != nil && longitude != nil
+                latitude = latitude.to_d
 
-                if is_number?(latitude) && is_number?(longitude)
+                longitude = longitude.to_d
 
-                  latitude = latitude.to_d
+                # Make sure delivery location is in store country
 
-                  longitude = longitude.to_d
+                geo_location = Geocoder.search([latitude, longitude])
 
-                  # Make sure delivery location is in store country
+                if geo_location.size > 0
 
-                  geo_location = Geocoder.search([latitude, longitude])
+                  geo_location_country_code = geo_location.first.country_code
 
-                  if geo_location.size > 0
-
-                    geo_location_country_code = geo_location.first.country_code
-
-
-                    store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
+                  store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
 
 
-                    if geo_location_country_code == store_user.store_country
+                  if geo_location_country_code == store_user.store_country
 
-                      distance = calculate_distance_km(delivery_location, store_user.store_address )
+                    distance = calculate_distance_km(delivery_location, store_user.store_address )
 
-                      if distance <= 100
+                    if distance <= 100
 
-                        @success = true
-
-                        cart_bundle.update!(delivery_location: delivery_location)
-
-                        if distance > 25
-
-                          @delivery_options = { 1 => 'Exclusive Delivery' }
-
-                        else
-
-                          @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
-
-                        end
+                      @success = true
 
 
-                        @cart_bundles = customer_cart_bundles(cart)
+                      if distance > 25
 
-                        ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
-
+                        @delivery_options = { 1 => 'Exclusive Delivery' }
 
                       else
 
-                        @success = false
-
-                        @error_code = 1
-
-                        @message = 'Delivery location outside deliverable zone'
+                        @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
 
                       end
+
 
 
                     else
@@ -99,7 +79,7 @@ class CartController < ApplicationController
 
                       @error_code = 1
 
-                      @message =  'Delivery location outside store country'
+                      @message = 'Delivery location outside deliverable zone'
 
                     end
 
@@ -110,26 +90,29 @@ class CartController < ApplicationController
 
                     @error_code = 1
 
-                    @message = 'Delivery location outside deliverable zone'
+                    @message =  'Delivery location outside store country'
 
                   end
 
+
+                else
+
+                  @success = false
+
+                  @error_code = 1
+
+                  @message = 'Delivery location outside deliverable zone'
+
                 end
 
-
               end
+
 
             end
 
           end
 
-
-        else
-
-          @success = false
-
         end
-
 
 
       else
@@ -138,9 +121,9 @@ class CartController < ApplicationController
 
         @error_code = 0
 
-        @cart_bundles = customer_cart_bundles(cart)
+        cart_bundles = customer_cart_bundles(cart)
 
-        ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
+        ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: cart_bundles}
 
       end
 

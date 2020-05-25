@@ -153,7 +153,7 @@ Rails.application.routes.draw do
 
   post '/delete-cart-item' => 'cart#delete_cart_item'
 
-  post '/set-cart-bundle-location' => 'cart#set_cart_bundle_location'
+  post '/validate-cart-bundle-location' => 'cart#validate_cart_bundle_location'
 
 
 
