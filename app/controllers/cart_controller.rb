@@ -2,6 +2,153 @@ class CartController < ApplicationController
 
   before_action :authenticate_user!
 
+  include OrderHelper
+
+
+  def set_cart_bundle_location
+
+    # error_codes
+
+    # { 0: CART_BUNDLE_NOT_FOUND, 1: INVALID_DELIVERY_LOCATION }
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      cart = customer_user.cart
+
+      cart_bundle = cart.cart_bundles.find_by(id: params[:cart_bundle_id])
+
+      if cart_bundle != nil
+
+
+        if cart_bundle.delivery_location.nil? || cart_bundle.delivery_location.empty?
+
+          delivery_location = params[:delivery_location]
+
+          if delivery_location != nil
+
+            delivery_location = eval(delivery_location)
+
+            if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+              latitude = delivery_location[:latitude]
+
+              longitude = delivery_location[:longitude]
+
+              if latitude != nil && longitude != nil
+
+                if is_number?(latitude) && is_number?(longitude)
+
+                  latitude = latitude.to_d
+
+                  longitude = longitude.to_d
+
+                  # Make sure delivery location is in store country
+
+                  geo_location = Geocoder.search([latitude, longitude])
+
+                  if geo_location.size > 0
+
+                    geo_location_country_code = geo_location.first.country_code
+
+
+                    store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
+
+
+                    if geo_location_country_code == store_user.store_country
+
+                      distance = calculate_distance_km(delivery_location, store_user.store_address )
+
+                      if distance <= 100
+
+                        @success = true
+
+                        cart_bundle.update!(delivery_location: delivery_location)
+
+                        if distance > 25
+
+                          @delivery_options = { 1 => 'Exclusive Delivery' }
+
+                        else
+
+                          @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+
+                        end
+
+
+                        @cart_bundles = customer_cart_bundles(cart)
+
+                        ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
+
+
+                      else
+
+                        @success = false
+
+                        @error_code = 1
+
+                        @message = 'Delivery location outside deliverable zone'
+
+                      end
+
+
+                    else
+
+                      @success = false
+
+                      @error_code = 1
+
+                      @message =  'Delivery location outside store country'
+
+                    end
+
+
+                  else
+
+                    @success = false
+
+                    @error_code = 1
+
+                    @message = 'Delivery location outside deliverable zone'
+
+                  end
+
+                end
+
+
+              end
+
+            end
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+
+
+      else
+
+        @success = false
+
+        @error_code = 0
+
+        @cart_bundles = customer_cart_bundles(cart)
+
+        ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
+
+      end
+
+
+    end
+
+  end
+
   def delete_cart_item
 
 
@@ -187,6 +334,12 @@ class CartController < ApplicationController
 
 
   private
+
+  def is_number?(arg)
+
+    arg.is_a?(Numeric)
+
+  end
 
   def customer_cart_bundles(cart)
 
