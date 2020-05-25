@@ -5,6 +5,124 @@ class CartController < ApplicationController
   include OrderHelper
 
 
+  def setup_cart_bundle
+
+    # error_codes
+
+    # { 0: CART_BUNDLE_NOT_FOUND }
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      cart = customer_user.cart
+
+      cart_bundle = cart.cart_bundles.find_by(id: params[:cart_bundle_id])
+
+      if cart_bundle != nil
+
+        if (cart_bundle.delivery_location.nil? ||  cart_bundle.delivery_location.empty? ) && cart_bundle.order_type == nil
+
+          delivery_location = params[:delivery_location]
+
+          if delivery_location != nil
+
+            delivery_location = eval(delivery_location)
+
+            if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+              latitude = delivery_location[:latitude]
+
+              longitude = delivery_location[:longitude]
+
+              if latitude != nil && longitude != nil
+
+                if is_number?(latitude) && is_number?(longitude)
+
+                  latitude = latitude.to_d
+
+                  longitude = longitude.to_d
+
+                  # Make sure delivery location is in store country
+
+                  geo_location = Geocoder.search([latitude, longitude])
+
+                  if geo_location.size > 0
+
+                    geo_location_country_code = geo_location.first.country_code
+
+                    store_user = StoreUser.find_by(id: cart_bundle.store_user_id)
+
+                    if geo_location_country_code == store_user.store_country
+
+                      distance = calculate_distance_km(delivery_location, store_user.store_address )
+
+                      if distance <= 100
+
+                        # Exclusive delivery is available up to 100 KM
+
+                        # Standard delivery is only available if delivery location is within 25 KM of the store
+
+                        order_type = params[:order_type]
+
+                        if is_order_type_valid?(order_type)
+
+                          order_type = order_type.to_i
+
+                          if order_type == 0 && distance <= 25 || order_type == 1
+
+                            @success = true
+
+                            cart_bundle.update!(delivery_location: delivery_location, order_type: order_type)
+
+                            @cart_bundles = customer_cart_bundles(cart)
+
+                            ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: @cart_bundles}
+
+                          end
+
+
+                        end
+
+                      end
+
+
+                    end
+
+
+
+                  end
+
+                end
+
+
+              end
+
+
+            end
+
+
+          end
+
+        end
+
+      else
+
+        @success = false
+
+        @error_code = 0
+
+        cart_bundles = customer_cart_bundles(cart)
+
+        ActionCable.server.broadcast "cart_#{cart.id}_customer_#{current_user.id}", {cart_bundles: cart_bundles}
+
+      end
+
+    end
+
+  end
+
+
   def validate_cart_bundle_location
 
     # error_codes
@@ -373,13 +491,13 @@ class CartController < ApplicationController
       store_profile = store_user.store.profile
 
       cart_bundles.push({
-                             cart_bundle_id: cart_bundle.id,
-                             delivery_location: cart_bundle.delivery_location,
-                             order_type: cart_bundle.order_type,
-                             cart_items: cart_items,
-                             store_name: store_user.store_name,
-                             store_logo: store_profile.profile_picture.url
-                         })
+                            cart_bundle_id: cart_bundle.id,
+                            delivery_location: cart_bundle.delivery_location,
+                            order_type: cart_bundle.order_type,
+                            cart_items: cart_items,
+                            store_name: store_user.store_name,
+                            store_logo: store_profile.profile_picture.url
+                        })
 
 
 

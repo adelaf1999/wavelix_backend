@@ -155,6 +155,8 @@ Rails.application.routes.draw do
 
   post '/validate-cart-bundle-location' => 'cart#validate_cart_bundle_location'
 
+  post '/setup-cart-bundle' => 'cart#setup_cart_bundle'
+
 
 
 

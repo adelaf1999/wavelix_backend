@@ -20,4 +20,24 @@ module OrderHelper
 
   end
 
+  def is_order_type_valid?(order_type)
+
+
+    res = /^(?<num>\d+)$/.match(order_type)
+
+    if res == nil
+
+      false
+
+    else
+
+      order_type = order_type.to_i
+
+      order_type == 0 || order_type == 1
+
+    end
+
+
+  end
+
 end
