@@ -15,59 +15,107 @@ class CartController < ApplicationController
 
       @cart_items = []
 
-      cart.cart_items.each do |cart_item|
+      current_location = params[:current_location]
 
-        product = Product.find_by(id: cart_item.product_id)
+      if current_location != nil
 
-        if product != nil
+        current_location = eval(current_location)
 
-          if !product.product_available
+        if current_location.instance_of?(Hash)
 
-            cart_item.destroy!
+          latitude = current_location[:latitude]
 
-          elsif product.stock_quantity == 0
+          longitude = current_location[:longitude]
 
-            cart_item.destroy!
+          if latitude != nil && longitude != nil
 
-          else
+            if is_number?(latitude) && is_number?(longitude)
 
-            if cart_item.quantity > product.stock_quantity
+              latitude = latitude.to_d
 
-              cart_item.update!(quantity: product.stock_quantity)
+              longitude = longitude.to_d
+
+              geo_location = Geocoder.search([latitude, longitude])
+
+              if geo_location.size > 0
+
+                geo_location_country_code = geo_location.first.country_code
+
+                # Update customer country code and delete products not in country code
+
+                customer_user.update!(country: geo_location_country_code)
+
+                cart.cart_items.each do |cart_item|
+
+                  product = Product.find_by(id: cart_item.product_id)
+
+                  if product != nil
+
+                    if !product.product_available
+
+                      cart_item.destroy!
+
+                    elsif product.stock_quantity == 0
+
+                      cart_item.destroy!
+
+                    elsif customer_user.country != product.store_country
+
+                      cart_item.destroy!
+
+                    else
+
+                      if cart_item.quantity > product.stock_quantity
+
+                        cart_item.update!(quantity: product.stock_quantity)
+
+                      end
+
+
+                      store_user = StoreUser.find_by(id: cart_item.store_user_id)
+
+                      store_profile = store_user.store.profile
+
+                      @cart_items.push(
+                          {
+                              cart_item_id: cart_item.id,
+                              quantity: cart_item.quantity,
+                              product_options: cart_item.product_options,
+                              store_name: store_user.store_name,
+                              product_picture: product.main_picture.url,
+                              store_logo: store_profile.profile_picture.url,
+                              stock_quantity: product.stock_quantity,
+                              product_name: product.name
+                          }
+                      )
+
+
+                    end
+
+                  else
+
+                    cart_item.destroy!
+
+                  end
+
+                end
+
+                # Send cart items to cart channel
+
+
+
+              end
+
 
             end
 
-
-            store_user = StoreUser.find_by(id: cart_item.store_user_id)
-
-            store_profile = store_user.store.profile
-
-            @cart_items.push(
-                {
-                    cart_item_id: cart_item.id,
-                    quantity: cart_item.quantity,
-                    product_options: cart_item.product_options,
-                    store_name: store_user.store_name,
-                    product_picture: product.main_picture.url,
-                    store_logo: store_profile.profile_picture.url,
-                    stock_quantity: product.stock_quantity,
-                    product_name: product.name
-                }
-            )
-
-
           end
-
-
-        else
-
-          cart_item.destroy!
 
         end
 
       end
 
-      # Send cart items to cart channel
+
 
     end
 
