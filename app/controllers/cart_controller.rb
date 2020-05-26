@@ -5,6 +5,74 @@ class CartController < ApplicationController
   include OrderHelper
 
 
+  def get_cart_items
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      cart = customer_user.cart
+
+      @cart_items = []
+
+      cart.cart_items.each do |cart_item|
+
+        product = Product.find_by(id: cart_item.product_id)
+
+        if product != nil
+
+          if !product.product_available
+
+            cart_item.destroy!
+
+          elsif product.stock_quantity == 0
+
+            cart_item.destroy!
+
+          else
+
+            if cart_item.quantity > product.stock_quantity
+
+              cart_item.update!(quantity: product.stock_quantity)
+
+            end
+
+
+            store_user = StoreUser.find_by(id: cart_item.store_user_id)
+
+            store_profile = store_user.store.profile
+
+            @cart_items.push(
+                {
+                    cart_item_id: cart_item.id,
+                    quantity: cart_item.quantity,
+                    product_options: cart_item.product_options,
+                    store_name: store_user.store_name,
+                    product_picture: product.main_picture.url,
+                    store_logo: store_profile.profile_picture.url,
+                    stock_quantity: product.stock_quantity,
+                    product_name: product.name
+                }
+            )
+
+
+          end
+
+
+        else
+
+          cart_item.destroy!
+
+        end
+
+      end
+
+      # Send cart items to cart channel
+
+    end
+
+  end
+
   def add
 
     if current_user.customer_user?
