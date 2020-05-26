@@ -149,14 +149,6 @@ Rails.application.routes.draw do
 
   post '/add-cart' => 'cart#add'
 
-  get '/get-cart-bundles' => 'cart#get_cart_bundles'
-
-  post '/delete-cart-item' => 'cart#delete_cart_item'
-
-  post '/validate-cart-bundle-location' => 'cart#validate_cart_bundle_location'
-
-  post '/setup-cart-bundle' => 'cart#setup_cart_bundle'
-
 
 
 

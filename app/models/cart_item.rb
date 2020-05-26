@@ -1,7 +1,7 @@
 class CartItem < ApplicationRecord
 
 
-  belongs_to :cart_bundle
+  belongs_to :cart
 
   serialize :product_options, Hash
 
