@@ -151,6 +151,8 @@ Rails.application.routes.draw do
 
   post '/get-cart-items' => 'cart#get_cart_items'
 
+  post '/delete-cart-item' => 'cart#delete_cart_item'
+
 
 
 
