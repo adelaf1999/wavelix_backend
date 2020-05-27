@@ -4,6 +4,242 @@ class CartController < ApplicationController
 
   include OrderHelper
 
+  def check_cart_delivery_location
+
+    # error_codes
+
+    # { 0: INVALID_DELIVERY_LOCATION, 1:  ITEMS_OUTSIDE_DELIVERABLE_ZONE, 2: ALL_ITEMS_OUTSIDE_DELIVERABLE_ZONE}
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      cart = customer_user.cart
+
+      selected_cart_items = params[:selected_cart_items]
+
+      if selected_cart_items != nil
+
+        selected_cart_items = eval(selected_cart_items)
+
+        if selected_cart_items.instance_of?(Array) && selected_cart_items.size > 0
+
+
+          # If the cart item is not found it gets deleted from the selected cart items
+
+          selected_cart_items.delete_if do |cart_item_id|
+
+            cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+            cart_item == nil
+
+          end
+
+
+          ActionCable.server.broadcast "cart_#{cart.id}_user_#{current_user.id}_channel", {selected_cart_items: selected_cart_items}
+
+
+          if selected_cart_items.size > 0
+
+
+            delivery_location = params[:delivery_location]
+
+            if delivery_location != nil
+
+              delivery_location = eval(delivery_location)
+
+              if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+                latitude = delivery_location[:latitude]
+
+                longitude = delivery_location[:longitude]
+
+                if latitude != nil && longitude != nil
+
+                  if is_number?(latitude) && is_number?(longitude)
+
+                    latitude = latitude.to_d
+
+                    longitude = longitude.to_d
+
+                    # Make sure delivery location is in store country
+
+                    geo_location = Geocoder.search([latitude, longitude])
+
+                    if geo_location.size > 0
+
+
+                      geo_location_country_code = geo_location.first.country_code
+
+                      country_valid = true
+
+
+                      # Check if all stores are in the country of the delivery location
+
+                      selected_cart_items.each do |cart_item_id|
+
+                        cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                        store_user = StoreUser.find_by(id: cart_item.store_user_id)
+
+                        if geo_location_country_code != store_user.store_country
+
+                          @success = false
+                          @error_code = 0
+                          @message = 'Delivery location outside store(s) country'
+                          country_valid = false
+                          break
+
+                        end
+
+                      end
+
+                      if country_valid
+
+
+                        @outside_zone_items = []
+                        @delivery_options = {}
+                        outside_zone_stores = []
+                        has_outside_zone_items = false
+
+                        # Check if all stores are within deliverable zone from delivery location
+
+                        selected_cart_items.each do |cart_item_id|
+
+                          cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                          store_user = StoreUser.find_by(id: cart_item.store_user_id)
+
+                          distance = calculate_distance_km(delivery_location, store_user.store_address )
+
+                          if distance <= 100
+
+
+                            if distance > 25
+
+                              if @delivery_options[store_user.id].nil?
+
+                                @delivery_options[store_user.id] = {
+                                    store_name: store_user.store_name,
+                                    options: { 1 => 'Exclusive Delivery' }
+                                }
+
+                              end
+
+
+                            else
+
+
+                              if @delivery_options[store_user.id].nil?
+
+                                @delivery_options[store_user.id] = {
+                                    store_name: store_user.store_name,
+                                    options: { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+                                }
+
+                              end
+
+                            end
+
+
+                          else
+
+                            has_outside_zone_items = true
+
+                            @outside_zone_items.push(cart_item_id)
+
+                            if !outside_zone_stores.include?(store_user.store_name)
+
+                              outside_zone_stores.push(store_user.store_name)
+
+                            end
+
+                          end
+
+
+                        end
+
+
+
+                        if has_outside_zone_items
+
+
+                          @success = false
+
+
+                          if @outside_zone_items.length == selected_cart_items.length
+
+                            @error_code = 2
+
+                            @message = 'Delivery location outside deliverable zone'
+
+                          else
+
+                            @error_code = 1
+
+                            @message = 'Item(s) from the following store(s) are outside deliverable zone: '
+
+
+                            outside_zone_stores.each do |store_name|
+                              @message += ' ' + store_name + ','
+                            end
+
+                            @message.delete_suffix!(',')
+
+                            @message += '. '
+
+                            @message += 'Do you want to exclude them and continue?'
+
+
+
+                          end
+
+
+
+
+
+                        else
+
+
+                          @success = true
+
+                        end
+
+
+                      end
+
+
+                    else
+
+                      @success = false
+                      @error_code = 0
+                      @message = 'Delivery location outside deliverable zone'
+
+
+                    end
+
+                  end
+
+                end
+
+
+              end
+
+            end
+
+
+          end
+
+
+        end
+
+      end
+
+
+    end
+
+  end
+
 
   def delete_cart_item
 
