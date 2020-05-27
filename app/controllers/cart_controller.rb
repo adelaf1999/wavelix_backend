@@ -45,6 +45,8 @@ class CartController < ApplicationController
 
       @cart_items = []
 
+      cookies.encrypted[:cart_id] = cart.id
+
       current_location = params[:current_location]
 
       if current_location != nil
