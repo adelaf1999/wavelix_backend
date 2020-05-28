@@ -281,6 +281,8 @@ class CartController < ApplicationController
 
       @cart_items = []
 
+      @home_address = customer_user.home_address
+
       cookies.encrypted[:cart_id] = cart.id
 
       current_location = params[:current_location]
