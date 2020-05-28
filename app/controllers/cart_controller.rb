@@ -8,7 +8,7 @@ class CartController < ApplicationController
 
     # error_codes
 
-    # { 0: INVALID_DELIVERY_LOCATION, 1:  ITEMS_OUTSIDE_DELIVERABLE_ZONE, 2: ALL_ITEMS_OUTSIDE_DELIVERABLE_ZONE}
+    # { 0: INVALID_DELIVERY_LOCATION, 1:  ITEMS_OUTSIDE_DELIVERABLE_ZONE}
 
     if current_user.customer_user?
 
@@ -169,7 +169,7 @@ class CartController < ApplicationController
 
                           if @outside_zone_items.length == selected_cart_items.length
 
-                            @error_code = 2
+                            @error_code = 0
 
                             @message = 'Delivery location outside deliverable zone'
 
