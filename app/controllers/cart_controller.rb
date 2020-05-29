@@ -110,6 +110,8 @@ class CartController < ApplicationController
 
                           store_user = StoreUser.find_by(id: cart_item.store_user_id)
 
+                          store_profile = store_user.store.profile
+
                           distance = calculate_distance_km(delivery_location, store_user.store_address )
 
                           if distance <= 100
@@ -119,8 +121,10 @@ class CartController < ApplicationController
 
                               if @delivery_options[store_user.id].nil?
 
+
                                 @delivery_options[store_user.id] = {
                                     store_name: store_user.store_name,
+                                    store_logo: store_profile.profile_picture.url,
                                     options: { 1 => 'Exclusive Delivery' }
                                 }
 
@@ -134,6 +138,7 @@ class CartController < ApplicationController
 
                                 @delivery_options[store_user.id] = {
                                     store_name: store_user.store_name,
+                                    store_logo: store_profile.profile_picture.url,
                                     options: { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
                                 }
 
