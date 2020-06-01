@@ -85,7 +85,7 @@ module Auth
             end
 
             def store_user_params
-                params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number,  :store_business_license, :currency, :schedule)
+                params.permit(:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number,  :store_business_license, :currency, :schedule, :handles_delivery, :has_sensitive_products)
             end
 
             def validate_store_user_params
@@ -93,7 +93,7 @@ module Auth
 
                  valid = true
 
-                 req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_business_license, :currency, :schedule]
+                 req_params = [:store_owner_full_name, :store_owner_work_number, :store_name, :store_address, :store_number, :store_business_license, :currency, :schedule, :handles_delivery, :has_sensitive_products]
 
 
                  store_params = store_user_params
@@ -115,6 +115,8 @@ module Auth
                     store_number = store_params[:store_number]
                     store_business_license = store_params[:store_business_license]
                     currency = store_params[:currency]
+                    handles_delivery = eval(store_params[:handles_delivery])
+                    has_sensitive_products = eval(store_params[:has_sensitive_products])
 
 
                     begin
@@ -127,13 +129,16 @@ module Auth
 
                     end
 
-                    # store_country_code = store_params[:store_country]
-                    # c = ISO3166::Country.new(store_country_code)
-                    # To get country name: c.name
-
                     store_address = eval(store_params[:store_address])
                     latitude = store_address[:latitude]
                     longitude = store_address[:longitude]
+
+
+                    if valid &&  ( !is_boolean?(handles_delivery) || !is_boolean?(has_sensitive_products) )
+
+                      valid = false
+
+                    end
 
 
 
@@ -295,7 +300,9 @@ module Auth
                             store_number: store_number,
                             store_country: country_code,
                             store_business_license: store_business_license,
-                            currency: currency
+                            currency: currency,
+                            has_sensitive_products: has_sensitive_products,
+                            handles_delivery: handles_delivery
                         )
 
 
@@ -340,6 +347,10 @@ module Auth
 
 
             protected
+
+            def is_boolean?(value)
+              [true, false].include? value
+            end
 
             def is_time_valid?(time)
 
