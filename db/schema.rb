@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_26_134355) do
+ActiveRecord::Schema.define(version: 2020_06_01_091841) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -58,6 +58,16 @@ ActiveRecord::Schema.define(version: 2020_05_26_134355) do
     t.string "building_name"
     t.integer "apartment_floor"
     t.string "country", null: false
+  end
+
+  create_table "days", force: :cascade do |t|
+    t.string "open_at"
+    t.string "close_at"
+    t.integer "week_day", null: false
+    t.boolean "closed", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.integer "schedule_id", null: false
   end
 
   create_table "delayed_jobs", force: :cascade do |t|
@@ -159,6 +169,12 @@ ActiveRecord::Schema.define(version: 2020_05_26_134355) do
     t.integer "privacy", default: 0
     t.text "profile_picture"
     t.string "profile_bio"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "schedules", force: :cascade do |t|
+    t.integer "store_user_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end

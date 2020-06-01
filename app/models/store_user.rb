@@ -7,6 +7,7 @@ class StoreUser < ApplicationRecord
     enum status: {unverified: 0, verified: 1}
     has_many :orders
     after_create :save_street_name
+    has_one :schedule
    
 
     def get_categories
