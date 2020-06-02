@@ -155,5 +155,9 @@ Rails.application.routes.draw do
 
   post '/check-cart-delivery-location' => 'cart#check_cart_delivery_location'
 
+  # Customer Settings Routes
+
+  get '/customer-settings' => 'customer_settings#index'
+
 
 end
