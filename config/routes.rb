@@ -113,6 +113,8 @@ Rails.application.routes.draw do
 
   post '/search-products' => 'search#search_products'
 
+  post '/search-index' => 'search#index'
+
   # Follow Routes
 
   post '/follow-user' => 'follow#follow'

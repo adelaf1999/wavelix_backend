@@ -4,6 +4,75 @@ class SearchController < ApplicationController
 
   before_action :authenticate_user!
 
+  def index
+
+    @currencies = get_currencies
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      @currency = customer_user.default_currency
+
+      current_location = params[:current_location]
+
+      if current_location != nil
+
+        current_location = eval(current_location)
+
+        if current_location.instance_of?(Hash)
+
+          latitude = current_location[:latitude]
+
+          longitude = current_location[:longitude]
+
+          if latitude != nil && longitude != nil
+
+            if is_number?(latitude) && is_number?(longitude)
+
+              latitude = latitude.to_d
+
+              longitude = longitude.to_d
+
+              geo_location = Geocoder.search([latitude, longitude])
+
+              if geo_location.size > 0
+
+                geo_location_country_code = geo_location.first.country_code
+
+                customer_user.update!(country: geo_location_country_code)
+
+                @country = geo_location_country_code
+
+
+              else
+
+                @country = customer_user.country
+
+              end
+
+            end
+
+          end
+
+        end
+
+      end
+
+
+
+    else
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      @country = store_user.store_country
+
+      @currency = store_user.currency
+
+    end
+
+  end
+
   def search_users
 
     # search for users by full_name and username
@@ -96,68 +165,68 @@ class SearchController < ApplicationController
 
       if store_name.length > 0 && country != nil && is_limit_valid
 
-          limit = limit.to_i
+        limit = limit.to_i
 
-          if current_user.store_user?
-
-
-            if street_name != nil && street_name.length > 0
-
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
-
-            else
-
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
-
-            end
+        if current_user.store_user?
 
 
+          if street_name != nil && street_name.length > 0
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
-
-            user_address = store_user.store_address
+            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
 
           else
 
-            if street_name != nil && street_name.length > 0
-
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).limit(limit)
-
-            else
-
-              stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).limit(limit)
-
-            end
-
-
-
-            customer_user = CustomerUser.find_by(customer_id: current_user.id)
-
-            user_address = customer_user.home_address
+            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).where.not(store_id: current_user.id).limit(limit)
 
           end
 
 
-          stores.each do |store|
 
-            user = User.find_by(id: store.store_id)
+          store_user = StoreUser.find_by(store_id: current_user.id)
 
-            profile = user.profile
+          user_address = store_user.store_address
 
-            distance = calculate_distance(user_address, store.store_address)
+        else
 
-            @results.push({
-                              profile_picture: profile.profile_picture.url,
-                              username: user.username,
-                              country: store.store_country,
-                              name: store.store_name,
-                              distance: distance,
-                              street_name: store.street_name,
-                              profile_id: profile.id
-                          })
+          if street_name != nil && street_name.length > 0
+
+            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where("street_name ILIKE ?", "%#{street_name}%" ).where(status: 1, store_country: country_code).limit(limit)
+
+          else
+
+            stores = StoreUser.all.where("store_name ILIKE ?", "%#{store_name}%" ).where(status: 1, store_country: country_code).limit(limit)
+
           end
 
-         @results = @results.sort_by { |hsh| hsh[:distance] } # returns sorted array of hashes asc by distance
+
+
+          customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+          user_address = customer_user.home_address
+
+        end
+
+
+        stores.each do |store|
+
+          user = User.find_by(id: store.store_id)
+
+          profile = user.profile
+
+          distance = calculate_distance(user_address, store.store_address)
+
+          @results.push({
+                            profile_picture: profile.profile_picture.url,
+                            username: user.username,
+                            country: store.store_country,
+                            name: store.store_name,
+                            distance: distance,
+                            street_name: store.street_name,
+                            profile_id: profile.id
+                        })
+        end
+
+        @results = @results.sort_by { |hsh| hsh[:distance] } # returns sorted array of hashes asc by distance
 
 
 
@@ -276,6 +345,12 @@ class SearchController < ApplicationController
 
 
   private
+
+  def is_number?(arg)
+
+    arg.is_a?(Numeric)
+
+  end
 
   def add_product(product, store_user, base_currency, distance, results)
 
