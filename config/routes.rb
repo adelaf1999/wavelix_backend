@@ -159,5 +159,7 @@ Rails.application.routes.draw do
 
   get '/customer-settings' => 'customer_settings#index'
 
+  post '/change-default-currency' => 'customer_settings#change_default_currency'
+
 
 end

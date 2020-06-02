@@ -2,6 +2,7 @@ if @default_currency != nil
     node(:default_currency) { @default_currency }
 end
 
-if @currencies != nil
-    node(:currencies) { @currencies }
+if @success != nil
+    node(:success) { @success  }
 end
+
