@@ -163,5 +163,9 @@ Rails.application.routes.draw do
 
   post '/change-default-currency' => 'customer_settings#change_default_currency'
 
+  # Stores Routes
+
+  get '/get-store-currency' => 'stores#get_store_currency'
+
 
 end
