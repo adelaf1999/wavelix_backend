@@ -53,32 +53,7 @@ class Product < ApplicationRecord
      end
 
    end
-
-   def decrement_stock_quantity(amount)
-        # amount must be an integer
-       if is_positive_integer?(amount.to_s)
-            
-            amount = amount.to_i
-            
-            if amount > 0 && (amount <= self.stock_quantity )
-
-                # prevent stock quantity from being negative and make sure its greater than 0
-
-                stock_quantity = self.stock_quantity - amount
-
-                self.update!(stock_quantity: stock_quantity)
-
-                # if stock_quantity == 0
-                #     self.update!(product_available: false, stock_quantity: stock_quantity )
-                # else
-                #     self.update!(stock_quantity: stock_quantity)
-                # end
-
-            end
-       
-        end
-   end
-
+   
 
    def remove_image(image_name)
 
