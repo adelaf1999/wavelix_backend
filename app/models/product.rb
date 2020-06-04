@@ -1,6 +1,6 @@
 class Product < ApplicationRecord
 
-   validates_presence_of :name, :description, :price, :main_picture, :category_id, :stock_quantity
+   validates_presence_of :name, :price, :main_picture, :category_id
 
    mount_uploader :main_picture, ImageUploader
 

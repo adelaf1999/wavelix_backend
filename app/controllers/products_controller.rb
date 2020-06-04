@@ -80,7 +80,7 @@ class ProductsController < ApplicationController
 
                 else
 
-                  @success = false
+                    @success = false
 
                 end
 
@@ -89,7 +89,7 @@ class ProductsController < ApplicationController
 
             else
 
-              @success = false
+                @success = false
 
             end
 
@@ -97,7 +97,7 @@ class ProductsController < ApplicationController
 
         else
 
-          @success = false
+            @success = false
 
         end
 
@@ -112,15 +112,17 @@ class ProductsController < ApplicationController
 
             missing_params = false
 
-            req_params = [:name, :description, :price, :main_picture, :category_id, :stock_quantity]
+            req_params = [:name,  :price, :main_picture, :category_id]
+
+            # optional params: description, stock_quantity
 
 
             product_params = params.permit(
-                :name, 
-                :description, 
-                :price, 
-                :main_picture, 
-                :category_id, 
+                :name,
+                :description,
+                :price,
+                :main_picture,
+                :category_id,
                 :stock_quantity,
                 :product_attributes,
                 {product_pictures: []},
@@ -128,10 +130,12 @@ class ProductsController < ApplicationController
             )
 
             req_params.each do |p|
+
                 if product_params[p] == nil
-                  missing_params = true
-                  break
+                    missing_params = true
+                    break
                 end
+
             end
 
 
@@ -140,23 +144,23 @@ class ProductsController < ApplicationController
             if !missing_params
 
                 name = product_params[:name]
-                
+
                 description = product_params[:description]
-                
+
                 price = product_params[:price]
-                
+
                 main_picture = product_params[:main_picture]
-                
+
                 category_id = product_params[:category_id]
-                
+
                 stock_quantity = product_params[:stock_quantity]
-                
+
                 product_attributes = product_params[:product_attributes]
-                
+
                 product_pictures = product_params[:product_pictures]
 
                 isBase64 = product_params[:isBase64]
-                
+
                 category = store_user.categories.find_by(id: category_id)
 
                 if isBase64 != nil
@@ -167,48 +171,50 @@ class ProductsController < ApplicationController
 
                 if category != nil
 
-                    valid = true
+
+                    product = Product.new
+
+                    product.category_id = category_id
 
                     if name.length == 0
-                        valid = false
+
                         @success = false
                         @message = "Name cannot be empty"
                         return
+
+                    else
+
+                        product.name = name
+
                     end
 
-                    if valid && description.length == 0
-                        valid = false
+                    if description != nil && description.length > 0
+
+                        product.description = description
+
+                    end
+
+
+
+                    if is_valid_price?(price.to_s)
+
+                        product.price = price.to_d
+
+
+                    else
+
                         @success = false
-                        @message = "Description cannot be empty"
+                        @message = "Invalid price"
                         return
-                    end
-
-
-                    if valid
-
-                        if is_valid_price?(price.to_s)
-
-                            price = price.to_d 
-
-                        else
-
-                            valid = false
-                            @success = false
-                            @message = "Invalid price"
-
-                            return
-
-                        end
-
 
                     end
+
 
 
                     if isBase64 != nil && isBase64
 
 
-                        if valid && main_picture != nil
-
+                        if  main_picture != nil
 
                             main_picture = eval(main_picture)
 
@@ -237,15 +243,17 @@ class ProductsController < ApplicationController
                                     if valid_extensions.include?(extension)
 
                                         main_picture = ActionDispatch::Http::UploadedFile.new({
-                                                                                              tempfile: temp_pic,
-                                                                                              type: pic_type,
-                                                                                              filename: pic_name
-                                                                                          })
+                                                                                                  tempfile: temp_pic,
+                                                                                                  type: pic_type,
+                                                                                                  filename: pic_name
+                                                                                              })
+
+                                        product.main_picture = main_picture
+
                                     end
 
                                 else
 
-                                    valid = false
                                     @success = false
                                     @message = "Invalid main picture"
                                     return
@@ -255,10 +263,8 @@ class ProductsController < ApplicationController
 
                             else
 
-                                valid = false
                                 @success = false
                                 @message = "Invalid main picture"
-
                                 return
 
                             end
@@ -266,10 +272,8 @@ class ProductsController < ApplicationController
 
                         else
 
-                            valid = false
                             @success = false
                             @message = "Upload a main picture for your product."
-
                             return
 
                         end
@@ -279,13 +283,18 @@ class ProductsController < ApplicationController
                     else
 
 
-                        if valid && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture) )
 
-                            valid = false
+                        if  !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture)
+
                             @success = false
                             @message = "Make sure you uploaded an appropriate picture with valid extension."
 
                             return
+
+                        else
+
+
+                            product.main_picture = main_picture
 
                         end
 
@@ -294,29 +303,36 @@ class ProductsController < ApplicationController
 
 
 
+                    if stock_quantity != nil && !stock_quantity.empty?
 
-                    if valid &&  ( !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
+                        if !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0
 
-                        valid = false
-                        @success = false
-                        @message = "Stock quantity must be a positive integer"
+                            @success = false
+                            @message = "Stock quantity must be a positive integer"
+                            return
 
-                        return
+                        else
+
+
+                            product.stock_quantity = stock_quantity.to_i
+
+                        end
+
+
 
                     end
 
 
-                    if valid && category.subcategories.length > 0 
+                    if category.subcategories.length > 0
 
-                        valid = false
+
                         @success = false
                         @message = "Cannot add product since category already has subcategories."
-
                         return
 
                     end
 
-                    product = Product.new
+
 
                     # validate product_attributes as necessary
 
@@ -325,27 +341,25 @@ class ProductsController < ApplicationController
                         begin
 
                             product_attributes = eval(product_attributes)
-                        
+
                             if product_attributes.instance_of?(Hash) && product_attributes.length > 0
-                        
+
                                 product.product_attributes = product_attributes
-                        
+
                             else
-                               
-                                valid = false
+
                                 @success = false
                                 @message = "Invalid product attributes"
                                 return
 
                             end
-                        
-                          rescue  SyntaxError, NameError
-                            
-                            valid = false
+
+                        rescue  SyntaxError, NameError
+
                             @success = false
                             @message = "Invalid product attributes"
                             return
-                          
+
                         end
 
 
@@ -365,9 +379,8 @@ class ProductsController < ApplicationController
                         else
 
 
-                            if valid && !are_product_pictures_valid?(product_pictures)
+                            if !are_product_pictures_valid?(product_pictures)
 
-                                valid = false
                                 @success = false
                                 @message = "Make sure you uploaded an appropriate pictures with valid extension."
                                 return
@@ -386,32 +399,21 @@ class ProductsController < ApplicationController
 
 
 
-                    if valid
 
-                       product.name = name
-                       product.description = description
-                       product.price = price.to_d
-                       product.main_picture = main_picture
-                       product.category_id = category_id
-                       product.stock_quantity = stock_quantity.to_i
-
-
-                       if product.save
+                    if product.save
 
                         @success = true
                         @message = "Succesfully created product"
 
-                       else
+                    else
 
                         @success = false
                         @message = "Error creating product"
 
-                       end
-
-
                     end
 
-                else 
+
+                else
 
                     @success = false
                     @message = "Category may have been moved or deleted"
@@ -500,7 +502,7 @@ class ProductsController < ApplicationController
                 if category != nil
 
                     category_products = category.products
-    
+
                     category_products = category_products.where("name ILIKE ?", "%#{name}%").order('name ASC')
 
                     category_products.each do |category_product|
@@ -510,7 +512,7 @@ class ProductsController < ApplicationController
                     end
 
                 end
-    
+
 
             end
 
@@ -631,7 +633,7 @@ class ProductsController < ApplicationController
                         main_picture = params[:main_picture]
                         product_pictures = params[:product_pictures]
                         isBase64 = params[:isBase64]
-                        
+
 
                         if isBase64 != nil
 
@@ -926,7 +928,7 @@ class ProductsController < ApplicationController
                                 product.product_available = product_available
                             end
 
-                            
+
                             if product.save!
 
                                 @success = true
@@ -944,7 +946,7 @@ class ProductsController < ApplicationController
 
                             end
 
-                            
+
 
 
                         end
@@ -974,42 +976,42 @@ class ProductsController < ApplicationController
 
             if category != nil
 
-               pictures = params[:product_pictures]
+                pictures = params[:product_pictures]
 
-               file = params[:file]
+                file = params[:file]
 
-               isBase64 = params[:isBase64]
+                isBase64 = params[:isBase64]
 
-               canImport = true
-
-
-               if category.subcategories.length > 0
-
-                   canImport = false
-                   @success = false
-                   @message = "Cannot import products since category already has subcategories."
-
-                   return
-
-               end
+                canImport = true
 
 
-               if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
+                if category.subcategories.length > 0
 
-                   canImport = false
-                   @success = false
-                   @message = "The file to import products must be of type csv."
-                   return
+                    canImport = false
+                    @success = false
+                    @message = "Cannot import products since category already has subcategories."
 
-               end
+                    return
 
-               if  pictures == nil || !pictures.instance_of?(Array)
+                end
 
-                   canImport = false
-                   @success = false
-                   @message = "Upload pictures to continue"
 
-               end
+                if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
+
+                    canImport = false
+                    @success = false
+                    @message = "The file to import products must be of type csv."
+                    return
+
+                end
+
+                if  pictures == nil || !pictures.instance_of?(Array)
+
+                    canImport = false
+                    @success = false
+                    @message = "Upload pictures to continue"
+
+                end
 
                 # Even if the user might have uploaded extra pictures, or if there are some missing pictures,
                 #  or if there are some pictures of invalid type
@@ -1017,355 +1019,355 @@ class ProductsController < ApplicationController
                 #  then you can report to the user how many products were imported
                 #  and the names of those that failed to import so he can re import them
 
-               if canImport
+                if canImport
 
-                   if isBase64 != nil
+                    if isBase64 != nil
 
-                       isBase64 = eval(isBase64.downcase)
+                        isBase64 = eval(isBase64.downcase)
 
-                       if isBase64 == true
-                           pictures = decode_base64_pictures(pictures)
-                       end
+                        if isBase64 == true
+                            pictures = decode_base64_pictures(pictures)
+                        end
 
-                   end
+                    end
 
-                   canCreate = true
+                    canCreate = true
 
-                   csv_file = file.tempfile.open
+                    csv_file = file.tempfile.open
 
-                   filepath = csv_file.path
+                    filepath = csv_file.path
 
-                   csv = CSV.read(filepath, headers: true, converters: :numeric)
+                    csv = CSV.read(filepath, headers: true, converters: :numeric)
 
-                   csv_header_map = get_csv_file_header_map(csv)
+                    csv_header_map = get_csv_file_header_map(csv)
 
-                   # make sure all headers are present
+                    # make sure all headers are present
 
-                   csv_header_map.values.each do |value|
+                    csv_header_map.values.each do |value|
 
-                       if value.empty?
-                           canCreate = false
-                           @success = false
-                           @message = "Make sure your csv file has all of the following headers: name, description, price, main picture and stock quantity"
-                           csv_file.close
-                           return
-                       end
+                        if value.empty?
+                            canCreate = false
+                            @success = false
+                            @message = "Make sure your csv file has all of the following headers: name, description, price, main picture and stock quantity"
+                            csv_file.close
+                            return
+                        end
 
-                   end
+                    end
 
-                   if canCreate
+                    if canCreate
 
 
-                       csv.each do |row|
+                        csv.each do |row|
 
-                           canSave = true
+                            canSave = true
 
 
-                           name = row[ csv_header_map[:name] ]
-                           description = row[ csv_header_map[:description] ]
-                           price = row[ csv_header_map[:price] ]
-                           main_picture = get_uploaded_picture(pictures, row[ csv_header_map[:main_picture] ] )
-                           stock_quantity = row[ csv_header_map[:stock_quantity] ]
+                            name = row[ csv_header_map[:name] ]
+                            description = row[ csv_header_map[:description] ]
+                            price = row[ csv_header_map[:price] ]
+                            main_picture = get_uploaded_picture(pictures, row[ csv_header_map[:main_picture] ] )
+                            stock_quantity = row[ csv_header_map[:stock_quantity] ]
 
-                           if name == nil || name.length == 0
-                               canSave = false
-                           end
+                            if name == nil || name.length == 0
+                                canSave = false
+                            end
 
-                           if canSave && ( description == nil || description.length == 0 )
-                               canSave = false
-                           end
+                            if canSave && ( description == nil || description.length == 0 )
+                                canSave = false
+                            end
 
-                           if canSave &&   ( price == nil || !is_valid_price?(price.to_s) )
-                               canSave = false
-                           else
-                               price = price.to_d
-                           end
+                            if canSave &&   ( price == nil || !is_valid_price?(price.to_s) )
+                                canSave = false
+                            else
+                                price = price.to_d
+                            end
 
 
-                           if isBase64 != nil &&  isBase64
+                            if isBase64 != nil &&  isBase64
 
-                               if canSave && main_picture == nil
-                                   canSave = false
-                               end
+                                if canSave && main_picture == nil
+                                    canSave = false
+                                end
 
-                           else
+                            else
 
-                               if canSave &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
-                                   canSave = false
-                               end
+                                if canSave &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+                                    canSave = false
+                                end
 
-                           end
+                            end
 
 
 
-                           if canSave  && ( stock_quantity == nil || !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
-                               canSave = false
-                           else
-                               stock_quantity = stock_quantity.to_i
-                           end
+                            if canSave  && ( stock_quantity == nil || !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
+                                canSave = false
+                            else
+                                stock_quantity = stock_quantity.to_i
+                            end
 
 
-                           if canSave
+                            if canSave
 
-                               # All other columns add them to the product attributes
+                                # All other columns add them to the product attributes
 
-                               # Make sure that the other headers are not the required headers
+                                # Make sure that the other headers are not the required headers
 
-                               #  or that they resemble that required headers in some way
+                                #  or that they resemble that required headers in some way
 
-                               product_attributes = {}
-                               product_pictures = []
-                               required_headers = csv_header_map.values
+                                product_attributes = {}
+                                product_pictures = []
+                                required_headers = csv_header_map.values
 
 
-                               csv.headers.each do |header|
+                                csv.headers.each do |header|
 
-                                   if header != nil
+                                    if header != nil
 
-                                       if is_csv_pictures_header?(header)
+                                        if is_csv_pictures_header?(header)
 
-                                           row_value = row[header]
+                                            row_value = row[header]
 
-                                           if row_value != nil && !row_value.to_s.empty?
+                                            if row_value != nil && !row_value.to_s.empty?
 
-                                               if row_value.is_a?(String) && row_value.include?(",")
+                                                if row_value.is_a?(String) && row_value.include?(",")
 
-                                                   row_value = row_value.strip
+                                                    row_value = row_value.strip
 
-                                                   picture_names = row_value.split(",")
+                                                    picture_names = row_value.split(",")
 
-                                                   picture_names.each do |picture_name|
+                                                    picture_names.each do |picture_name|
 
-                                                       picture_name = picture_name.strip
+                                                        picture_name = picture_name.strip
 
-                                                       picture = get_uploaded_picture(pictures, picture_name)
+                                                        picture = get_uploaded_picture(pictures, picture_name)
 
-                                                       if isBase64 != nil &&  isBase64
+                                                        if isBase64 != nil &&  isBase64
 
-                                                           if picture != nil
+                                                            if picture != nil
 
-                                                               product_pictures.push(picture)
+                                                                product_pictures.push(picture)
 
-                                                           end
+                                                            end
 
-                                                       else
+                                                        else
 
-                                                           if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
+                                                            if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
 
-                                                               product_pictures.push(picture)
+                                                                product_pictures.push(picture)
 
-                                                           end
+                                                            end
 
-                                                       end
+                                                        end
 
 
-                                                   end
+                                                    end
 
-                                               end
+                                                end
 
-                                           end
+                                            end
 
-                                       else
+                                        else
 
-                                           if !required_headers.include?(header) &&
-                                               !header.include?("name") &&
-                                               !description_contains(header) &&
-                                               !price_contains(header) &&
-                                               !main_picture_contains(header) &&
-                                               !stock_quantity_contains(header)
+                                            if !required_headers.include?(header) &&
+                                                !header.include?("name") &&
+                                                !description_contains(header) &&
+                                                !price_contains(header) &&
+                                                !main_picture_contains(header) &&
+                                                !stock_quantity_contains(header)
 
-                                               row_value = row[ header ]
+                                                row_value = row[ header ]
 
-                                               if row_value != nil
+                                                if row_value != nil
 
 
-                                                   if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
+                                                    if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
 
-                                                       # makes sure product keys are unique
+                                                        # makes sure product keys are unique
 
-                                                       if row_value.is_a?(String)
+                                                        if row_value.is_a?(String)
 
-                                                           row_value = row_value.strip
+                                                            row_value = row_value.strip
 
 
 
-                                                           if row_value.include?(",")
+                                                            if row_value.include?(",")
 
-                                                               is_row_list = true
+                                                                is_row_list = true
 
-                                                               row_value_array = row_value.split(",")
+                                                                row_value_array = row_value.split(",")
 
-                                                               row_value_array.each do |value|
+                                                                row_value_array.each do |value|
 
-                                                                   value = value.strip
+                                                                    value = value.strip
 
-                                                                   if value.include?(" ")
+                                                                    if value.include?(" ")
 
-                                                                       value_array = value.split(" ")
+                                                                        value_array = value.split(" ")
 
-                                                                       if value_array.size > 2
+                                                                        if value_array.size > 2
 
-                                                                           is_row_list = false
+                                                                            is_row_list = false
 
-                                                                           break
+                                                                            break
 
-                                                                       end
+                                                                        end
 
-                                                                   end
+                                                                    end
 
 
-                                                               end
+                                                                end
 
-                                                               if is_row_list
+                                                                if is_row_list
 
-                                                                   header = header.downcase
+                                                                    header = header.downcase
 
-                                                                   product_attributes[header] = row_value_array
+                                                                    product_attributes[header] = row_value_array
 
-                                                               end
+                                                                end
 
 
 
-                                                           elsif row_value.include?("-") && !product_attributes.has_key?(header)
+                                                            elsif row_value.include?("-") && !product_attributes.has_key?(header)
 
-                                                               is_row_list = true
+                                                                is_row_list = true
 
-                                                               row_value_array = row_value.split("-")
+                                                                row_value_array = row_value.split("-")
 
-                                                               row_value_array.each do |value|
+                                                                row_value_array.each do |value|
 
-                                                                   value = value.strip
+                                                                    value = value.strip
 
-                                                                   if value.include?(" ")
+                                                                    if value.include?(" ")
 
-                                                                       value_array = value.split(" ")
+                                                                        value_array = value.split(" ")
 
-                                                                       if value_array.size > 2
+                                                                        if value_array.size > 2
 
-                                                                           is_row_list = false
+                                                                            is_row_list = false
 
-                                                                           break
+                                                                            break
 
-                                                                       end
+                                                                        end
 
-                                                                   end
+                                                                    end
 
 
-                                                               end
+                                                                end
 
-                                                               if is_row_list
+                                                                if is_row_list
 
-                                                                   header = header.downcase
+                                                                    header = header.downcase
 
-                                                                   product_attributes[header] = row_value_array
+                                                                    product_attributes[header] = row_value_array
 
-                                                               end
+                                                                end
 
-                                                           end
+                                                            end
 
 
-                                                           if !product_attributes.has_key?(header)
+                                                            if !product_attributes.has_key?(header)
 
-                                                               header = header.downcase
+                                                                header = header.downcase
 
-                                                               product_attributes[header] = row_value
+                                                                product_attributes[header] = row_value
 
 
-                                                           end
+                                                            end
 
 
-                                                       else
+                                                        else
 
-                                                           header = header.downcase
+                                                            header = header.downcase
 
-                                                           product_attributes[header] = row_value
+                                                            product_attributes[header] = row_value
 
-                                                       end
+                                                        end
 
-                                                   end
+                                                    end
 
 
 
-                                               end
+                                                end
 
 
 
-                                           end
+                                            end
 
-                                       end
+                                        end
 
 
 
-                                   end
+                                    end
 
 
 
-                               end
+                                end
 
-                               product = Product.new
+                                product = Product.new
 
-                               product.name = name
-                               product.description = description
-                               product.price = price
-                               product.main_picture = main_picture
-                               product.category_id = category.id
-                               product.stock_quantity = stock_quantity
+                                product.name = name
+                                product.description = description
+                                product.price = price
+                                product.main_picture = main_picture
+                                product.category_id = category.id
+                                product.stock_quantity = stock_quantity
 
-                               if product_attributes.size > 0
-                                   product.product_attributes = product_attributes
-                               end
+                                if product_attributes.size > 0
+                                    product.product_attributes = product_attributes
+                                end
 
-                               if product_pictures.size > 0
+                                if product_pictures.size > 0
 
-                                   product.product_pictures = product_pictures
+                                    product.product_pictures = product_pictures
 
-                               end
+                                end
 
 
-                               if product.save!
+                                if product.save!
 
-                                   new_products = []
+                                    new_products = []
 
-                                   category.products.order('name ASC').each do |p|
-                                       new_products.push(p)
-                                   end
+                                    category.products.order('name ASC').each do |p|
+                                        new_products.push(p)
+                                    end
 
-                                   new_products = new_products.to_json
+                                    new_products = new_products.to_json
 
-                                   ActionCable.server.broadcast "category_#{category.id}_products_user_#{current_user.id}", {products: new_products}
+                                    ActionCable.server.broadcast "category_#{category.id}_products_user_#{current_user.id}", {products: new_products}
 
-                               end
+                                end
 
 
-                           end
+                            end
 
 
 
 
 
-                       end
+                        end
 
-                       @success = true
+                        @success = true
 
-                       #products = []
-                       #
-                       #category.products.each do |product|
-                       #    products.push(product.to_json)
-                       #end
-                       #
-                       #@products = products
+                        #products = []
+                        #
+                        #category.products.each do |product|
+                        #    products.push(product.to_json)
+                        #end
+                        #
+                        #@products = products
 
-                       csv_file.close
+                        csv_file.close
 
 
-                   end
+                    end
 
 
 
 
 
 
-               end
+                end
 
 
 
@@ -1522,7 +1524,7 @@ class ProductsController < ApplicationController
 
     def description_contains(header)
 
-            header.include?("description") ||
+        header.include?("description") ||
             header.include?("information")  ||
             header.include?("info") ||
             header.include?("about") ||
@@ -1532,7 +1534,7 @@ class ProductsController < ApplicationController
 
     def price_contains(header)
 
-            header.include?("price") ||
+        header.include?("price") ||
             header.include?("cost")
 
 
@@ -1540,7 +1542,7 @@ class ProductsController < ApplicationController
 
     def main_picture_contains(header)
 
-            header.include?("picture") ||
+        header.include?("picture") ||
             header.include?("image") ||
             header.include?("photo") ||
             header.include?("thumbnail")
@@ -1548,7 +1550,7 @@ class ProductsController < ApplicationController
 
     def stock_quantity_contains(header)
 
-            header.include?("stock") ||
+        header.include?("stock") ||
             header.include?("quantity") ||
             header.include?("qty")
 
@@ -1565,23 +1567,23 @@ class ProductsController < ApplicationController
     end
 
     def is_positive_integer?(arg)
-     
+
         res = /^(?<num>\d+)$/.match(arg)
-   
+
         if res == nil
-           false
+            false
         else
-           true
+            true
         end
-   
+
     end
 
     def is_valid_price?(arg)
-        
+
         # price must be a number greater than 0
 
         if /^\d+([.]\d+)?$/.match(arg) == nil
-          false
+            false
         else
 
             arg = arg.to_d
@@ -1591,7 +1593,7 @@ class ProductsController < ApplicationController
             else
                 true
             end
-         
+
         end
     end
 
@@ -1634,6 +1636,6 @@ class ProductsController < ApplicationController
 
     end
 
-   
+
 
 end
