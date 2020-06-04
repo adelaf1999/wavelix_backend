@@ -305,7 +305,7 @@ class ProductsController < ApplicationController
 
                     if stock_quantity != nil && !stock_quantity.empty?
 
-                        if !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0
+                        if !is_positive_integer?(stock_quantity.to_s)
 
                             @success = false
                             @message = "Stock quantity must be a positive integer"
@@ -622,13 +622,13 @@ class ProductsController < ApplicationController
 
                         # PRODUCT NAME VALIDATORS
 
-                        canUpdate = true
+
 
                         name = params[:name]
                         description = params[:description]
                         price = params[:price]
                         stock_quantity = params[:stock_quantity]
-                        product_available = params[:product_available]
+                        product_available = eval(params[:product_available])
                         product_attributes = params[:product_attributes]
                         main_picture = params[:main_picture]
                         product_pictures = params[:product_pictures]
@@ -641,15 +641,25 @@ class ProductsController < ApplicationController
 
                         end
 
+                        if name != nil
 
-                        if name != nil && name.length == 0
+                            if name.length == 0
 
-                            canUpdate = false
-                            @success = false
-                            @message = "product name cannot be empty"
-                            return
+
+                                @success = false
+                                @message = "Product name cannot be empty"
+                                return
+
+                            else
+
+                                product.name = name
+
+                            end
 
                         end
+
+
+
 
                         if isBase64 != nil && isBase64
 
@@ -687,11 +697,14 @@ class ProductsController < ApplicationController
                                                                                                       type: pic_type,
                                                                                                       filename: pic_name
                                                                                                   })
+
+                                            product.main_picture = main_picture
+
                                         end
 
                                     else
 
-                                        canUpdate = false
+
                                         @success = false
                                         @message = "Invalid main picture"
                                         return
@@ -701,7 +714,7 @@ class ProductsController < ApplicationController
 
                                 else
 
-                                    canUpdate = false
+
                                     @success = false
                                     @message = "Invalid main picture"
                                     return
@@ -716,14 +729,25 @@ class ProductsController < ApplicationController
                         else
 
 
-                            if main_picture != nil  && ( !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+                            if main_picture != nil
 
-                                canUpdate = false
-                                @success = false
-                                @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
-                                return
+                                if !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture)
+
+                                    @success = false
+                                    @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
+                                    return
+
+                                else
+
+                                    product.main_picture = main_picture
+
+                                end
+
 
                             end
+
+
+
 
 
                         end
@@ -735,84 +759,80 @@ class ProductsController < ApplicationController
 
                             if !is_valid_price?(price.to_s)
 
-                                canUpdate = false
+
                                 @success = false
-                                @message = "invalid price"
+                                @message = "Invalid price"
                                 return
 
                             else
 
-                                price = price.to_d
+                                product.price = price.to_d
 
                             end
 
                         end
 
-                        if stock_quantity != nil
 
-                            # stock quantity can be zero only if product_available is false
 
-                            if !is_positive_integer?(stock_quantity.to_s)
+                        if stock_quantity == nil || stock_quantity.empty?
 
-                                canUpdate = false
-                                @success = false
-                                @message = "Stock quantity must be a positive integer greater than or equal to zero"
-                                return
+                            product.stock_quantity = nil
 
-                            else
+                            if product_available != nil && is_boolean?(product_available)
+
+                                product.product_available = product_available
+
+                            end
+
+                        else
+
+                            if is_whole_number?(stock_quantity)
 
                                 stock_quantity = stock_quantity.to_i
 
-                            end
+                                product.stock_quantity = stock_quantity
 
-                        end
+                                if stock_quantity == 0
 
-                        if product_available != nil
 
-                            if product_available.instance_of?(String)
+                                    if product_available != nil && is_boolean?(product_available)
 
-                                product_available = product_available.downcase
+                                        if product_available
 
-                                if product_available == "false"
+                                            @success = false
+                                            @message = "Cannot set the product availability on unless the stock quantity is greater zero"
+                                            return
 
-                                    product_available = false
+                                        else
 
-                                elsif  product_available == "true"
+                                            product.product_available = product_available
 
-                                    if stock_quantity == 0
+                                        end
 
-                                        canUpdate = false
-                                        @success = false
-                                        @message = "Cannot set the product availability on unless the stock quantity is greater zero"
-                                        return
 
-                                    elsif stock_quantity > 0
-
-                                        product_available = true
 
                                     end
 
+                                else
+
+
+                                    if product_available != nil && is_boolean?(product_available)
+
+                                        product.product_available = product_available
+
+                                    end
+
+
                                 end
-
-
-                            else
-
-                                canUpdate = false
-                                @success = false
-                                @message = "error updating product"
-                                return
 
                             end
 
 
                         end
 
-                        if description != nil && description.length == 0
+                        if description != nil
 
-                            canUpdate = false
-                            @success = false
-                            @message = "description cannot be empty"
-                            return
+                            product.description = description
 
                         end
 
@@ -822,20 +842,27 @@ class ProductsController < ApplicationController
 
                                 product_attributes = eval(product_attributes)
 
-                                if !product_attributes.instance_of?(Hash)
+
+
+                                if product_attributes.instance_of?(Hash)
 
                                     # can be empty hash
 
-                                    canUpdate = false
+                                    product.product_attributes = product_attributes
+
+
+                                else
+
                                     @success = false
                                     @message = "Invalid product attributes"
                                     return
 
                                 end
 
+
+
                             rescue  SyntaxError, NameError
 
-                                canUpdate = false
                                 @success = false
                                 @message = "Invalid product attributes"
                                 return
@@ -869,7 +896,7 @@ class ProductsController < ApplicationController
 
                                 if !are_product_pictures_valid?(product_pictures)
 
-                                    canUpdate = false
+
                                     @success = false
                                     @message = "Make sure you uploaded an appropriate pictures with valid extension."
                                     return
@@ -894,62 +921,23 @@ class ProductsController < ApplicationController
 
 
 
+                        if product.save!
 
+                            @success = true
+                            @message = "Updated product"
+                            @product = product.to_json
+                            @product_pictures = product.get_images.to_json
 
-                        if canUpdate
+                            return
 
+                        else
 
-                            if name != nil
-                                product.name = name
-                            end
-
-                            if main_picture != nil
-                                product.main_picture = main_picture
-                            end
-
-                            if price != nil
-                                product.price = price
-                            end
-
-                            if stock_quantity != nil
-                                product.stock_quantity = stock_quantity
-                            end
-
-                            if description != nil
-                                product.description = description
-                            end
-
-                            if product_attributes != nil
-                                product.product_attributes = product_attributes
-                            end
-
-
-                            if product_available != nil
-                                product.product_available = product_available
-                            end
-
-
-                            if product.save!
-
-                                @success = true
-                                @message = "Updated product"
-                                @product = product.to_json
-                                @product_pictures = product.get_images.to_json
-
-                                return
-
-                            else
-
-                                @success = false
-                                @message = "Error updating"
-                                return
-
-                            end
-
-
-
+                            @success = false
+                            @message = "Error updating"
+                            return
 
                         end
+
 
 
                     end
@@ -1100,7 +1088,7 @@ class ProductsController < ApplicationController
 
 
 
-                            if canSave  && ( stock_quantity == nil || !is_positive_integer?(stock_quantity.to_s) || stock_quantity.to_i == 0 )
+                            if canSave  && ( stock_quantity == nil || !is_positive_integer?(stock_quantity.to_s) )
                                 canSave = false
                             else
                                 stock_quantity = stock_quantity.to_i
@@ -1383,6 +1371,10 @@ class ProductsController < ApplicationController
 
     private
 
+    def is_boolean?(arg)
+        [true, false].include?(arg)
+    end
+
     def decode_base64_pictures(pictures)
 
         decoded_pictures = []
@@ -1566,7 +1558,9 @@ class ProductsController < ApplicationController
 
     end
 
-    def is_positive_integer?(arg)
+    def is_whole_number?(arg)
+
+        # 0, 1, 2, 3
 
         res = /^(?<num>\d+)$/.match(arg)
 
@@ -1574,6 +1568,25 @@ class ProductsController < ApplicationController
             false
         else
             true
+        end
+
+    end
+
+    def is_positive_integer?(arg)
+
+        # 1, 2, 3, 4
+
+        res = /^(?<num>\d+)$/.match(arg)
+
+        if res == nil
+            false
+        else
+
+            arg = arg.to_i
+
+            arg != 0
+
+
         end
 
     end
