@@ -15,44 +15,7 @@ class Product < ApplicationRecord
 
    before_create :add_store_attributes
 
-
-   def can_buy?(user)
-
-     # Stores cannot buy products
-
-     # Product cannot be bought if stock quantity is 0 or is not available
-
-     # Customer cannot buy product if its not in his country
-
-     # Customers can only buy products from verified stores
-
-
-     if user.store_user? || self.stock_quantity == 0 || !self.product_available
-
-       false
-
-     elsif user.customer_user?
-
-       customer_user = CustomerUser.find_by(customer_id: user.id)
-
-       store_user = self.category.store_user
-
-
-       if store_user.verified?
-
-         customer_user.country == self.store_country
-
-       else
-
-         false
-
-       end
-
-
-
-     end
-
-   end
+   
    
 
    def remove_image(image_name)
