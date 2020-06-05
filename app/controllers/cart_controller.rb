@@ -340,12 +340,16 @@ class CartController < ApplicationController
 
                     else
 
-                      if cart_item.quantity > product.stock_quantity
 
-                        cart_item.update!(quantity: product.stock_quantity)
+                      if product.stock_quantity != nil
+
+                        if cart_item.quantity > product.stock_quantity
+
+                          cart_item.update!(quantity: product.stock_quantity)
+
+                        end
 
                       end
-
 
                       @cart_items.push(get_cart_item(cart_item))
 
