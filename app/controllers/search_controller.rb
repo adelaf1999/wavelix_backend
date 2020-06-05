@@ -361,9 +361,9 @@ class SearchController < ApplicationController
 
     else
 
-      exchange_rates = get_exchange_rate # currency is the base currency, in this case USD
+      exchange_rates = get_exchange_rates(base_currency) # currency is the base currency, in this case USD
 
-      price = product.price / exchange_rates[product.currency.to_sym]
+      price = product.price / exchange_rates[product.currency]
 
     end
 
@@ -429,23 +429,6 @@ class SearchController < ApplicationController
   end
 
 
-  def get_exchange_rate
-
-    # Temporary method till we add fixer.io api just for development purposes
-
-    # Assumes base to be USD and returns conversion rates for LBP, EUR and GBP
-
-    # Products can be in currency LBP, EUR, GBP and USD
-
-    {
-        base: 'USD',
-        LBP: 1506.14,
-        EUR: 0.92,
-        GBP: 0.80
-    }
-
-
-  end
 
   def is_limit_valid?(arg)
 

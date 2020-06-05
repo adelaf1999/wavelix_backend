@@ -1,5 +1,9 @@
 module MoneyHelper
 
+  require 'faraday'
+  require 'faraday_middleware'
+  require 'net/http'
+
   def get_currencies
 
 
@@ -14,5 +18,29 @@ module MoneyHelper
     currencies.include?(code)
 
   end
+
+
+  def get_exchange_rates(base_currency)
+
+    url = 'https://data.fixer.io/api'
+
+    conn = Faraday.new(url: url) do |faraday|
+      faraday.response :json
+      faraday.adapter Faraday.default_adapter
+    end
+
+
+    response = conn.get('latest', access_key: ENV.fetch('FIXER_IO_API_KEY'), base: base_currency)
+
+    # success: Returns true or false depending on whether or not your API request has succeeded.
+    # timestamp:	Returns the exact date and time (UNIX time stamp) the given rates were collected.
+    # base:	Returns the three-letter currency code of the base currency used for this request.
+    # rates:	Returns exchange rate data for the currencies you have requested.
+
+    response.body['rates']
+
+  end
+
+
 
 end
