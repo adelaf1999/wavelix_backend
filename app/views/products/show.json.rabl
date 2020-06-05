@@ -30,3 +30,11 @@ end
 if @home_address != nil
     node(:home_address) { @home_address }
 end
+
+if @product_currency != nil
+    node(:product_currency) {  @product_currency }
+end
+
+if @product_price != nil
+    node(:product_price) { @product_price }
+end

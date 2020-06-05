@@ -361,7 +361,7 @@ class SearchController < ApplicationController
 
     else
 
-      exchange_rates = get_exchange_rates(base_currency) # currency is the base currency, in this case USD
+      exchange_rates = get_exchange_rates(base_currency)
 
       price = product.price / exchange_rates[product.currency]
 

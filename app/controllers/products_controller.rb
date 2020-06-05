@@ -3,6 +3,8 @@ class ProductsController < ApplicationController
 
     before_action :authenticate_user!
 
+    include MoneyHelper
+
     def show
 
         product = Product.find_by(id: params[:product_id])
@@ -71,8 +73,49 @@ class ProductsController < ApplicationController
                     if current_user.customer_user?
 
                         customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
                         @customer_country = customer_user.country
+
                         @home_address = customer_user.home_address
+
+                        # Show the product price in the default selected currency of the customer
+
+                        @product_currency = customer_user.default_currency
+
+
+                        if product.currency == @product_currency
+
+                            @product_price = product.price
+
+                        else
+
+                            exchange_rates = get_exchange_rates(@product_currency)
+
+                            @product_price = product.price / exchange_rates[product.currency]
+
+                        end
+
+
+                    else
+
+
+                      current_store_user = StoreUser.find_by(store_id: current_user.id)
+
+                      @product_currency = current_store_user.currency
+
+                      if product.currency == @product_currency
+
+                          @product_price = product.price
+
+                      else
+
+                          exchange_rates = get_exchange_rates(@product_currency)
+
+                          @product_price = product.price / exchange_rates[product.currency]
+
+                      end
+
+
 
                     end
 
