@@ -30,7 +30,10 @@ module MoneyHelper
     end
 
 
-    response = conn.get('latest', access_key: ENV.fetch('FIXER_IO_API_KEY'), base: base_currency)
+    response = Rails.cache.fetch("exchange_rates_#{base_currency}", expires_in: 12.hours) do
+      conn.get('latest', access_key: ENV.fetch('FIXER_IO_API_KEY'), base: base_currency)
+    end
+
 
     # success: Returns true or false depending on whether or not your API request has succeeded.
     # timestamp:	Returns the exact date and time (UNIX time stamp) the given rates were collected.
