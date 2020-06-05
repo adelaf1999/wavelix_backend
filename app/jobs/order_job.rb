@@ -7,9 +7,9 @@ class OrderJob < Struct.new(:order_id)
 
     if order.pending?
 
-      # If the order was pending the stock quantity will be re-incremented
+      # If the order was pending the stock quantity of the product will be re-incremented if it was not nil
 
-      # And the order will be marked canceled
+      #  Then the order will be canceled
 
       ordered_products = order.products
 
@@ -19,9 +19,13 @@ class OrderJob < Struct.new(:order_id)
 
         product = Product.find_by(id: ordered_product[:id])
 
-        stock_quantity = product.stock_quantity + ordered_product[:quantity]
+        if product.stock_quantity != nil
 
-        product.update!(stock_quantity: stock_quantity)
+          stock_quantity = product.stock_quantity + ordered_product[:quantity]
+
+          product.update!(stock_quantity: stock_quantity)
+
+        end
 
       end
 

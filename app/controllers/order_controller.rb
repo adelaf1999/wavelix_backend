@@ -251,12 +251,12 @@ class OrderController < ApplicationController
 
                               else
 
-                                # The stock quantity of the product will be decremented after an order is created
 
-                                # If the order was till pending after 15 minutes the stock quantity of the product will be
+                                # If the stock quantity of a product was not nil it will be decremented after an order is created
+
+                                # If the order was till pending after 30 minutes the stock quantity of the product will be
 
                                 # re-incremented and the order will be marked canceled
-
 
 
                                 ordered_product = {
@@ -295,13 +295,16 @@ class OrderController < ApplicationController
                                   @order[:order_type] = order.order_type
 
 
+                                  if product.stock_quantity != nil
 
-                                  stock_quantity = product.stock_quantity - quantity
+                                    stock_quantity = product.stock_quantity - quantity
 
-                                  product.update!(stock_quantity: stock_quantity)
+                                    product.update!(stock_quantity: stock_quantity)
+
+                                  end
 
 
-                                  Delayed::Job.enqueue(OrderJob.new(order.id), queue: 'order_check_queue', priority: 0, run_at: 15.minutes.from_now)
+                                  Delayed::Job.enqueue(OrderJob.new(order.id), queue: 'order_check_queue', priority: 0, run_at: 30.minutes.from_now)
 
 
 
@@ -453,7 +456,16 @@ class OrderController < ApplicationController
 
       else
 
-        quantity <= product.stock_quantity
+        if product.stock_quantity != nil
+
+          quantity <= product.stock_quantity
+
+        else
+
+          true
+
+        end
+
 
       end
 
