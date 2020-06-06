@@ -5,3 +5,11 @@ end
 if @handles_delivery != nil
     node(:handles_delivery) { @handles_delivery }
 end
+
+if @status != nil
+    node(:status) { @status }
+end
+
+if @location != nil
+    node(:location) { @location }
+end

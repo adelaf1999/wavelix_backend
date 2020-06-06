@@ -48,6 +48,11 @@ class StoreSettingsController < ApplicationController
 
       @handles_delivery = store_user.handles_delivery
 
+      @status = store_user.status
+
+      @location = store_user.store_address
+
+
     end
 
   end
