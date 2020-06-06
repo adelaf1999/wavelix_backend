@@ -8,7 +8,18 @@ class StoreSettingsController < ApplicationController
 
       store_user = StoreUser.find_by(store_id: current_user.id)
 
-      @maximum_delivery_distance = store_user.maximum_delivery_distance
+
+      if store_user.maximum_delivery_distance == nil
+
+        @maximum_delivery_distance = ''
+
+      else
+
+        @maximum_delivery_distance = store_user.maximum_delivery_distance
+
+      end
+
+
 
       @handles_delivery = store_user.handles_delivery
 
