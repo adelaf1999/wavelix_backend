@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_04_071925) do
+ActiveRecord::Schema.define(version: 2020_06_06_085937) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -196,6 +196,7 @@ ActiveRecord::Schema.define(version: 2020_06_04_071925) do
     t.string "currency", null: false
     t.boolean "has_sensitive_products", default: false
     t.boolean "handles_delivery", default: false
+    t.decimal "maximum_delivery_distance"
   end
 
   create_table "users", force: :cascade do |t|

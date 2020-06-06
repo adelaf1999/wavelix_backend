@@ -167,5 +167,10 @@ Rails.application.routes.draw do
 
   get '/get-store-currency' => 'stores#get_store_currency'
 
+  # Store Settings Routes
+
+  get '/store-settings' => 'store_settings#index'
+
+  post '/set-maximum-delivery-distance' => 'store_settings#set_maximum_delivery_distance'
 
 end
