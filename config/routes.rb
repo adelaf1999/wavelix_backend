@@ -173,4 +173,6 @@ Rails.application.routes.draw do
 
   post '/set-maximum-delivery-distance' => 'store_settings#set_maximum_delivery_distance'
 
+  get '/toggle-handles-delivery' => 'store_settings#toggle_handles_delivery'
+
 end

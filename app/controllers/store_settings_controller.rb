@@ -2,6 +2,31 @@ class StoreSettingsController < ApplicationController
 
   before_action :authenticate_user!
 
+  def toggle_handles_delivery
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      if store_user.handles_delivery
+
+        handles_delivery = false
+
+        store_user.update!(handles_delivery: handles_delivery, maximum_delivery_distance: nil)
+
+      else
+
+        handles_delivery = true
+
+        store_user.update!(handles_delivery: handles_delivery)
+
+      end
+
+
+    end
+
+  end
+
   def index
 
     if current_user.store_user?
