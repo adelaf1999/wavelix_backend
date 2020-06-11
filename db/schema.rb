@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_10_123706) do
+ActiveRecord::Schema.define(version: 2020_06_11_094002) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -89,12 +89,14 @@ ActiveRecord::Schema.define(version: 2020_06_10_123706) do
   end
 
   create_table "drivers", force: :cascade do |t|
-    t.boolean "driver_mode_on", default: false
     t.text "current_location", null: false
     t.string "country", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "customer_user_id", null: false
+    t.integer "status", default: 0
+    t.string "currency", null: false
+    t.decimal "balance", default: "0.0"
   end
 
   create_table "follows", force: :cascade do |t|
@@ -123,9 +125,6 @@ ActiveRecord::Schema.define(version: 2020_06_10_123706) do
 
   create_table "orders", force: :cascade do |t|
     t.text "products", null: false, array: true
-    t.text "drivers_confirmed", default: [], array: true
-    t.decimal "delivery_price", default: "0.0"
-    t.string "delivery_currency", default: "USD"
     t.integer "driver_id"
     t.integer "status", default: 1
     t.text "delivery_location", null: false
@@ -134,7 +133,24 @@ ActiveRecord::Schema.define(version: 2020_06_10_123706) do
     t.integer "store_user_id", null: false
     t.integer "customer_user_id", null: false
     t.string "country", null: false
-    t.integer "order_type", null: false
+    t.string "drivers_rejected", default: [], array: true
+    t.string "unconfirmed_drivers", default: [], array: true
+    t.decimal "delivery_fee"
+    t.string "delivery_fee_currency", default: "USD"
+    t.integer "order_type"
+    t.integer "store_confirmation_status", default: 0
+    t.boolean "store_fulfilled_order", default: false
+    t.boolean "driver_received_order", default: false
+    t.boolean "customer_received_order", default: false
+    t.boolean "driver_fulfilled_order", default: false
+    t.boolean "driver_arrived_to_store", default: false
+    t.boolean "driver_arrived_to_delivery_location", default: false
+    t.boolean "store_handles_delivery", null: false
+    t.time "store_arrival_time_limit"
+    t.time "delivery_time_limit", null: false
+    t.boolean "driver_canceled_order", default: false
+    t.boolean "customer_canceled_order", default: false
+    t.string "order_canceled_reason", default: ""
   end
 
   create_table "posts", force: :cascade do |t|
@@ -199,6 +215,7 @@ ActiveRecord::Schema.define(version: 2020_06_10_123706) do
     t.boolean "has_sensitive_products", default: false
     t.boolean "handles_delivery", default: false
     t.decimal "maximum_delivery_distance"
+    t.decimal "balance", default: "0.0"
   end
 
   create_table "users", force: :cascade do |t|
