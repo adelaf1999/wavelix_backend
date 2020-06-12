@@ -1,7 +1,7 @@
 class OrderController < ApplicationController
 
   include OrderHelper
-
+  include MoneyHelper
 
   before_action :authenticate_user!
 
@@ -11,14 +11,15 @@ class OrderController < ApplicationController
 
     if current_user.customer_user?
 
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      default_currency = customer_user.default_currency
 
       delivery_location = params[:delivery_location]
 
       product = Product.find_by(id: params[:product_id])
 
-
       if delivery_location != nil && product != nil
-
 
         delivery_location = eval(delivery_location)
 
@@ -34,16 +35,13 @@ class OrderController < ApplicationController
 
             if is_number?(latitude) && is_number?(longitude)
 
-
               latitude = latitude.to_d
 
               longitude = longitude.to_d
 
-
               # Make sure delivery location is in store country
 
               geo_location = Geocoder.search([latitude, longitude])
-
 
               if geo_location.size > 0
 
@@ -51,34 +49,132 @@ class OrderController < ApplicationController
 
                 if geo_location_country_code == product.store_country
 
-                  distance = calculate_distance_km(delivery_location, store_user.store_address )
+                  has_sensitive_products = store_user.has_sensitive_products
 
-                  if distance <= 100
+                  handles_delivery = store_user.handles_delivery
 
-                    @success = true
+                  maximum_delivery_distance = store_user.maximum_delivery_distance
+
+                  store_location = store_user.store_address
+
+                  distance = calculate_distance_km(delivery_location, store_location )
+
+                  if handles_delivery
+
+                    if maximum_delivery_distance != nil
+
+                      if distance <= maximum_delivery_distance
+
+                        @success = true
+
+                        @can_order = true
+
+                      else
+
+                        @success = false
+
+                        @message = 'Delivery location outside deliverable zone'
+
+                      end
+
+                    else
+
+                      @success = true
+
+                      @can_order = true
+
+                    end
+
+                  else
+
+                    if has_sensitive_products
+
+                      if distance <= 7
+
+                        @success = true
+
+                        @can_order = true
 
 
-                    if distance > 25
+                        if default_currency == 'USD'
 
-                      @delivery_options = { 1 => 'Exclusive Delivery' }
+                          @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
 
+                        else
+
+                          @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                          exchange_rates = get_exchange_rates(default_currency)
+
+                          @delivery_fee =  @delivery_fee / exchange_rates['USD']
+
+                        end
+
+
+                      else
+
+                        @success = false
+
+                        @message = 'Delivery location outside deliverable zone'
+
+
+                      end
 
                     else
 
 
-                      @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+                      if distance <= 100
+
+                        @success = true
+
+
+                        if distance > 25
+
+                          # Only exclusive delivery available
+
+                          # Tell that to customer and explanation about exclusive delivery
+
+                          @can_order = true
+
+                          default_currency = customer_user.default_currency
+
+                          if default_currency == 'USD'
+
+                            @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                          else
+
+                            @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                            exchange_rates = get_exchange_rates(default_currency)
+
+                            @delivery_fee =  @delivery_fee / exchange_rates['USD']
+
+                          end
+
+
+
+                        else
+
+                          @can_order = false # Its false since customer has to choose which delivery option he wants
+
+                          @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+
+                        end
+
+
+                      else
+
+                        @success = false
+                        @message = 'Delivery location outside deliverable zone'
+
+                      end
+
 
                     end
 
 
-                  else
-
-                    @success = false
-                    @message = 'Delivery location outside deliverable zone'
-
                   end
-
-
 
 
                 else

@@ -1,5 +1,50 @@
 module OrderHelper
 
+  require 'faraday'
+  require 'faraday_middleware'
+  require 'net/http'
+
+
+
+  def calculate_exclusive_delivery_fee_usd(delivery_location, store_location)
+
+    # Returns delivery fee from store to delivery location in USD
+
+    latitude = delivery_location[:latitude]
+
+    longitude = delivery_location[:longitude]
+
+    store_latitude = store_location[:latitude]
+
+    store_longitude = store_location[:longitude]
+
+    url = 'https://maps.googleapis.com/maps/api/distancematrix'
+
+    conn = Faraday.new(url: url) do |faraday|
+      faraday.response :json
+      faraday.adapter Faraday.default_adapter
+    end
+
+    response = Rails.cache.fetch("#{store_latitude},#{store_longitude}|#{latitude},#{longitude}", expires_in: 30.minutes) do
+      conn.get(
+          'json',
+          units: 'metric',
+          origins: "#{store_latitude},#{store_longitude}",
+          destinations: "#{latitude},#{longitude}",
+          key: ENV.fetch('GOOGLE_API_KEY')
+      )
+    end
+
+    data = response.body['rows'][0]['elements'][0]
+
+    travel_distance = data['distance']['value'] / 1000 # KM
+
+    travel_time = data['duration']['value'] / 60 # Minutes
+
+    0.0189 * travel_time + 0.533 * travel_distance + 2 # in USD
+
+  end
+
   def calculate_distance_km(loc1, loc2)
 
     rad_per_deg = Math::PI/180  # PI / 180
