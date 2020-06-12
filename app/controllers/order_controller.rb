@@ -91,6 +91,10 @@ class OrderController < ApplicationController
 
                       if distance <= 7
 
+                        # Only exclusive delivery available
+
+                        # Tell that to customer and explanation about exclusive delivery
+
                         @success = true
 
                         @can_order = true
@@ -109,6 +113,8 @@ class OrderController < ApplicationController
                           @delivery_fee =  @delivery_fee / exchange_rates['USD']
 
                         end
+
+                        @order_type = 1
 
 
                       else
@@ -151,6 +157,8 @@ class OrderController < ApplicationController
                             @delivery_fee =  @delivery_fee / exchange_rates['USD']
 
                           end
+
+                          @order_type = 1
 
 
 

@@ -17,3 +17,7 @@ end
 if @can_order != nil
     node(:can_order) { @can_order }
 end
+
+if @order_type != nil
+    node(:order_type) { @order_type }
+end
