@@ -5,6 +5,25 @@ module OrderHelper
   require 'net/http'
 
 
+  def calculate_standard_delivery_fee_usd(distance)
+
+
+    # Distance represent the distance radius from store to delivery location
+
+    if distance >= 0 && distance <= 1
+      1.99
+    elsif distance > 1 && distance <= 5
+      2.99
+    elsif distance > 5 && distance <= 10
+      5.99
+    elsif distance > 10 && distance <= 15
+      7.99
+    elsif distance > 15 && distance <= 25
+      9.99
+    end
+
+  end
+
 
   def calculate_exclusive_delivery_fee_usd(delivery_location, store_location)
 

@@ -142,7 +142,6 @@ class OrderController < ApplicationController
 
                           @can_order = true
 
-                          default_currency = customer_user.default_currency
 
                           if default_currency == 'USD'
 
@@ -166,7 +165,39 @@ class OrderController < ApplicationController
 
                           @can_order = false # Its false since customer has to choose which delivery option he wants
 
-                          @delivery_options = { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+
+                          if default_currency == 'USD'
+
+                            standard_delivery_fee = calculate_standard_delivery_fee_usd(distance)
+
+                            exclusive_delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                            @delivery_options = [
+                                { order_type: 0, label: 'Standard Delivery', delivery_fee: standard_delivery_fee },
+                                { order_type: 1, label: 'Exclusive Delivery',delivery_fee: exclusive_delivery_fee }
+                            ]
+
+
+                          else
+
+                            standard_delivery_fee = calculate_standard_delivery_fee_usd(distance)
+
+                            exclusive_delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                            exchange_rates = get_exchange_rates(default_currency)
+
+                            standard_delivery_fee =  standard_delivery_fee / exchange_rates['USD']
+
+                            exclusive_delivery_fee =  exclusive_delivery_fee / exchange_rates['USD']
+
+
+                            @delivery_options = [
+                                { order_type: 0, label: 'Standard Delivery', delivery_fee: standard_delivery_fee },
+                                { order_type: 1, label: 'Exclusive Delivery',delivery_fee: exclusive_delivery_fee }
+                            ]
+
+                          end
+
 
                         end
 
