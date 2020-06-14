@@ -143,7 +143,7 @@ Rails.application.routes.draw do
 
   # Order Routes
 
-  post '/checkout' => 'order#checkout'
+  post '/place-order' => 'order#place_order'
 
   post '/validate-delivery-location' => 'order#validate_delivery_location'
 

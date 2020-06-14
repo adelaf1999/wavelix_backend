@@ -4,8 +4,38 @@ class Order < ApplicationRecord
   enum store_confirmation_status: {store_unconfirmed: 0, store_rejected: 1, store_accepted: 2}
   enum order_type: { standard: 0, exclusive: 1 } # Can be nil if store handles delivery
   serialize :delivery_location, Hash
+  before_create :setup_order
 
   belongs_to :store_user
   belongs_to :customer_user
+
+  private
+
+
+  def setup_order
+
+    if !self.store_handles_delivery
+
+      self.store_fulfilled_order = false
+
+      self.driver_received_order = false
+
+      self.customer_received_order = false
+
+      self.driver_fulfilled_order = false
+
+      self.driver_arrived_to_store = false
+
+      self.driver_arrived_to_delivery_location = false
+
+      self.driver_received_order_code = SecureRandom.hex
+
+      self.driver_fulfilled_order_code = SecureRandom.hex
+
+    end
+
+
+  end
+
 
 end

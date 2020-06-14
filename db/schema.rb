@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_11_094002) do
+ActiveRecord::Schema.define(version: 2020_06_14_124804) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -139,18 +139,22 @@ ActiveRecord::Schema.define(version: 2020_06_11_094002) do
     t.string "delivery_fee_currency", default: "USD"
     t.integer "order_type"
     t.integer "store_confirmation_status", default: 0
-    t.boolean "store_fulfilled_order", default: false
-    t.boolean "driver_received_order", default: false
-    t.boolean "customer_received_order", default: false
-    t.boolean "driver_fulfilled_order", default: false
-    t.boolean "driver_arrived_to_store", default: false
-    t.boolean "driver_arrived_to_delivery_location", default: false
     t.boolean "store_handles_delivery", null: false
     t.time "store_arrival_time_limit"
-    t.time "delivery_time_limit", null: false
-    t.boolean "driver_canceled_order", default: false
     t.boolean "customer_canceled_order", default: false
     t.string "order_canceled_reason", default: ""
+    t.string "driver_received_order_code"
+    t.string "driver_fulfilled_order_code"
+    t.boolean "store_fulfilled_order"
+    t.boolean "driver_received_order"
+    t.boolean "customer_received_order"
+    t.boolean "driver_fulfilled_order"
+    t.boolean "driver_arrived_to_store"
+    t.boolean "driver_arrived_to_delivery_location"
+    t.time "delivery_time_limit"
+    t.boolean "driver_canceled_order"
+    t.decimal "total_price", null: false
+    t.string "total_price_currency", default: "USD"
   end
 
   create_table "posts", force: :cascade do |t|
