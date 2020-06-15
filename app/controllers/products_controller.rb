@@ -66,9 +66,10 @@ class ProductsController < ApplicationController
                     @store[:profile_id] = store_profile.id
                     @store[:username] = store.username
                     @store[:location] = store_user.store_address
-                    @store[:has_sensitive_products] = store_user.has_sensitive_products
-                    @store[:handles_delivery] = store_user.handles_delivery
-                    @store[:maximum_delivery_distance] = store_user.maximum_delivery_distance
+
+                    @has_sensitive_products = store_user.has_sensitive_products
+                    @handles_delivery = store_user.handles_delivery
+                    @maximum_delivery_distance = store_user.maximum_delivery_distance
 
 
                     if current_user.customer_user?

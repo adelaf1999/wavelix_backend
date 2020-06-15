@@ -14,6 +14,16 @@ if @product_options != nil
     node(:product_options) { @product_options }
 end
 
-if @store != nil
-    node(:store) { @store }
+if @has_sensitive_products != nil
+    node(:has_sensitive_products) { @has_sensitive_products }
 end
+
+if @handles_delivery != nil
+    node(:handles_delivery) { @handles_delivery }
+end
+
+if @maximum_delivery_distance != nil
+    node(:maximum_delivery_distance) { @maximum_delivery_distance }
+end
+
+

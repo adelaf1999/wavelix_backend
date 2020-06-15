@@ -38,3 +38,14 @@ end
 if @product_price != nil
     node(:product_price) { @product_price }
 end
+
+
+if @has_sensitive_products != nil
+    node(:has_sensitive_products) { @has_sensitive_products }
+end
+
+if @handles_delivery != nil
+    node(:handles_delivery) { @handles_delivery }
+end
+
+node(:maximum_delivery_distance) { @maximum_delivery_distance }

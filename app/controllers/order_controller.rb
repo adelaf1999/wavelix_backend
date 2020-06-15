@@ -505,20 +505,11 @@ class OrderController < ApplicationController
 
                                 @error_code = 4
 
-                                store = store_user.store
+                                @has_sensitive_products = has_sensitive_products
 
-                                store_profile = store.profile
+                                @handles_delivery = handles_delivery
 
-                                @store = {}
-                                @store[:name] = store_user.store_name
-                                @store[:logo] = store_profile.profile_picture.url
-                                @store[:profile_id] = store_profile.id
-                                @store[:username] = store.username
-                                @store[:location] = store_user.store_address
-                                @store[:has_sensitive_products] = store_user.has_sensitive_products
-                                @store[:handles_delivery] = store_user.handles_delivery
-                                @store[:maximum_delivery_distance] = store_user.maximum_delivery_distance
-
+                                @maximum_delivery_distance = maximum_delivery_distance
 
 
                               end
