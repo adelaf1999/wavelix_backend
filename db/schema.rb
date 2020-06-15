@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_14_124804) do
+ActiveRecord::Schema.define(version: 2020_06_15_083519) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -97,6 +97,7 @@ ActiveRecord::Schema.define(version: 2020_06_14_124804) do
     t.integer "status", default: 0
     t.string "currency", null: false
     t.decimal "balance", default: "0.0"
+    t.boolean "driver_verified", default: false
   end
 
   create_table "follows", force: :cascade do |t|
@@ -155,6 +156,7 @@ ActiveRecord::Schema.define(version: 2020_06_14_124804) do
     t.boolean "driver_canceled_order"
     t.decimal "total_price", null: false
     t.string "total_price_currency", default: "USD"
+    t.integer "prospective_driver_id"
   end
 
   create_table "posts", force: :cascade do |t|
