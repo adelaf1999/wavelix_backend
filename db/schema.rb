@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_15_083519) do
+ActiveRecord::Schema.define(version: 2020_06_17_111015) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -98,6 +98,7 @@ ActiveRecord::Schema.define(version: 2020_06_15_083519) do
     t.string "currency", null: false
     t.decimal "balance", default: "0.0"
     t.boolean "driver_verified", default: false
+    t.string "name", null: false
   end
 
   create_table "follows", force: :cascade do |t|
@@ -147,8 +148,6 @@ ActiveRecord::Schema.define(version: 2020_06_15_083519) do
     t.string "driver_received_order_code"
     t.string "driver_fulfilled_order_code"
     t.boolean "store_fulfilled_order"
-    t.boolean "driver_received_order"
-    t.boolean "customer_received_order"
     t.boolean "driver_fulfilled_order"
     t.boolean "driver_arrived_to_store"
     t.boolean "driver_arrived_to_delivery_location"

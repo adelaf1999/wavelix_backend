@@ -6,6 +6,160 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def get_orders
+
+
+    if current_user.store_user?
+
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      store_address = store_user.store_address
+
+      store_latitude = store_address[:latitude]
+
+      store_longitude = store_address[:longitude]
+
+      @orders = []
+
+      store_user.orders.order(created_at: :desc).each do |order|
+
+        @order = {}
+
+        timezone = Timezone.lookup(store_latitude, store_longitude)
+
+        @order[:created_at] = order.created_at
+
+        @order[:ordered_at] = timezone.time_with_offset(order.created_at).strftime('%A %-d, %Y at %-I:%M %p')
+
+
+        driver_canceled_order = order.driver_canceled_order
+
+        if driver_canceled_order != nil
+
+          @order[:driver_canceled_order] = driver_canceled_order
+
+        end
+
+        store_handles_delivery = order.store_handles_delivery
+
+        @order[:store_handles_delivery] = store_handles_delivery
+
+        if store_handles_delivery
+
+          delivery_time_limit = order.delivery_time_limit
+
+          if delivery_time_limit != nil
+
+            @order[:delivery_time_limit] = delivery_time_limit
+
+          end
+
+        else
+
+          @order[:driver_arrived_to_delivery_location] = order.driver_arrived_to_delivery_location
+
+          @order[:driver_arrived_to_store] = order.driver_arrived_to_store
+
+          @order[:driver_fulfilled_order] = order.driver_fulfilled_order
+
+          @order[:store_fulfilled_order] = order.store_fulfilled_order
+
+          if order.driver_id != nil
+
+            driver = Driver.find_by(id: order.driver_id)
+
+            @order[:driver_name] = driver.name
+
+          end
+
+        end
+
+        order_canceled_reason = order.order_canceled_reason
+
+        if order_canceled_reason.length > 0
+
+          @order[:order_canceled_reason] = order_canceled_reason
+
+        end
+
+        customer_canceled_order = order.customer_canceled_order
+
+        if customer_canceled_order
+
+          @order[:customer_canceled_order] = customer_canceled_order
+
+        end
+
+
+        @order[:store_confirmation_status] = order.store_confirmation_status
+
+        order_type = order.order_type
+
+        if order_type != nil
+
+          @order[:order_type] = order.order_type
+
+        end
+
+
+        customer_user = CustomerUser.find_by(id: order.customer_user_id)
+
+        customer = {
+            name: customer_user.full_name
+        }
+
+        @order[:customer] = customer
+
+
+
+        @order[:delivery_location] = order.delivery_location
+
+        @order[:status] = order.status
+
+        products = []
+
+
+        order.products.each do |ordered_product|
+
+          ordered_product = eval(ordered_product)
+
+
+          product = Product.find_by(id: ordered_product[:id])
+
+          products.push({
+                            id: ordered_product[:id],
+                            quantity: ordered_product[:quantity],
+                            price: ordered_product[:price],
+                            currency: ordered_product[:currency],
+                            product_options: ordered_product[:product_options],
+                            name: product.name,
+                            picture: product.main_picture.url
+                        })
+
+
+
+        end
+
+        @order[:products] = products
+
+        @order[:id] = order.id
+
+        @orders.push(@order)
+
+      end
+
+
+
+    else
+
+
+
+    end
+
+  end
+
+
   def validate_delivery_location
 
 
@@ -780,6 +934,14 @@ class OrderController < ApplicationController
   )
 
 
+    store_latitude = store_location[:latitude]
+
+    store_longitude = store_location[:longitude]
+
+    timezone = Timezone.lookup(store_latitude, store_longitude)
+
+    local_time = timezone.time_with_offset(Time.now)
+
     if order_type == 0
 
 
@@ -832,13 +994,6 @@ class OrderController < ApplicationController
 
       # If store is closed order is not created
 
-      store_latitude = store_location[:latitude]
-
-      store_longitude = store_location[:longitude]
-
-      timezone = Timezone.lookup(store_latitude, store_longitude)
-
-      local_time = timezone.time_with_offset(Time.now)
 
       day =  store_schedule.days.find_by(week_day: get_day_of_week(local_time))
 
@@ -997,13 +1152,13 @@ class OrderController < ApplicationController
   )
 
 
+    timezone = Timezone.lookup(store_latitude, store_longitude)
+
+    local_time = timezone.time_with_offset(Time.now)
+
     if has_sensitive_products
 
       # If store is closed order is not created
-
-      timezone = Timezone.lookup(store_latitude, store_longitude)
-
-      local_time = timezone.time_with_offset(Time.now)
 
       day =  store_schedule.days.find_by(week_day: get_day_of_week(local_time))
 

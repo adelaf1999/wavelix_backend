@@ -18,10 +18,6 @@ class Order < ApplicationRecord
 
       self.store_fulfilled_order = false
 
-      self.driver_received_order = false
-
-      self.customer_received_order = false
-
       self.driver_fulfilled_order = false
 
       self.driver_arrived_to_store = false
