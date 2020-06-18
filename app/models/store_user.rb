@@ -6,7 +6,6 @@ class StoreUser < ApplicationRecord
     has_many :categories
     enum status: {unverified: 0, verified: 1}
     has_many :orders
-    after_create :save_street_name
     has_one :schedule, dependent: :destroy
    
 
@@ -60,24 +59,7 @@ class StoreUser < ApplicationRecord
     end
 
 
-    private
 
-
-    def save_street_name
-
-        address = self.store_address
-
-        latitude = address[:latitude]
-
-        longitude = address[:longitude]
-
-        results = Geocoder.search([latitude, longitude])
-
-        street_name = results.first.address
-
-        self.update!(street_name: street_name)
-
-    end
 
     def get_child_subcategories(subcategories, parent_category)
 
