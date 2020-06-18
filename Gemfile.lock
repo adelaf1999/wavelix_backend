@@ -58,6 +58,8 @@ GEM
       zeitwerk (~> 2.2)
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
+    authy (2.7.5)
+      httpclient (>= 2.5.3.3)
     aws-eventstream (1.0.3)
     aws-partitions (1.240.0)
     aws-sdk-core (3.77.0)
@@ -129,6 +131,7 @@ GEM
     geocoder (1.6.2)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
+    httpclient (2.8.3)
     i18n (1.7.0)
       concurrent-ruby (~> 1.0)
     i18n_data (0.8.0)
@@ -242,6 +245,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  authy (~> 2.7, >= 2.7.5)
   bootsnap (>= 1.4.2)
   byebug
   carrierwave (~> 2.0, >= 2.0.2)

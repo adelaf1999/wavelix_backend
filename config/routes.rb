@@ -177,4 +177,12 @@ Rails.application.routes.draw do
 
   get '/toggle-handles-delivery' => 'store_settings#toggle_handles_delivery'
 
+  # Phone verifications Routes
+
+  get '/is-phone-number-verified' => 'phone_verifications#is_phone_number_verified'
+
+  post '/request-phone-verification' => 'phone_verifications#create'
+
+  post '/validate-phone-verification' => 'phone_verifications#verify'
+
 end

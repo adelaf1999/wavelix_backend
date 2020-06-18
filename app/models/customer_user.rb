@@ -8,6 +8,11 @@ class CustomerUser < ApplicationRecord
     after_create :create_cart
 
 
+    def phone_number_verified?
+        self.phone_number_verified
+    end
+
+
     private
 
     def create_cart
