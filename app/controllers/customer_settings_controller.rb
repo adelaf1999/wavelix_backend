@@ -11,21 +11,31 @@ class CustomerSettingsController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      currency = params[:currency]
+      if customer_user.phone_number_verified?
 
-      if currency != nil && is_currency_valid?(currency)
+        currency = params[:currency]
 
-        customer_user.update!(default_currency: currency)
+        if currency != nil && is_currency_valid?(currency)
 
-        @default_currency = currency
+          customer_user.update!(default_currency: currency)
 
-        @success = true
+          @default_currency = currency
+
+          @success = true
+
+        else
+
+          @success = false
+
+        end
 
       else
 
         @success = false
 
       end
+
+
 
     end
 
@@ -38,9 +48,14 @@ class CustomerSettingsController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      @default_currency = customer_user.default_currency
+      if customer_user.phone_number_verified?
 
-      @currencies = get_currencies
+        @default_currency = customer_user.default_currency
+
+        @currencies = get_currencies
+
+      end
+
 
     end
 
