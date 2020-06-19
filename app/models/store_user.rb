@@ -120,9 +120,9 @@ class StoreUser < ApplicationRecord
 
         location = Geocoder.search([latitude, longitude]).first
 
-        street_address = location.street_address
+        if location != nil
 
-        if street_address
+            street_address = location.street_address
 
             self.street_name = street_address
 
