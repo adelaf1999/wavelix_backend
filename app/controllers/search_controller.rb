@@ -12,42 +12,46 @@ class SearchController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      @currency = customer_user.default_currency
+      if customer_user.phone_number_verified?
 
-      current_location = params[:current_location]
+        @currency = customer_user.default_currency
 
-      if current_location != nil
+        current_location = params[:current_location]
 
-        current_location = eval(current_location)
+        if current_location != nil
 
-        if current_location.instance_of?(Hash)
+          current_location = eval(current_location)
 
-          latitude = current_location[:latitude]
+          if current_location.instance_of?(Hash)
 
-          longitude = current_location[:longitude]
+            latitude = current_location[:latitude]
 
-          if latitude != nil && longitude != nil
+            longitude = current_location[:longitude]
 
-            if is_number?(latitude) && is_number?(longitude)
+            if latitude != nil && longitude != nil
 
-              latitude = latitude.to_d
+              if is_number?(latitude) && is_number?(longitude)
 
-              longitude = longitude.to_d
+                latitude = latitude.to_d
 
-              geo_location = Geocoder.search([latitude, longitude])
+                longitude = longitude.to_d
 
-              if geo_location.size > 0
+                geo_location = Geocoder.search([latitude, longitude])
 
-                geo_location_country_code = geo_location.first.country_code
+                if geo_location.size > 0
 
-                customer_user.update!(country: geo_location_country_code)
+                  geo_location_country_code = geo_location.first.country_code
 
-                @country = geo_location_country_code
+                  customer_user.update!(country: geo_location_country_code)
+
+                  @country = geo_location_country_code
 
 
-              else
+                else
 
-                @country = customer_user.country
+                  @country = customer_user.country
+
+                end
 
               end
 
@@ -57,8 +61,8 @@ class SearchController < ApplicationController
 
         end
 
-      end
 
+      end
 
 
     else
@@ -75,7 +79,23 @@ class SearchController < ApplicationController
 
   def search_users
 
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
     # search for users by full_name and username
+
+    # can only search for users whose phone number is also verified as well
 
     search = params[:search]
 
@@ -101,7 +121,7 @@ class SearchController < ApplicationController
 
         end
 
-        customer_users_by_full_name = CustomerUser.all.where("full_name ILIKE ?", "%#{search}%").where.not(customer_id: user_ids).limit(50)
+        customer_users_by_full_name = CustomerUser.all.where("full_name ILIKE ?", "%#{search}%").where(phone_number_verified: true).where.not(customer_id: user_ids).limit(50)
 
 
         customer_users_by_full_name.each do |customer_user|
@@ -140,6 +160,20 @@ class SearchController < ApplicationController
 
 
   def search_stores
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
 
     # Only verified stores appear in searches
 
@@ -239,10 +273,23 @@ class SearchController < ApplicationController
 
   def search_products
 
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
     # Products must be from verified stores and they must be available products
 
     # Store users can see their own products in search
-
 
     product_name = params[:product_name]
 
