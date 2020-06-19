@@ -117,20 +117,6 @@ class FollowController < ApplicationController
 
   def follow
 
-    if current_user.customer_user?
-
-      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
-
-      if !customer_user.phone_number_verified?
-
-        @success = false
-
-        return
-
-      end
-
-    end
-
     profile = Profile.find_by(id: params[:profile_id])
 
     if profile != nil

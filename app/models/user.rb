@@ -55,6 +55,8 @@ class User < ActiveRecord::Base
 
     # To follow a store it must be verified
     # To follow a person their account must be public
+    # A person that wants to follow must verify their phone number
+    # Can only follow another person if their phone number is verified as well
     # If their account is not public create a request to follow
     # A store cannot follow anyone if its not verified
 
@@ -76,7 +78,19 @@ class User < ActiveRecord::Base
 
       else
 
-        create_following_relationship(other)
+        this_customer_user = CustomerUser.find_by(customer_id: self.id)
+
+        if this_customer_user.phone_number_verified?
+
+          create_following_relationship(other)
+
+        else
+
+          false
+
+        end
+
+
 
       end
 
@@ -133,15 +147,27 @@ class User < ActiveRecord::Base
 
     else
 
-      other_profile  = other.profile
+      other_customer = CustomerUser.find_by(customer_id: other.id)
 
-      if other_profile.public_account?
-        following_relationships.create!(followed_id: other.id)
-        true
+      if other_customer.phone_number_verified?
+
+        other_profile  = other.profile
+
+        if other_profile.public_account?
+          following_relationships.create!(followed_id: other.id)
+          true
+        else
+          following_relationships.create!(followed_id: other.id, status: 0)
+          true
+        end
+
       else
-        following_relationships.create!(followed_id: other.id, status: 0)
-        true
+
+        false
+
       end
+
+
 
 
     end
