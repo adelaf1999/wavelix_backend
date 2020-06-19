@@ -57,7 +57,6 @@ class PhoneVerificationsController < ApplicationController
           if phone_number == nil || phone_number.can_request_sms?
 
             @success = true
-            @seconds_left = 0
 
           else
 
