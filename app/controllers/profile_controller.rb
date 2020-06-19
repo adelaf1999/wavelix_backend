@@ -7,6 +7,8 @@ class ProfileController < ApplicationController
 
     # store user can only be viewed if verified
 
+    # customer user can only be viewed if phone number is verified
+
     # customer user can be viewed based on privacy settings and on following status
 
     profile = Profile.find_by(id: params[:profile_id])
@@ -14,7 +16,6 @@ class ProfileController < ApplicationController
     if profile != nil && profile.id != current_user.profile.id
 
       user = profile.user
-
 
       following_relationship = current_user.following_relationships.find_by(followed_id: user.id)
 
@@ -47,6 +48,18 @@ class ProfileController < ApplicationController
 
         end
 
+      elsif current_user.customer_user?
+
+        customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+        if !customer_user.phone_number_verified?
+
+          @success = false
+
+          return
+
+        end
+
 
       end
 
@@ -58,78 +71,89 @@ class ProfileController < ApplicationController
 
       if user.customer_user?
 
-        @profile_data = {}
+        customer_user = CustomerUser.find_by(customer_id: user.id)
+
+        if customer_user.phone_number_verified?
+
+          @profile_data = {}
 
 
-        username = user.username
-        profile_picture = profile.profile_picture.url
-        profile_bio = profile.profile_bio
+          username = user.username
+          profile_picture = profile.profile_picture.url
+          profile_bio = profile.profile_bio
 
 
-        # Common data when user profile is public/private
-        @success = true
-        cookies.encrypted[:profile_id] = profile.id
+          # Common data when user profile is public/private
+          @success = true
+          cookies.encrypted[:profile_id] = profile.id
 
-        @profile_data[:is_following] = is_following
-        @profile_data[:user_type] = user_type
-        @profile_data[:username] = username
-        @profile_data[:profile_picture] = profile_picture
-        @profile_data[:profile_bio] = profile_bio
-        @profile_data[:is_private] = is_private
+          @profile_data[:is_following] = is_following
+          @profile_data[:user_type] = user_type
+          @profile_data[:username] = username
+          @profile_data[:profile_picture] = profile_picture
+          @profile_data[:profile_bio] = profile_bio
+          @profile_data[:is_private] = is_private
 
-        if profile.public_account? || (profile.private_account? && is_following)
+          if profile.public_account? || (profile.private_account? && is_following)
 
 
-          profile_posts = get_complete_profile_posts(profile)
-          story_posts = get_complete_story_posts(profile)
-          follow_relationships = get_follow_relationships(user)
+            profile_posts = get_complete_profile_posts(profile)
+            story_posts = get_complete_story_posts(profile)
+            follow_relationships = get_follow_relationships(user)
 
-          @profile_data[:profile_posts] = profile_posts
-          @profile_data[:story_posts] = story_posts
-          @profile_data[:follow_relationships] = follow_relationships
+            @profile_data[:profile_posts] = profile_posts
+            @profile_data[:story_posts] = story_posts
+            @profile_data[:follow_relationships] = follow_relationships
+
+          else
+
+            follow_relationships = get_follow_relationships(user)
+
+            followers = follow_relationships[:followers]
+
+            following = follow_relationships[:following]
+
+            placeholder_followers = []
+
+            placeholder_following = []
+
+            for i in 1..followers.count do
+
+              placeholder_followers.push("placeholder#{i}")
+
+            end
+
+            for i in 1..following.count do
+
+              placeholder_following.push("placeholder#{i}")
+
+            end
+
+            follow_relationships[:followers] = placeholder_followers
+
+            follow_relationships[:following] = placeholder_following
+
+            follower_relationship = user.follower_relationships.find_by(follower_id: current_user.id)
+
+            if follower_relationship != nil && follower_relationship.inactive?
+
+              @profile_data[:is_requested] = true
+
+            end
+
+            @profile_data[:follow_relationships] = follow_relationships
+
+
+
+
+          end
 
         else
 
-          follow_relationships = get_follow_relationships(user)
-
-          followers = follow_relationships[:followers]
-
-          following = follow_relationships[:following]
-
-          placeholder_followers = []
-
-          placeholder_following = []
-
-          for i in 1..followers.count do
-
-            placeholder_followers.push("placeholder#{i}")
-
-          end
-
-          for i in 1..following.count do
-
-            placeholder_following.push("placeholder#{i}")
-
-          end
-
-          follow_relationships[:followers] = placeholder_followers
-
-          follow_relationships[:following] = placeholder_following
-
-          follower_relationship = user.follower_relationships.find_by(follower_id: current_user.id)
-
-          if follower_relationship != nil && follower_relationship.inactive?
-
-            @profile_data[:is_requested] = true
-
-          end
-
-          @profile_data[:follow_relationships] = follow_relationships
-
-
-
+          @success = false
 
         end
+
 
       else
 
@@ -166,6 +190,7 @@ class ProfileController < ApplicationController
         else
 
           @success = false
+
         end
 
 
@@ -185,8 +210,8 @@ class ProfileController < ApplicationController
 
     @profile_data = {}
 
-
     if current_user.store_user?
+
       # store specific profile data
       store_user = StoreUser.find_by(store_id: current_user.id)
       @profile_data[:store_name] = store_user.store_name
@@ -196,7 +221,21 @@ class ProfileController < ApplicationController
 
     else
 
-      @profile_data[:follow_requests] = get_user_follow_requests(current_user)
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      else
+
+        @profile_data[:follow_requests] = get_user_follow_requests(current_user)
+
+      end
+
+
 
     end
 
@@ -213,6 +252,20 @@ class ProfileController < ApplicationController
   end
 
   def update_profile
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
 
     profile_picture = params[:profile_picture]
 
@@ -253,6 +306,22 @@ class ProfileController < ApplicationController
   end
 
   def search_follow
+
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
 
     search_follow_type = params[:search_follow_type]
 
@@ -309,8 +378,6 @@ class ProfileController < ApplicationController
 
 
 
-
-
       if search_follow_type == 0
 
         profile = Profile.find_by(id: profile_id)
@@ -327,8 +394,6 @@ class ProfileController < ApplicationController
           follows_list = current_user.followers.merge(current_user.follower_relationships.where(status: 1))
 
         end
-
-
 
 
       else
@@ -420,6 +485,20 @@ class ProfileController < ApplicationController
   end
 
   def change_profile_settings
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
 
     privacy_on = params[:privacy_on]
 
