@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_18_094350) do
+ActiveRecord::Schema.define(version: 2020_06_19_111647) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -222,6 +222,7 @@ ActiveRecord::Schema.define(version: 2020_06_18_094350) do
     t.boolean "handles_delivery", default: false
     t.decimal "maximum_delivery_distance"
     t.decimal "balance", default: "0.0"
+    t.string "street_name", default: ""
   end
 
   create_table "users", force: :cascade do |t|

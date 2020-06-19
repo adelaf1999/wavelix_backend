@@ -7,7 +7,8 @@ class StoreUser < ApplicationRecord
     enum status: {unverified: 0, verified: 1}
     has_many :orders
     has_one :schedule, dependent: :destroy
-   
+    after_create :save_street_name
+
 
     def get_categories
 
@@ -105,5 +106,33 @@ class StoreUser < ApplicationRecord
         categories
 
     end
+
+    private
+
+
+    def save_street_name
+
+        address = self.store_address
+
+        latitude = address[:latitude]
+
+        longitude = address[:longitude]
+
+        location = Geocoder.search([latitude, longitude]).first
+
+        street_address = location.street_address
+
+        if street_address
+
+            self.street_name = street_address
+
+            self.save
+
+        end
+
+
+    end
+
+
 
 end
