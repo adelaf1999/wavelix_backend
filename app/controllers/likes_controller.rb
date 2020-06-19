@@ -7,6 +7,20 @@ class LikesController < ApplicationController
 
   def destroy
 
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
     post = Post.find_by(id: params[:post_id])
 
     if post != nil
@@ -40,6 +54,20 @@ class LikesController < ApplicationController
     # cannot like posts of private account unless following them
 
     # can like once and only once profile posts only
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
 
     post = Post.find_by(id: params[:post_id])
 
