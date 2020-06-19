@@ -207,10 +207,16 @@ class PhoneVerificationsController < ApplicationController
                 phone_number: number
             )
 
+            # puts response
+
 
             if response.ok?
 
               @success = true
+
+              next_request_at = (DateTime.now.utc + 60.seconds).to_datetime
+
+              PhoneNumber.create!(number: "#{country_code}#{number}", next_request_at: next_request_at)
 
             else
 
@@ -220,9 +226,7 @@ class PhoneVerificationsController < ApplicationController
 
             end
 
-            next_request_at = (DateTime.now.utc + 60.seconds).to_datetime
 
-            PhoneNumber.create!(number: "#{country_code}#{number}", next_request_at: next_request_at)
 
 
 
@@ -241,6 +245,10 @@ class PhoneVerificationsController < ApplicationController
 
                 @success = true
 
+                next_request_at = (DateTime.now.utc + 60.seconds).to_datetime
+
+                phone_number.update!(next_request_at: next_request_at)
+
               else
 
                 @success = false
@@ -248,10 +256,6 @@ class PhoneVerificationsController < ApplicationController
 
 
               end
-
-              next_request_at = (DateTime.now.utc + 60.seconds).to_datetime
-
-              phone_number.update!(next_request_at: next_request_at)
 
 
             else
