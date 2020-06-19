@@ -113,11 +113,14 @@ class SearchController < ApplicationController
 
         users_by_username.each do |user|
 
-          if user.id != current_user.id
+          customer_user = CustomerUser.find_by(customer_id: user.id)
+
+          if customer_user.phone_number_verified? && user.id != current_user.id
 
             user_ids.push(user.id)
 
           end
+
 
         end
 
