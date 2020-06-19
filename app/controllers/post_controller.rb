@@ -9,6 +9,21 @@ class PostController < ApplicationController
 
   def destroy
 
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
+
     # can destroy profile / story post
 
     profile = current_user.profile
@@ -39,6 +54,20 @@ class PostController < ApplicationController
 
 
   def edit_profile_post
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
 
     profile = current_user.profile
 
@@ -86,6 +115,18 @@ class PostController < ApplicationController
 
         @success = false
         @message = "You need to be verified to create post"
+        return
+
+      end
+
+    elsif current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
         return
 
       end
