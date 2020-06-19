@@ -7,6 +7,20 @@ class ProductsController < ApplicationController
 
     def show
 
+        if current_user.customer_user?
+
+            customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+            if !customer_user.phone_number_verified?
+
+                @success = false
+
+                return
+
+            end
+
+        end
+
         product = Product.find_by(id: params[:product_id])
 
         if product != nil
@@ -101,21 +115,21 @@ class ProductsController < ApplicationController
                     else
 
 
-                      current_store_user = StoreUser.find_by(store_id: current_user.id)
+                        current_store_user = StoreUser.find_by(store_id: current_user.id)
 
-                      @product_currency = current_store_user.currency
+                        @product_currency = current_store_user.currency
 
-                      if product.currency == @product_currency
+                        if product.currency == @product_currency
 
-                          @product_price = product.price
+                            @product_price = product.price
 
-                      else
+                        else
 
-                          exchange_rates = get_exchange_rates(@product_currency)
+                            exchange_rates = get_exchange_rates(@product_currency)
 
-                          @product_price = product.price / exchange_rates[product.currency]
+                            @product_price = product.price / exchange_rates[product.currency]
 
-                      end
+                        end
 
 
 
@@ -1128,15 +1142,15 @@ class ProductsController < ApplicationController
 
                         else
 
-                          if !is_positive_integer?(stock_quantity.to_s)
+                            if !is_positive_integer?(stock_quantity.to_s)
 
-                              can_save = false
+                                can_save = false
 
-                          else
+                            else
 
-                              stock_quantity = stock_quantity.to_i
+                                stock_quantity = stock_quantity.to_i
 
-                          end
+                            end
 
                         end
 
@@ -1532,7 +1546,7 @@ class ProductsController < ApplicationController
 
     def is_csv_pictures_header?(header)
 
-      header == 'pictures' || header == 'images' || header == 'photos' || header == 'pics' || header == 'imgs'
+        header == 'pictures' || header == 'images' || header == 'photos' || header == 'pics' || header == 'imgs'
 
     end
 
