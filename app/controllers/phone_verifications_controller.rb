@@ -62,10 +62,7 @@ class PhoneVerificationsController < ApplicationController
 
             # Phone number exists but still cant make phone request
 
-            # Validate seconds_left in front end make sure its greater than 0
-
             @success = false
-            @seconds_left = (phone_number.next_request_at - DateTime.now).to_i
 
           end
 
@@ -239,6 +236,8 @@ class PhoneVerificationsController < ApplicationController
                   country_code: country_code,
                   phone_number: number
               )
+
+              # puts response
 
 
               if response.ok?
