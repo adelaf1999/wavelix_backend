@@ -167,132 +167,91 @@ class OrderController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      default_currency = customer_user.default_currency
+      if customer_user.phone_number_verified?
 
-      delivery_location = params[:delivery_location]
+        default_currency = customer_user.default_currency
 
-      product = Product.find_by(id: params[:product_id])
+        delivery_location = params[:delivery_location]
 
-      if delivery_location != nil && product != nil
+        product = Product.find_by(id: params[:product_id])
 
-        delivery_location = eval(delivery_location)
+        if delivery_location != nil && product != nil
 
-        store_user = product.category.store_user
+          delivery_location = eval(delivery_location)
 
-        if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+          store_user = product.category.store_user
 
-          latitude = delivery_location[:latitude]
+          if delivery_location.instance_of?(Hash) && !delivery_location.empty?
 
-          longitude = delivery_location[:longitude]
+            latitude = delivery_location[:latitude]
 
-          if latitude != nil && longitude != nil
+            longitude = delivery_location[:longitude]
 
-            if is_number?(latitude) && is_number?(longitude)
+            if latitude != nil && longitude != nil
 
-              latitude = latitude.to_d
+              if is_number?(latitude) && is_number?(longitude)
 
-              longitude = longitude.to_d
+                latitude = latitude.to_d
 
-              # Make sure delivery location is in store country
+                longitude = longitude.to_d
 
-              geo_location = Geocoder.search([latitude, longitude])
+                # Make sure delivery location is in store country
 
-              if geo_location.size > 0
+                geo_location = Geocoder.search([latitude, longitude])
 
-                geo_location_country_code = geo_location.first.country_code
+                if geo_location.size > 0
 
-                if geo_location_country_code == product.store_country
+                  geo_location_country_code = geo_location.first.country_code
 
-                  has_sensitive_products = store_user.has_sensitive_products
+                  if geo_location_country_code == product.store_country
 
-                  handles_delivery = store_user.handles_delivery
+                    has_sensitive_products = store_user.has_sensitive_products
 
-                  maximum_delivery_distance = store_user.maximum_delivery_distance
+                    handles_delivery = store_user.handles_delivery
 
-                  store_location = store_user.store_address
+                    maximum_delivery_distance = store_user.maximum_delivery_distance
 
-                  distance = calculate_distance_km(delivery_location, store_location )
+                    store_location = store_user.store_address
 
-                  if handles_delivery
+                    distance = calculate_distance_km(delivery_location, store_location )
 
-                    if maximum_delivery_distance != nil
+                    if handles_delivery
 
-                      if distance <= maximum_delivery_distance
+                      if maximum_delivery_distance != nil
 
-                        @success = true
+                        if distance <= maximum_delivery_distance
 
-                        @can_order = true
+                          @success = true
 
-                      else
-
-                        @success = false
-
-                        @message = 'Delivery location outside deliverable zone'
-
-                      end
-
-                    else
-
-                      @success = true
-
-                      @can_order = true
-
-                    end
-
-                  else
-
-                    if has_sensitive_products
-
-                      if distance <= 7
-
-                        # Only exclusive delivery available
-
-                        # Tell that to customer and explanation about exclusive delivery
-
-                        @success = true
-
-                        @can_order = true
-
-
-                        if default_currency == 'USD'
-
-                          @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+                          @can_order = true
 
                         else
 
-                          @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+                          @success = false
 
-                          exchange_rates = get_exchange_rates(default_currency)
-
-                          @delivery_fee =  @delivery_fee / exchange_rates['USD']
+                          @message = 'Delivery location outside deliverable zone'
 
                         end
 
-                        @order_type = 1
-
-
                       else
 
-                        @success = false
+                        @success = true
 
-                        @message = 'Delivery location outside deliverable zone'
-
+                        @can_order = true
 
                       end
 
                     else
 
+                      if has_sensitive_products
 
-                      if distance <= 100
-
-                        @success = true
-
-
-                        if distance > 25
+                        if distance <= 7
 
                           # Only exclusive delivery available
 
                           # Tell that to customer and explanation about exclusive delivery
+
+                          @success = true
 
                           @can_order = true
 
@@ -314,52 +273,98 @@ class OrderController < ApplicationController
                           @order_type = 1
 
 
-
                         else
 
-                          @can_order = false # Its false since customer has to choose which delivery option he wants
+                          @success = false
 
-
-                          if default_currency == 'USD'
-
-                            standard_delivery_fee = calculate_standard_delivery_fee_usd(distance)
-
-                            exclusive_delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
-
-                            @delivery_options = [
-                                { order_type: 0, label: 'Standard Delivery', delivery_fee: standard_delivery_fee },
-                                { order_type: 1, label: 'Exclusive Delivery',delivery_fee: exclusive_delivery_fee }
-                            ]
-
-
-                          else
-
-                            standard_delivery_fee = calculate_standard_delivery_fee_usd(distance)
-
-                            exclusive_delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
-
-                            exchange_rates = get_exchange_rates(default_currency)
-
-                            standard_delivery_fee =  standard_delivery_fee / exchange_rates['USD']
-
-                            exclusive_delivery_fee =  exclusive_delivery_fee / exchange_rates['USD']
-
-
-                            @delivery_options = [
-                                { order_type: 0, label: 'Standard Delivery', delivery_fee: standard_delivery_fee },
-                                { order_type: 1, label: 'Exclusive Delivery',delivery_fee: exclusive_delivery_fee }
-                            ]
-
-                          end
+                          @message = 'Delivery location outside deliverable zone'
 
 
                         end
 
-
                       else
 
-                        @success = false
-                        @message = 'Delivery location outside deliverable zone'
+
+                        if distance <= 100
+
+                          @success = true
+
+
+                          if distance > 25
+
+                            # Only exclusive delivery available
+
+                            # Tell that to customer and explanation about exclusive delivery
+
+                            @can_order = true
+
+
+                            if default_currency == 'USD'
+
+                              @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                            else
+
+                              @delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                              exchange_rates = get_exchange_rates(default_currency)
+
+                              @delivery_fee =  @delivery_fee / exchange_rates['USD']
+
+                            end
+
+                            @order_type = 1
+
+
+
+                          else
+
+                            @can_order = false # Its false since customer has to choose which delivery option he wants
+
+
+                            if default_currency == 'USD'
+
+                              standard_delivery_fee = calculate_standard_delivery_fee_usd(distance)
+
+                              exclusive_delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                              @delivery_options = [
+                                  { order_type: 0, label: 'Standard Delivery', delivery_fee: standard_delivery_fee },
+                                  { order_type: 1, label: 'Exclusive Delivery',delivery_fee: exclusive_delivery_fee }
+                              ]
+
+
+                            else
+
+                              standard_delivery_fee = calculate_standard_delivery_fee_usd(distance)
+
+                              exclusive_delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                              exchange_rates = get_exchange_rates(default_currency)
+
+                              standard_delivery_fee =  standard_delivery_fee / exchange_rates['USD']
+
+                              exclusive_delivery_fee =  exclusive_delivery_fee / exchange_rates['USD']
+
+
+                              @delivery_options = [
+                                  { order_type: 0, label: 'Standard Delivery', delivery_fee: standard_delivery_fee },
+                                  { order_type: 1, label: 'Exclusive Delivery',delivery_fee: exclusive_delivery_fee }
+                              ]
+
+                            end
+
+
+                          end
+
+
+                        else
+
+                          @success = false
+                          @message = 'Delivery location outside deliverable zone'
+
+                        end
+
 
                       end
 
@@ -367,38 +372,37 @@ class OrderController < ApplicationController
                     end
 
 
+                  else
+
+                    @success = false
+                    @message = 'Delivery location outside store country'
+
                   end
 
 
                 else
 
                   @success = false
-                  @message = 'Delivery location outside store country'
+                  @message = 'Delivery location outside deliverable zone'
 
                 end
 
-
-              else
-
-                @success = false
-                @message = 'Delivery location outside deliverable zone'
-
               end
 
-
-
-
-
-
             end
+
 
           end
 
 
         end
 
+      else
+
+        @success = false
 
       end
+
 
     end
 
@@ -433,76 +437,50 @@ class OrderController < ApplicationController
 
       end
 
-
       if valid
 
         product = Product.find_by(id: params[:product_id])
 
         customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-        if product != nil
+        if customer_user.phone_number_verified?
 
-          store_user = product.category.store_user
+          if product != nil
 
-          if store_user.verified? && customer_user.country == product.store_country
+            store_user = product.category.store_user
 
-            # Product stock quantity can be nil
+            if store_user.verified? && customer_user.country == product.store_country
 
-            if !product.product_available
+              # Product stock quantity can be nil
 
-              @success = false
-              @error_code = 0
-              @product = product.to_json
+              if !product.product_available
 
-            elsif product.stock_quantity == 0
+                @success = false
+                @error_code = 0
+                @product = product.to_json
 
-              @success = false
-              @error_code = 1
-              @product = product.to_json
+              elsif product.stock_quantity == 0
 
-            else
+                @success = false
+                @error_code = 1
+                @product = product.to_json
 
-              quantity = params[:quantity]
+              else
 
-
-              if is_quantity_valid?(quantity, product)
-
-                quantity = quantity.to_i
-
-                product_options = params[:product_options] # optional
-
-                product_attributes = product.product_attributes
-
-                if product_attributes != nil && product_attributes.size > 0
-
-                  if product_options == nil
-
-                    @success = false
-
-                    @error_code = 3
-
-                    @product_options = {}
-
-                    product_attributes.each do |key, value|
-
-                      if value.instance_of?(Array)
-
-                        value.prepend('Select option')
-
-                        @product_options[key] = value
-
-                      end
-
-                    end
-
-                    return
+                quantity = params[:quantity]
 
 
-                  else
+                if is_quantity_valid?(quantity, product)
 
-                    product_options = eval(product_options)
+                  quantity = quantity.to_i
 
-                    if !product_options.instance_of?(Hash) ||  product_options.size < product_attributes.size || product_options.size > product_attributes.size
+                  product_options = params[:product_options] # optional
+
+                  product_attributes = product.product_attributes
+
+                  if product_attributes != nil && product_attributes.size > 0
+
+                    if product_options == nil
 
                       @success = false
 
@@ -524,28 +502,12 @@ class OrderController < ApplicationController
 
                       return
 
+
                     else
 
-                      product_options_valid = true
+                      product_options = eval(product_options)
 
-                      product_options.each do |key, value|
-
-                        key = key.to_sym
-
-                        attribute_values = product_attributes[key]
-
-                        if attribute_values == nil || !attribute_values.include?(value)
-
-                          product_options_valid = false
-
-                          break
-
-                        end
-
-                      end
-
-
-                      if !product_options_valid
+                      if !product_options.instance_of?(Hash) ||  product_options.size < product_attributes.size || product_options.size > product_attributes.size
 
                         @success = false
 
@@ -567,69 +529,151 @@ class OrderController < ApplicationController
 
                         return
 
+                      else
+
+                        product_options_valid = true
+
+                        product_options.each do |key, value|
+
+                          key = key.to_sym
+
+                          attribute_values = product_attributes[key]
+
+                          if attribute_values == nil || !attribute_values.include?(value)
+
+                            product_options_valid = false
+
+                            break
+
+                          end
+
+                        end
+
+
+                        if !product_options_valid
+
+                          @success = false
+
+                          @error_code = 3
+
+                          @product_options = {}
+
+                          product_attributes.each do |key, value|
+
+                            if value.instance_of?(Array)
+
+                              value.prepend('Select option')
+
+                              @product_options[key] = value
+
+                            end
+
+                          end
+
+                          return
+
+                        end
+
                       end
 
                     end
 
+                  else
+
+
+                    product_options = nil
+
+
                   end
 
-                else
+
+                  delivery_location = eval(params[:delivery_location])
+
+                  if delivery_location.instance_of?(Hash)
+
+                    latitude = delivery_location[:latitude]
+
+                    longitude = delivery_location[:longitude]
+
+                    if latitude != nil && longitude != nil
+
+                      if is_number?(latitude) && is_number?(longitude)
+
+                        latitude = latitude.to_d
+
+                        longitude = longitude.to_d
+
+                        # Make sure delivery location is in store country
+
+                        geo_location = Geocoder.search([latitude, longitude])
+
+                        if geo_location.size > 0
+
+                          geo_location_country_code = geo_location.first.country_code
+
+                          if geo_location_country_code == product.store_country
+
+                            has_sensitive_products = store_user.has_sensitive_products
+
+                            handles_delivery = store_user.handles_delivery
+
+                            maximum_delivery_distance = store_user.maximum_delivery_distance
+
+                            store_location = store_user.store_address
+
+                            store_latitude = store_location[:latitude]
+
+                            store_longitude = store_location[:longitude]
+
+                            store_schedule = store_user.schedule
+
+                            distance = calculate_distance_km(delivery_location, store_location )
+
+                            if handles_delivery
+
+                              if maximum_delivery_distance != nil
+
+                                if distance <= maximum_delivery_distance
 
 
-                  product_options = nil
+                                  @success = handles_delivery_order(
+                                      has_sensitive_products,
+                                      store_latitude,
+                                      store_longitude,
+                                      store_schedule,
+                                      product,
+                                      quantity,
+                                      delivery_location,
+                                      store_user,
+                                      customer_user,
+                                      geo_location_country_code,
+                                      product_options
+                                  )
+
+                                  if !@success
+
+                                    @error_code = 5
+
+                                  end
 
 
-                end
+
+                                else
+
+                                  @success = false
+
+                                  @error_code = 4
+
+                                  @has_sensitive_products = has_sensitive_products
+
+                                  @handles_delivery = handles_delivery
+
+                                  @maximum_delivery_distance = maximum_delivery_distance
 
 
-                delivery_location = eval(params[:delivery_location])
+                                end
 
-                if delivery_location.instance_of?(Hash)
-
-                  latitude = delivery_location[:latitude]
-
-                  longitude = delivery_location[:longitude]
-
-                  if latitude != nil && longitude != nil
-
-                    if is_number?(latitude) && is_number?(longitude)
-
-                      latitude = latitude.to_d
-
-                      longitude = longitude.to_d
-
-                      # Make sure delivery location is in store country
-
-                      geo_location = Geocoder.search([latitude, longitude])
-
-                      if geo_location.size > 0
-
-                        geo_location_country_code = geo_location.first.country_code
-
-                        if geo_location_country_code == product.store_country
-
-                          has_sensitive_products = store_user.has_sensitive_products
-
-                          handles_delivery = store_user.handles_delivery
-
-                          maximum_delivery_distance = store_user.maximum_delivery_distance
-
-                          store_location = store_user.store_address
-
-                          store_latitude = store_location[:latitude]
-
-                          store_longitude = store_location[:longitude]
-
-                          store_schedule = store_user.schedule
-
-                          distance = calculate_distance_km(delivery_location, store_location )
-
-                          if handles_delivery
-
-                            if maximum_delivery_distance != nil
-
-                              if distance <= maximum_delivery_distance
-
+                              else
 
                                 @success = handles_delivery_order(
                                     has_sensitive_products,
@@ -651,110 +695,91 @@ class OrderController < ApplicationController
 
                                 end
 
-
-
-                              else
-
-                                @success = false
-
-                                @error_code = 4
-
-                                @has_sensitive_products = has_sensitive_products
-
-                                @handles_delivery = handles_delivery
-
-                                @maximum_delivery_distance = maximum_delivery_distance
-
-
                               end
+
+
 
                             else
 
-                              @success = handles_delivery_order(
-                                  has_sensitive_products,
-                                  store_latitude,
-                                  store_longitude,
-                                  store_schedule,
-                                  product,
-                                  quantity,
-                                  delivery_location,
-                                  store_user,
-                                  customer_user,
-                                  geo_location_country_code,
-                                  product_options
-                              )
-
-                              if !@success
-
-                                @error_code = 5
-
-                              end
-
-                            end
+                              if has_sensitive_products
 
 
+                                if distance <= 7
 
-                          else
-
-                            if has_sensitive_products
-
-
-                              if distance <= 7
-
-                                # Only exclusive delivery available
+                                  # Only exclusive delivery available
 
 
-                                @success = does_not_handle_delivery_order(
-                                    1,
-                                    store_schedule,
-                                    product_options,
-                                    delivery_location,
-                                    store_user,
-                                    customer_user,
-                                    geo_location_country_code,
-                                    product,
-                                    quantity,
-                                    store_location,
-                                    distance
-                                )
+                                  @success = does_not_handle_delivery_order(
+                                      1,
+                                      store_schedule,
+                                      product_options,
+                                      delivery_location,
+                                      store_user,
+                                      customer_user,
+                                      geo_location_country_code,
+                                      product,
+                                      quantity,
+                                      store_location,
+                                      distance
+                                  )
 
 
-                                if !@success
+                                  if !@success
 
-                                  @error_code = 5
+                                    @error_code = 5
+
+                                  end
+
+
+
+                                else
+
+                                  @success = false
+
 
                                 end
 
 
-
                               else
 
-                                @success = false
+
+                                if distance <= 100
 
 
-                              end
+                                  order_type = params[:order_type]
+
+                                  if order_type != nil && is_order_type_valid?(order_type)
+
+                                    order_type = order_type.to_i
+
+                                    if order_type == 0
+
+                                      if distance > 25
+
+                                        @success = false
+
+                                      else
 
 
-                            else
+                                        @success = does_not_handle_delivery_order(
+                                            order_type,
+                                            store_schedule,
+                                            product_options,
+                                            delivery_location,
+                                            store_user,
+                                            customer_user,
+                                            geo_location_country_code,
+                                            product,
+                                            quantity,
+                                            store_location,
+                                            distance
+                                        )
 
 
-                              if distance <= 100
+                                      end
 
 
-                                order_type = params[:order_type]
-
-                                if order_type != nil && is_order_type_valid?(order_type)
-
-                                  order_type = order_type.to_i
-
-                                  if order_type == 0
-
-                                    if distance > 25
-
-                                      @success = false
-
-                                    else
-
+                                    elsif order_type == 1
 
                                       @success = does_not_handle_delivery_order(
                                           order_type,
@@ -770,34 +795,23 @@ class OrderController < ApplicationController
                                           distance
                                       )
 
+                                      if !@success
+
+                                        @error_code = 5
+
+                                      end
+
 
                                     end
 
 
-                                  elsif order_type == 1
 
-                                    @success = does_not_handle_delivery_order(
-                                        order_type,
-                                        store_schedule,
-                                        product_options,
-                                        delivery_location,
-                                        store_user,
-                                        customer_user,
-                                        geo_location_country_code,
-                                        product,
-                                        quantity,
-                                        store_location,
-                                        distance
-                                    )
+                                  else
 
-                                    if !@success
-
-                                      @error_code = 5
-
-                                    end
-
+                                    @success = false
 
                                   end
+
 
 
 
@@ -807,17 +821,15 @@ class OrderController < ApplicationController
 
                                 end
 
-
-
-
-                              else
-
-                                @success = false
-
                               end
+
 
                             end
 
+
+                          else
+
+                            @success = false
 
                           end
 
@@ -853,21 +865,21 @@ class OrderController < ApplicationController
                 else
 
                   @success = false
+                  @error_code = 2
+                  @product = product.to_json
+
 
                 end
 
-
-              else
-
-                @success = false
-                @error_code = 2
-                @product = product.to_json
-
-
               end
 
-            end
 
+
+            else
+
+              @success = false
+
+            end
 
 
           else
@@ -876,12 +888,13 @@ class OrderController < ApplicationController
 
           end
 
-
         else
 
           @success = false
 
         end
+
+
 
       else
 
