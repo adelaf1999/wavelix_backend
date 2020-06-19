@@ -6,6 +6,20 @@ class CommentController < ApplicationController
 
   def destroy
 
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
     comment = Comment.find_by(id: params[:comment_id])
 
     post = Post.find_by(id: params[:post_id])
@@ -78,6 +92,20 @@ class CommentController < ApplicationController
     # unverified stores cannot comment
 
     # can only comment on profile posts
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
 
     post = Post.find_by(id: params[:post_id])
 
