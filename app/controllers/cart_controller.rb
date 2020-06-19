@@ -14,95 +14,69 @@ class CartController < ApplicationController
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-      cart = customer_user.cart
+      if customer_user.phone_number_verified?
 
-      selected_cart_items = params[:selected_cart_items]
+        cart = customer_user.cart
 
-      if selected_cart_items != nil
+        selected_cart_items = params[:selected_cart_items]
 
-        selected_cart_items = eval(selected_cart_items)
+        if selected_cart_items != nil
 
-        if selected_cart_items.instance_of?(Array) && selected_cart_items.size > 0
+          selected_cart_items = eval(selected_cart_items)
 
-
-          # If the cart item is not found it gets deleted from the selected cart items
-
-          selected_cart_items.delete_if do |cart_item_id|
-
-            cart_item = cart.cart_items.find_by(id: cart_item_id)
-
-            cart_item == nil
-
-          end
+          if selected_cart_items.instance_of?(Array) && selected_cart_items.size > 0
 
 
-          ActionCable.server.broadcast "cart_#{cart.id}_user_#{current_user.id}_channel", {selected_cart_items: selected_cart_items}
+            # If the cart item is not found it gets deleted from the selected cart items
+
+            selected_cart_items.delete_if do |cart_item_id|
+
+              cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+              cart_item == nil
+
+            end
 
 
-          if selected_cart_items.size > 0
+            ActionCable.server.broadcast "cart_#{cart.id}_user_#{current_user.id}_channel", {selected_cart_items: selected_cart_items}
 
 
-            delivery_location = params[:delivery_location]
-
-            if delivery_location != nil
-
-              delivery_location = eval(delivery_location)
-
-              if delivery_location.instance_of?(Hash) && !delivery_location.empty?
-
-                latitude = delivery_location[:latitude]
-
-                longitude = delivery_location[:longitude]
-
-                if latitude != nil && longitude != nil
-
-                  if is_number?(latitude) && is_number?(longitude)
-
-                    latitude = latitude.to_d
-
-                    longitude = longitude.to_d
-
-                    # Make sure delivery location is in store country
-
-                    geo_location = Geocoder.search([latitude, longitude])
-
-                    if geo_location.size > 0
+            if selected_cart_items.size > 0
 
 
-                      geo_location_country_code = geo_location.first.country_code
+              delivery_location = params[:delivery_location]
 
-                      country_valid = true
+              if delivery_location != nil
+
+                delivery_location = eval(delivery_location)
+
+                if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+                  latitude = delivery_location[:latitude]
+
+                  longitude = delivery_location[:longitude]
+
+                  if latitude != nil && longitude != nil
+
+                    if is_number?(latitude) && is_number?(longitude)
+
+                      latitude = latitude.to_d
+
+                      longitude = longitude.to_d
+
+                      # Make sure delivery location is in store country
+
+                      geo_location = Geocoder.search([latitude, longitude])
+
+                      if geo_location.size > 0
 
 
-                      # Check if all stores are in the country of the delivery location
+                        geo_location_country_code = geo_location.first.country_code
 
-                      selected_cart_items.each do |cart_item_id|
-
-                        cart_item = cart.cart_items.find_by(id: cart_item_id)
-
-                        store_user = StoreUser.find_by(id: cart_item.store_user_id)
-
-                        if geo_location_country_code != store_user.store_country
-
-                          @success = false
-                          @error_code = 0
-                          @message = 'Delivery location outside store(s) country'
-                          country_valid = false
-                          break
-
-                        end
-
-                      end
-
-                      if country_valid
+                        country_valid = true
 
 
-                        @outside_zone_items = []
-                        @delivery_options = {}
-                        outside_zone_stores = []
-                        has_outside_zone_items = false
-
-                        # Check if all stores are within deliverable zone from delivery location
+                        # Check if all stores are in the country of the delivery location
 
                         selected_cart_items.each do |cart_item_id|
 
@@ -110,54 +84,131 @@ class CartController < ApplicationController
 
                           store_user = StoreUser.find_by(id: cart_item.store_user_id)
 
-                          store_profile = store_user.store.profile
+                          if geo_location_country_code != store_user.store_country
 
-                          distance = calculate_distance_km(delivery_location, store_user.store_address )
+                            @success = false
+                            @error_code = 0
+                            @message = 'Delivery location outside store(s) country'
+                            country_valid = false
+                            break
 
-                          if distance <= 100
+                          end
+
+                        end
+
+                        if country_valid
 
 
-                            if distance > 25
+                          @outside_zone_items = []
+                          @delivery_options = {}
+                          outside_zone_stores = []
+                          has_outside_zone_items = false
 
-                              if @delivery_options[store_user.id].nil?
+                          # Check if all stores are within deliverable zone from delivery location
+
+                          selected_cart_items.each do |cart_item_id|
+
+                            cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                            store_user = StoreUser.find_by(id: cart_item.store_user_id)
+
+                            store_profile = store_user.store.profile
+
+                            distance = calculate_distance_km(delivery_location, store_user.store_address )
+
+                            if distance <= 100
 
 
-                                @delivery_options[store_user.id] = {
-                                    store_name: store_user.store_name,
-                                    store_logo: store_profile.profile_picture.url,
-                                    options: { 1 => 'Exclusive Delivery' }
-                                }
+                              if distance > 25
+
+                                if @delivery_options[store_user.id].nil?
+
+
+                                  @delivery_options[store_user.id] = {
+                                      store_name: store_user.store_name,
+                                      store_logo: store_profile.profile_picture.url,
+                                      options: { 1 => 'Exclusive Delivery' }
+                                  }
+
+                                end
+
+
+                              else
+
+
+                                if @delivery_options[store_user.id].nil?
+
+                                  @delivery_options[store_user.id] = {
+                                      store_name: store_user.store_name,
+                                      store_logo: store_profile.profile_picture.url,
+                                      options: { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+                                  }
+
+                                end
 
                               end
 
 
                             else
 
+                              has_outside_zone_items = true
 
-                              if @delivery_options[store_user.id].nil?
+                              @outside_zone_items.push(cart_item_id)
 
-                                @delivery_options[store_user.id] = {
-                                    store_name: store_user.store_name,
-                                    store_logo: store_profile.profile_picture.url,
-                                    options: { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
-                                }
+                              if !outside_zone_stores.include?(store_user.store_name)
+
+                                outside_zone_stores.push(store_user.store_name)
 
                               end
 
                             end
 
 
-                          else
+                          end
 
-                            has_outside_zone_items = true
 
-                            @outside_zone_items.push(cart_item_id)
 
-                            if !outside_zone_stores.include?(store_user.store_name)
+                          if has_outside_zone_items
 
-                              outside_zone_stores.push(store_user.store_name)
+
+                            @success = false
+
+
+                            if @outside_zone_items.length == selected_cart_items.length
+
+                              @error_code = 0
+
+                              @message = 'Delivery location outside deliverable zone'
+
+                            else
+
+                              @error_code = 1
+
+                              @message = 'Item(s) from the following store(s) are outside deliverable zone: '
+
+
+                              outside_zone_stores.each do |store_name|
+                                @message += ' ' + store_name + ','
+                              end
+
+                              @message.delete_suffix!(',')
+
+                              @message += '. '
+
+                              @message += 'Do you want to exclude them and continue?'
+
+
 
                             end
+
+
+
+
+
+                          else
+
+
+                            @success = true
 
                           end
 
@@ -165,80 +216,39 @@ class CartController < ApplicationController
                         end
 
 
+                      else
 
-                        if has_outside_zone_items
-
-
-                          @success = false
-
-
-                          if @outside_zone_items.length == selected_cart_items.length
-
-                            @error_code = 0
-
-                            @message = 'Delivery location outside deliverable zone'
-
-                          else
-
-                            @error_code = 1
-
-                            @message = 'Item(s) from the following store(s) are outside deliverable zone: '
-
-
-                            outside_zone_stores.each do |store_name|
-                              @message += ' ' + store_name + ','
-                            end
-
-                            @message.delete_suffix!(',')
-
-                            @message += '. '
-
-                            @message += 'Do you want to exclude them and continue?'
-
-
-
-                          end
-
-
-
-
-
-                        else
-
-
-                          @success = true
-
-                        end
+                        @success = false
+                        @error_code = 0
+                        @message = 'Delivery location outside deliverable zone'
 
 
                       end
-
-
-                    else
-
-                      @success = false
-                      @error_code = 0
-                      @message = 'Delivery location outside deliverable zone'
-
 
                     end
 
                   end
 
+
                 end
 
-
               end
+
 
             end
 
 
           end
 
-
         end
 
+      else
+
+        @success = false
+
       end
+
+
 
 
     end
@@ -252,21 +262,25 @@ class CartController < ApplicationController
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-      cart = customer_user.cart
+      if customer_user.phone_number_verified?
 
-      @cart_items = []
+        cart = customer_user.cart
 
-      cart_item = cart.cart_items.find_by(id: params[:cart_item_id])
+        @cart_items = []
 
-      if cart_item != nil
+        cart_item = cart.cart_items.find_by(id: params[:cart_item_id])
 
-        cart_item.destroy!
+        if cart_item != nil
 
-      end
+          cart_item.destroy!
 
-      cart.cart_items.each do |item|
+        end
 
-        @cart_items.push(get_cart_item(item))
+        cart.cart_items.each do |item|
+
+          @cart_items.push(get_cart_item(item))
+
+        end
 
       end
 
@@ -282,94 +296,97 @@ class CartController < ApplicationController
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-      cart = customer_user.cart
+      if customer_user.phone_number_verified?
 
-      @cart_items = []
+        cart = customer_user.cart
 
-      @home_address = customer_user.home_address
+        @cart_items = []
 
-      cookies.encrypted[:cart_id] = cart.id
+        @home_address = customer_user.home_address
 
-      current_location = params[:current_location]
+        cookies.encrypted[:cart_id] = cart.id
 
-      if current_location != nil
+        current_location = params[:current_location]
 
-        current_location = eval(current_location)
+        if current_location != nil
 
-        if current_location.instance_of?(Hash)
+          current_location = eval(current_location)
 
-          latitude = current_location[:latitude]
+          if current_location.instance_of?(Hash)
 
-          longitude = current_location[:longitude]
+            latitude = current_location[:latitude]
 
-          if latitude != nil && longitude != nil
+            longitude = current_location[:longitude]
 
-            if is_number?(latitude) && is_number?(longitude)
+            if latitude != nil && longitude != nil
 
-              latitude = latitude.to_d
+              if is_number?(latitude) && is_number?(longitude)
 
-              longitude = longitude.to_d
+                latitude = latitude.to_d
 
-              geo_location = Geocoder.search([latitude, longitude])
+                longitude = longitude.to_d
 
-              if geo_location.size > 0
+                geo_location = Geocoder.search([latitude, longitude])
 
-                geo_location_country_code = geo_location.first.country_code
+                if geo_location.size > 0
 
-                # Update customer country code and delete products not in country code
+                  geo_location_country_code = geo_location.first.country_code
 
-                customer_user.update!(country: geo_location_country_code)
+                  # Update customer country code and delete products not in country code
 
-                cart.cart_items.each do |cart_item|
+                  customer_user.update!(country: geo_location_country_code)
 
-                  product = Product.find_by(id: cart_item.product_id)
+                  cart.cart_items.each do |cart_item|
 
-                  if product != nil
+                    product = Product.find_by(id: cart_item.product_id)
 
-                    if !product.product_available
+                    if product != nil
 
-                      cart_item.destroy!
+                      if !product.product_available
 
-                    elsif product.stock_quantity == 0
+                        cart_item.destroy!
 
-                      cart_item.destroy!
+                      elsif product.stock_quantity == 0
 
-                    elsif customer_user.country != product.store_country
+                        cart_item.destroy!
 
-                      cart_item.destroy!
+                      elsif customer_user.country != product.store_country
 
-                    else
+                        cart_item.destroy!
+
+                      else
 
 
-                      if product.stock_quantity != nil
+                        if product.stock_quantity != nil
 
-                        if cart_item.quantity > product.stock_quantity
+                          if cart_item.quantity > product.stock_quantity
 
-                          cart_item.update!(quantity: product.stock_quantity)
+                            cart_item.update!(quantity: product.stock_quantity)
+
+                          end
 
                         end
 
+                        @cart_items.push(get_cart_item(cart_item))
+
+
                       end
 
-                      @cart_items.push(get_cart_item(cart_item))
+                    else
 
+                      cart_item.destroy!
 
                     end
 
-                  else
-
-                    cart_item.destroy!
-
                   end
+
+                  # Send cart items to cart channel
+
 
                 end
 
-                # Send cart items to cart channel
-
-
 
               end
-
 
             end
 
@@ -378,7 +395,6 @@ class CartController < ApplicationController
         end
 
       end
-
 
 
     end
@@ -391,60 +407,70 @@ class CartController < ApplicationController
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-      cart = customer_user.cart
+      if customer_user.phone_number_verified?
 
-      product = Product.find_by(id: params[:product_id])
+        cart = customer_user.cart
 
-      if product != nil
+        product = Product.find_by(id: params[:product_id])
 
-        if customer_user.country == product.store_country
+        if product != nil
 
-          quantity = params[:quantity]
+          if customer_user.country == product.store_country
 
-          if quantity != nil
+            quantity = params[:quantity]
 
-            res = /^(?<num>\d+)$/.match(quantity)
+            if quantity != nil
 
-            if res == nil || quantity.to_i == 0
+              res = /^(?<num>\d+)$/.match(quantity)
 
-              @success = false
+              if res == nil || quantity.to_i == 0
 
-            else
+                @success = false
 
-              quantity = quantity.to_i
+              else
 
-              product_options = params[:product_options] # optional can be nil/empty
+                quantity = quantity.to_i
 
-              if product_options != nil && !product_options.empty?
+                product_options = params[:product_options] # optional can be nil/empty
 
-                product_options = eval(product_options)
+                if product_options != nil && !product_options.empty?
 
-                if !product_options.instance_of?(Hash) || product_options.size == 0
+                  product_options = eval(product_options)
+
+                  if !product_options.instance_of?(Hash) || product_options.size == 0
+
+                    product_options = nil
+
+                  end
+
+                else
 
                   product_options = nil
 
                 end
 
-              else
+                @success = true
 
-                product_options = nil
+                store_user = product.category.store_user
+
+                CartItem.create!(
+                    product_id: product.id,
+                    quantity: quantity,
+                    product_options: product_options,
+                    cart_id: cart.id,
+                    store_user_id: store_user.id
+                )
+
 
               end
 
-              @success = true
 
-              store_user = product.category.store_user
+            else
 
-              CartItem.create!(
-                  product_id: product.id,
-                  quantity: quantity,
-                  product_options: product_options,
-                  cart_id: cart.id,
-                  store_user_id: store_user.id
-              )
-
+              @success = false
 
             end
+
 
 
           else
@@ -460,7 +486,6 @@ class CartController < ApplicationController
           @success = false
 
         end
-
 
 
       else
