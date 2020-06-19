@@ -185,4 +185,6 @@ Rails.application.routes.draw do
 
   post '/validate-phone-verification' => 'phone_verifications#verify'
 
+  post '/can-request-sms' => 'phone_verifications#can_request_sms'
+
 end

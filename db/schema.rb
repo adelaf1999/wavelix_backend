@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_19_111647) do
+ActiveRecord::Schema.define(version: 2020_06_19_153113) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -158,6 +158,13 @@ ActiveRecord::Schema.define(version: 2020_06_19_111647) do
     t.decimal "total_price", null: false
     t.string "total_price_currency", default: "USD"
     t.integer "prospective_driver_id"
+  end
+
+  create_table "phone_numbers", force: :cascade do |t|
+    t.string "number", null: false
+    t.datetime "next_request_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "posts", force: :cascade do |t|
