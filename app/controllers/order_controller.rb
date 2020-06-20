@@ -106,7 +106,8 @@ class OrderController < ApplicationController
         customer_user = CustomerUser.find_by(id: order.customer_user_id)
 
         customer = {
-            name: customer_user.full_name
+            name: customer_user.full_name,
+            phone_number: customer_user.phone_number
         }
 
         @order[:customer] = customer
