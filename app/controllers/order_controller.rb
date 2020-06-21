@@ -30,7 +30,7 @@ class OrderController < ApplicationController
 
         @order[:created_at] = order.created_at
 
-        @order[:ordered_at] = timezone.time_with_offset(order.created_at).strftime('%A %-d, %Y at %-I:%M %p')
+        @order[:ordered_at] = timezone.time_with_offset(order.created_at).strftime('%Y-%m-%d %-I:%M %p')
 
 
         driver_canceled_order = order.driver_canceled_order
