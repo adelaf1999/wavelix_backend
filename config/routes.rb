@@ -151,6 +151,8 @@ Rails.application.routes.draw do
 
   post '/reject-order' => 'order#reject_order'
 
+  post '/accept-order' => 'order#accept_order'
+
   # Cart Routes
 
   post '/add-cart' => 'cart#add'

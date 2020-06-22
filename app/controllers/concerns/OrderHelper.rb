@@ -46,7 +46,7 @@ module OrderHelper
 
         if delivery_time_limit != nil
 
-          order[:delivery_time_limit] = delivery_time_limit
+          order[:delivery_time_limit] = timezone.time_with_offset(delivery_time_limit).strftime('%Y-%m-%d %-I:%M %p')
 
         end
 

@@ -6,6 +6,117 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def accept_order
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      order_id = params[:order_id]
+
+      order = store_user.orders.find_by(id: order_id)
+
+      if order != nil
+
+        if order.pending? && order.store_unconfirmed?
+
+          if order.store_handles_delivery
+
+            time_unit = params[:time_unit] # { 0: minutes, 1: hours: 2: days }
+
+            time = params[:time]
+
+            if time != nil && time_unit != nil
+
+              if is_delivery_time_limit_valid?(time, time_unit)
+
+                time = time.to_d
+
+                time_unit = time_unit.to_i
+
+                if time_unit == 0
+
+                  delivery_time_limit = (DateTime.now.utc).to_datetime + (time).minutes
+
+                elsif time_unit == 1
+
+                  delivery_time_limit = (DateTime.now.utc).to_datetime + (time).hours
+
+                else
+
+                  delivery_time_limit = (DateTime.now.utc).to_datetime + (time).days
+
+                end
+
+                order.ongoing!
+
+                order.store_accepted!
+
+                order.update!(delivery_time_limit: delivery_time_limit)
+
+                @orders = get_store_orders(store_user)
+
+                @success = true
+
+
+                # Send orders to customer_user and store_user channels
+
+
+
+              else
+
+                @success = false
+
+              end
+
+
+            else
+
+              @success = false
+
+            end
+
+
+
+
+
+          else
+
+            # If no driver was found within valid area cancel the order and notify store/customer
+
+            # Re-increment stock quantity of each product if applicable
+
+            # Else find the nearest driver to the store and contact him
+
+            # The driver will have 30 seconds to accept or reject order
+
+            # If the driver has accepted the order, the customer will be charged and the order will be marked ongoing
+
+            # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
+
+            # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
+
+            # If the driver let the order pass he will be added to unconfirmed drivers list
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
 
   def reject_order
 
@@ -836,6 +947,67 @@ class OrderController < ApplicationController
 
 
   private
+
+  def is_delivery_time_limit_valid?(time, time_unit)
+
+    res1 = /^(?<num>\d+)$/.match(time_unit)
+
+    if res1 == nil
+
+      false
+
+    else
+
+      time_unit = time_unit.to_i
+
+      if time_unit == 0 || time_unit == 1 || time_unit == 2
+
+        res2 = /^\d+([.]\d+)?$/.match(time)
+
+        if res2 == nil
+
+          false
+
+        else
+
+          time = time.to_d
+
+          if time == 0
+
+            false
+
+          else
+
+            # { 0: minutes, 1: hours: 2: days }
+
+            if time_unit == 0
+
+              (time).minutes <= 30.days
+
+            elsif time_unit == 1
+
+              (time).hours <= 30.days
+
+            elsif time_unit == 2
+
+              (time).days <= 30.days
+
+            end
+
+          end
+
+        end
+
+
+      else
+
+        false
+
+      end
+
+    end
+
+  end
 
 
   def product_total_usd(product_price, product_currency, quantity)

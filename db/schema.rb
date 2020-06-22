@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_19_153113) do
+ActiveRecord::Schema.define(version: 2020_06_22_091454) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -153,11 +153,11 @@ ActiveRecord::Schema.define(version: 2020_06_19_153113) do
     t.boolean "driver_fulfilled_order"
     t.boolean "driver_arrived_to_store"
     t.boolean "driver_arrived_to_delivery_location"
-    t.time "delivery_time_limit"
     t.boolean "driver_canceled_order"
     t.decimal "total_price", null: false
     t.string "total_price_currency", default: "USD"
     t.integer "prospective_driver_id"
+    t.datetime "delivery_time_limit"
   end
 
   create_table "phone_numbers", force: :cascade do |t|
