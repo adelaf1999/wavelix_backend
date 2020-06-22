@@ -176,6 +176,11 @@ class OrderController < ApplicationController
 
           # Send orders to customer_user and store_user channels
 
+          ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: @orders}
+
+          ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: @orders}
+
+
           # Refund customer the amount he paid
 
         else
