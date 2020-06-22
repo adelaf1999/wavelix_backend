@@ -174,6 +174,8 @@ class OrderController < ApplicationController
 
           # Send orders to customer_user and store_user channels
 
+          # Refund customer the amount he paid
+
         else
 
           @success = false
@@ -1088,6 +1090,8 @@ class OrderController < ApplicationController
       total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
 
 
+      # Charge customer credit card using total price usd and if successful create order else handle error
+
       Order.create!(
           products: [ordered_product],
           delivery_location: delivery_location,
@@ -1215,6 +1219,8 @@ class OrderController < ApplicationController
           delivery_fee_usd = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
 
           total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
+
+          # Charge customer credit card using total price usd and if successful create order else handle error
 
           Order.create!(
               products: [ordered_product],
@@ -1379,6 +1385,7 @@ class OrderController < ApplicationController
 
           total_price_usd = product_total_usd(product.price, product.currency, quantity)
 
+          # Charge customer credit card using total price usd and if successful create order else handle error
 
           Order.create!(
               products: [ordered_product],
@@ -1432,6 +1439,8 @@ class OrderController < ApplicationController
 
       total_price_usd = product_total_usd(product.price, product.currency, quantity)
 
+
+      # Charge customer credit card using total price usd and if successful create order else handle error
 
       Order.create!(
           products: [ordered_product],
