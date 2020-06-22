@@ -56,10 +56,24 @@ class OrderController < ApplicationController
 
                 @orders = get_store_orders(store_user)
 
+                # Send orders to customer_user and store_user channels
+
                 @success = true
 
+                # After the x amount of time the store promised to do the delivery
 
-                # Send orders to customer_user and store_user channels
+                # The customer can choose to confirm or open a dispute
+
+                # After 24 hours if the customer took no action the order will be completed
+
+                # And the store balance will be incremented
+
+                Delayed::Job.enqueue(
+                    StoreDeliveryTimeJob.new(order_id),
+                    queue: 'store_delivery_time_job_queue',
+                    priority: 0,
+                    run_at: delivery_time_limit + 24.hours
+                )
 
 
 
