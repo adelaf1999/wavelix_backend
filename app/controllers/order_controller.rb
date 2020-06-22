@@ -56,9 +56,14 @@ class OrderController < ApplicationController
 
                 @orders = get_store_orders(store_user)
 
+                @success = true
+
                 # Send orders to customer_user and store_user channels
 
-                @success = true
+                ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: @orders}
+
+                ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: @orders}
+
 
                 # After the x amount of time the store promised to do the delivery
 
