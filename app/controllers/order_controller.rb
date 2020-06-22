@@ -106,7 +106,7 @@ class OrderController < ApplicationController
 
             # The driver will have 30 seconds to accept or reject order
 
-            # If the driver has accepted the order, the customer will be charged and the order will be marked ongoing
+            # If the driver has accepted the order will be marked ongoing
 
             # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
 
