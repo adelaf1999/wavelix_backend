@@ -98,6 +98,8 @@ class OrderController < ApplicationController
 
             # If no driver was found within valid area cancel the order and notify store/customer
 
+            # And refund customer total price he paid (use total price from order )
+
             # Re-increment stock quantity of each product if applicable
 
             # Else find the nearest driver to the store and contact him
