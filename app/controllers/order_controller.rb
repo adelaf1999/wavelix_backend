@@ -1231,7 +1231,18 @@ class OrderController < ApplicationController
 
   def other_standard_delivery_drivers(store_latitude, store_longitude)
 
-    # Fetch all drivers that between 25KM and 50KM away from the store who are online and dont have any ongoing orders
+    # Fetch all drivers that between 25KM and 50KM away from the store
+
+    # That are online, dont have any ongoing orders and dont have any orders
+
+    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1)
+
+    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
+
+    drivers = drivers.uniq
+
+    drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+    
 
   end
 
