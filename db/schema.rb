@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_22_091454) do
+ActiveRecord::Schema.define(version: 2020_06_23_075928) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -91,8 +91,6 @@ ActiveRecord::Schema.define(version: 2020_06_22_091454) do
   end
 
   create_table "drivers", force: :cascade do |t|
-    t.text "current_location", null: false
-    t.string "country", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "customer_user_id", null: false
@@ -101,6 +99,9 @@ ActiveRecord::Schema.define(version: 2020_06_22_091454) do
     t.decimal "balance", default: "0.0"
     t.boolean "driver_verified", default: false
     t.string "name", null: false
+    t.decimal "latitude", precision: 10, scale: 6, null: false
+    t.decimal "longitude", precision: 10, scale: 6, null: false
+    t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
   end
 
   create_table "follows", force: :cascade do |t|
