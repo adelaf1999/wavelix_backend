@@ -54,15 +54,15 @@ class OrderController < ApplicationController
 
                 order.update!(delivery_time_limit: delivery_time_limit)
 
-                @orders = get_store_orders(store_user)
+                orders = get_store_orders(store_user)
 
                 @success = true
 
                 # Send orders to customer_user and store_user channels
 
-                ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: @orders}
+                ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
 
-                ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: @orders}
+                ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
 
 
                 # After the x amount of time the store promised to do the delivery
@@ -95,29 +95,208 @@ class OrderController < ApplicationController
 
             end
 
-
-
-
-
           else
 
-            # If no driver was found within valid area cancel the order and notify store/customer
 
-            # And refund customer total price he paid (use total price from order )
+            # Mark that the order accepted and send orders to front end
 
-            # Re-increment stock quantity of each product if applicable
+            order.store_accepted!
 
-            # Else find the nearest driver to the store and contact him
+            orders = get_store_orders(store_user)
 
-            # The driver will have 30 seconds to accept or reject order
+            ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
 
-            # If the driver has accepted the order will be marked ongoing
+            ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
 
-            # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
 
-            # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
+            has_sensitive_products = store_user.has_sensitive_products
 
-            # If the driver let the order pass he will be added to unconfirmed drivers list
+            store_location = store_user.store_address
+
+            store_latitude = store_location[:latitude]
+
+            store_longitude = store_location[:longitude]
+
+            if has_sensitive_products
+
+              # Driver can be within a 7KM radius maximum
+
+              # To be able to accept this order, driver cannot have any ongoing orders
+
+              drivers = Driver.within(7, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not( orders: {status: 2} )
+
+              if drivers.length > 0
+
+                # Find the nearest driver to the store and contact him
+
+                # The driver will have 30 seconds to accept or reject order
+
+                # If the driver has accepted the order will be marked ongoing
+
+                # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
+
+                # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
+
+                # If the driver let the order pass he will be added to unconfirmed drivers list
+
+              else
+
+                @success = true
+
+                no_drivers_found(order, store_user)
+
+              end
+
+            else
+
+
+              if order.exclusive?
+
+                # Driver can be within a 50KM radius maximum
+
+                # To be able to accept this order, driver cannot have any ongoing orders
+
+                drivers = Driver.within(50, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not( orders: {status: 2} )
+
+                if drivers.length > 0
+
+                  # Find the nearest driver to the store and contact him
+
+                  # The driver will have 30 seconds to accept or reject order
+
+                  # If the driver has accepted the order will be marked ongoing
+
+                  # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
+
+                  # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
+
+                  # If the driver let the order pass he will be added to unconfirmed drivers list
+
+                else
+
+
+                  @success = true
+
+
+                  no_drivers_found(order, store_user)
+
+
+                end
+
+
+              else
+
+                # Fetch all drivers that are within 25 KM away from the store who are online and dont have any exclusive orders ongoing
+
+                drivers = Driver.within(25, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not(orders: { status: 2, order_type: 1 })
+
+                if drivers.length > 0
+
+                  # They might have other standard orders ongoing or they might not have any orders ongoing at all
+
+                  driver_id = nil
+
+                  drivers.each do |driver|
+
+                    standard_orders = driver.orders.where(status: 2, order_type: 0).order(created_at: :asc)
+
+                    if standard_orders.length == 0
+
+                      driver_id = driver.id
+
+                      break
+
+                    else
+
+
+                      # The driver can only accept standard orders from other customers whose delivery location are within
+
+                      # 25 KM away from the store location of the first order and whose store location is within 25 KM away
+
+                      # from the delivery location of the first order
+
+                      first_order = standard_orders.first
+
+                      first_order_store_location = StoreUser.find_by(id: first_order.store_user_id).store_address
+
+                      first_order_delivery_location = first_order.delivery_location
+
+                      delivery_location = order.delivery_location
+
+                      # First order store location distance to the new order delivery location
+
+                      d1 = calculate_distance_km(first_order_store_location, delivery_location)
+
+                      # New order store location distance to the delivery location of first order
+
+                      d2 = calculate_distance_km(store_location, first_order_delivery_location)
+
+                      if d1 <= 25 && d2 <= 25
+
+                        driver_id = driver.id
+
+                        break
+
+                      end
+
+                    end
+
+                  end
+
+
+                  if driver_id != nil
+
+                    # Contact this prospective driver
+
+                    # The driver will have 30 seconds to accept or reject order
+
+                    # If the driver has accepted the order will be marked ongoing
+
+                    # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
+
+                    # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
+
+                    # If the driver let the order pass he will be added to unconfirmed drivers list
+
+                  else
+
+                    drivers = other_standard_delivery_drivers(store_latitude, store_longitude)
+
+                    if drivers.length > 0
+
+                    else
+
+                      @success = true
+
+                      no_drivers_found(order, store_user)
+
+                    end
+
+
+                  end
+
+
+                else
+
+                  drivers = other_standard_delivery_drivers(store_latitude, store_longitude)
+
+                  if drivers.length > 0
+
+                  else
+
+                    @success = true
+
+                    no_drivers_found(order, store_user)
+
+                  end
+
+                end
+
+              end
+
+
+            end
+
 
           end
 
@@ -975,6 +1154,57 @@ class OrderController < ApplicationController
 
 
   private
+
+
+  def no_drivers_found(order, store_user)
+
+
+    # If no driver was found within valid area cancel the order and notify store/customer
+
+    order.canceled!
+
+    # Re-increment stock quantity of each product if applicable
+
+    order.products.each do |ordered_product|
+
+      ordered_product = eval(ordered_product)
+
+      product = Product.find_by(id: ordered_product[:id])
+
+      if (product != nil) && (product.stock_quantity != nil)
+
+        stock_quantity = product.stock_quantity + ordered_product[:quantity]
+
+        product.update!(stock_quantity: stock_quantity)
+
+      end
+
+    end
+
+    order.update!(order_canceled_reason: 'No drivers found')
+
+    orders = get_store_orders(store_user)
+
+    # Send orders to customer_user and store_user channels
+
+    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+
+    ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+
+    # Refund customer the amount he paid
+
+
+
+
+  end
+
+  def other_standard_delivery_drivers(store_latitude, store_longitude)
+
+    # Fetch all drivers that between 25KM and 50KM away from the store who are online and dont have any ongoing orders
+
+    Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not(orders: {status: 2})
+
+  end
 
   def is_delivery_time_limit_valid?(time, time_unit)
 
