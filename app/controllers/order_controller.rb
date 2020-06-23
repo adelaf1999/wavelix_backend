@@ -165,9 +165,18 @@ class OrderController < ApplicationController
 
                 # Driver can be within a 50KM radius maximum
 
-                # To be able to accept this order, driver cannot have any ongoing orders
+                bounds = Geokit::Bounds.from_point_and_radius([store_latitude, store_longitude],50)
 
-                drivers = Driver.within(50, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not( orders: {status: 2} )
+                drivers = Driver.where(status: 1).in_bounds(bounds)
+
+                # Fetch all online drivers who have no orders and who have no ongoing orders
+
+                drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
+
+                drivers = drivers.uniq
+
+                drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
 
                 if drivers.length > 0
 
@@ -197,9 +206,20 @@ class OrderController < ApplicationController
 
               else
 
-                # Fetch all drivers that are within 25 KM away from the store who are online and dont have any exclusive orders ongoing
+                # Fetch all drivers that are within 25 KM away from the store
 
-                drivers = Driver.within(25, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not(orders: { status: 2, order_type: 1 })
+                bounds = Geokit::Bounds.from_point_and_radius([store_latitude, store_longitude],25)
+
+                drivers = Driver.where(status: 1).in_bounds(bounds)
+
+                # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
+
+                drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2, order_type: 1})
+
+                drivers = drivers.uniq
+
+                drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
 
                 if drivers.length > 0
 
@@ -1212,8 +1232,6 @@ class OrderController < ApplicationController
   def other_standard_delivery_drivers(store_latitude, store_longitude)
 
     # Fetch all drivers that between 25KM and 50KM away from the store who are online and dont have any ongoing orders
-
-    Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1).includes(:orders).where.not(orders: {status: 2})
 
   end
 
