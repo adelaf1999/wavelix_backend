@@ -5,7 +5,9 @@ class Driver < ApplicationRecord
                    :lng_column_name => :longitude
 
   belongs_to :customer_user, touch: true
+
   has_many :orders
+
   enum status: { offline: 0, online: 1 }
 
 

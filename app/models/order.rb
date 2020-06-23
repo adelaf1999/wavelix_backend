@@ -8,6 +8,8 @@ class Order < ApplicationRecord
 
   belongs_to :store_user
   belongs_to :customer_user
+  belongs_to :driver, optional: true # can be nil if store handles delivery / no driver selected yet
+
 
   private
 
