@@ -121,9 +121,7 @@ class OrderController < ApplicationController
 
               # Driver can be within a 7KM radius maximum
 
-              bounds = Geokit::Bounds.from_point_and_radius([store_latitude, store_longitude],7)
-
-              drivers = Driver.where(status: 1).in_bounds(bounds)
+              drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1)
 
               # To be able to accept this order, driver cannot have any ongoing orders
 
@@ -165,9 +163,7 @@ class OrderController < ApplicationController
 
                 # Driver can be within a 50KM radius maximum
 
-                bounds = Geokit::Bounds.from_point_and_radius([store_latitude, store_longitude],50)
-
-                drivers = Driver.where(status: 1).in_bounds(bounds)
+                drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1)
 
                 # Fetch all online drivers who have no orders and who have no ongoing orders
 
@@ -208,9 +204,7 @@ class OrderController < ApplicationController
 
                 # Fetch all drivers that are within 25 KM away from the store
 
-                bounds = Geokit::Bounds.from_point_and_radius([store_latitude, store_longitude],25)
-
-                drivers = Driver.where(status: 1).in_bounds(bounds)
+                drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1)
 
                 # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
 
