@@ -44,12 +44,11 @@ class OrderJob < Struct.new(:order_id, :driver_id)
 
         else
 
-
+          drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
 
         end
 
       end
-
 
 
     end

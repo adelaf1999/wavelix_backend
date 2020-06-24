@@ -68,6 +68,126 @@ module OrderHelper
 
   end
 
+
+
+  def other_standard_delivery_drivers(order, store_latitude, store_longitude)
+
+    # Fetch all online drivers that between 25KM and 50KM away from the store
+
+    # That  dont have any ongoing orders and dont have any orders
+
+    drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+
+    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
+
+    drivers = drivers.uniq
+
+    drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
+    drivers
+
+
+  end
+
+  def contact_standard_drivers(drivers, unconfirmed_drivers, order, store_user, store_latitude, store_longitude)
+
+
+    if drivers.length > 0
+
+      contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+
+    else
+
+      drivers = other_standard_delivery_drivers(order, store_latitude, store_longitude)
+
+      if drivers.length > 0
+
+        contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+
+      else
+
+        no_drivers_found(order, store_user)
+
+      end
+
+    end
+
+
+
+  end
+
+
+  def drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
+
+    store_location = store_user.store_address
+
+    drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
+    # Fetch all drivers that are within 25 KM away from the store
+
+    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+
+    # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
+
+    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2, order_type: 1})
+
+    drivers = drivers.uniq
+
+    drivers = drivers.select do |driver|
+
+      # The driver might have other standard orders ongoing or he might not have any orders ongoing at all
+
+      standard_orders = driver.orders.where(status: 2, order_type: 0).order(created_at: :asc)
+
+      if standard_orders.length == 0
+
+        true
+
+      else
+
+        # The driver can only accept standard orders from other customers whose delivery location are within
+
+        # 25 KM away from the store location of the first order and whose store location is within 25 KM away
+
+        # from the delivery location of the first order
+
+        first_order = standard_orders.first
+
+        first_order_store_location = StoreUser.find_by(id: first_order.store_user_id).store_address
+
+        first_order_delivery_location = first_order.delivery_location
+
+        delivery_location = order.delivery_location
+
+        # First order store location distance to the new order delivery location
+
+        d1 = calculate_distance_km(first_order_store_location, delivery_location)
+
+        # New order store location distance to the delivery location of first order
+
+        d2 = calculate_distance_km(store_location, first_order_delivery_location)
+
+        d1 <= 25 && d2 <= 25
+
+      end
+
+
+
+    end
+
+
+    drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
+
+    contact_standard_drivers(drivers, unconfirmed_drivers, order, store_user, store_latitude, store_longitude)
+
+
+  end
+
   def drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)

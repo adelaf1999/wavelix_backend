@@ -119,116 +119,7 @@ class OrderController < ApplicationController
 
               else
 
-                # Fetch all drivers that are within 25 KM away from the store
-
-                drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1)
-
-                # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
-
-                drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2, order_type: 1})
-
-                drivers = drivers.uniq
-
-                drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
-
-
-                if drivers.length > 0
-
-                  # They might have other standard orders ongoing or they might not have any orders ongoing at all
-
-                  driver_id = nil
-
-                  drivers.each do |driver|
-
-                    standard_orders = driver.orders.where(status: 2, order_type: 0).order(created_at: :asc)
-
-                    if standard_orders.length == 0
-
-                      driver_id = driver.id
-
-                      break
-
-                    else
-
-
-                      # The driver can only accept standard orders from other customers whose delivery location are within
-
-                      # 25 KM away from the store location of the first order and whose store location is within 25 KM away
-
-                      # from the delivery location of the first order
-
-                      first_order = standard_orders.first
-
-                      first_order_store_location = StoreUser.find_by(id: first_order.store_user_id).store_address
-
-                      first_order_delivery_location = first_order.delivery_location
-
-                      delivery_location = order.delivery_location
-
-                      # First order store location distance to the new order delivery location
-
-                      d1 = calculate_distance_km(first_order_store_location, delivery_location)
-
-                      # New order store location distance to the delivery location of first order
-
-                      d2 = calculate_distance_km(store_location, first_order_delivery_location)
-
-                      if d1 <= 25 && d2 <= 25
-
-                        driver_id = driver.id
-
-                        break
-
-                      end
-
-                    end
-
-                  end
-
-
-                  if driver_id != nil
-
-                    # Contact this prospective driver
-
-                    # The driver will have 30 seconds to accept or reject order
-
-                    # If the driver has accepted the order will be marked ongoing
-
-                    # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
-
-                    # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
-
-                    # If the driver let the order pass he will be added to unconfirmed drivers list
-
-                  else
-
-                    drivers = other_standard_delivery_drivers(store_latitude, store_longitude)
-
-                    if drivers.length > 0
-
-                    else
-
-                      no_drivers_found(order, store_user)
-
-                    end
-
-
-                  end
-
-
-                else
-
-                  drivers = other_standard_delivery_drivers(store_latitude, store_longitude)
-
-                  if drivers.length > 0
-
-                  else
-
-                    no_drivers_found(order, store_user)
-
-                  end
-
-                end
+                drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
 
               end
 
@@ -1085,22 +976,7 @@ class OrderController < ApplicationController
   private
 
 
-  def other_standard_delivery_drivers(store_latitude, store_longitude)
 
-    # Fetch all drivers that between 25KM and 50KM away from the store
-
-    # That are online, dont have any ongoing orders and dont have any orders
-
-    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1)
-
-    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
-
-    drivers = drivers.uniq
-
-    drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
-    
-
-  end
 
   def is_delivery_time_limit_valid?(time, time_unit)
 
