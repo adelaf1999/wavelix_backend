@@ -56,8 +56,6 @@ class OrderController < ApplicationController
 
                 orders = get_store_orders(store_user)
 
-                @success = true
-
                 # Send orders to customer_user and store_user channels
 
                 ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
@@ -82,16 +80,7 @@ class OrderController < ApplicationController
 
 
 
-              else
-
-                @success = false
-
               end
-
-
-            else
-
-              @success = false
 
             end
 
@@ -119,42 +108,7 @@ class OrderController < ApplicationController
 
             if has_sensitive_products
 
-              # Driver can be within a 7KM radius maximum
-
-              drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1)
-
-              # To be able to accept this order, driver cannot have any ongoing orders
-
-              # Fetch all online drivers who have no orders and who have no ongoing orders
-
-              drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
-
-              drivers = drivers.uniq
-
-              drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
-
-
-              if drivers.length > 0
-
-                # Find the nearest driver to the store and contact him
-
-                # The driver will have 30 seconds to accept or reject order
-
-                # If the driver has accepted the order will be marked ongoing
-
-                # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
-
-                # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
-
-                # If the driver let the order pass he will be added to unconfirmed drivers list
-
-              else
-
-                @success = true
-
-                no_drivers_found(order, store_user)
-
-              end
+              drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
 
             else
 
@@ -189,9 +143,6 @@ class OrderController < ApplicationController
                   # If the driver let the order pass he will be added to unconfirmed drivers list
 
                 else
-
-
-                  @success = true
 
 
                   no_drivers_found(order, store_user)
@@ -291,8 +242,6 @@ class OrderController < ApplicationController
 
                     else
 
-                      @success = true
-
                       no_drivers_found(order, store_user)
 
                     end
@@ -309,8 +258,6 @@ class OrderController < ApplicationController
 
                   else
 
-                    @success = true
-
                     no_drivers_found(order, store_user)
 
                   end
@@ -325,16 +272,7 @@ class OrderController < ApplicationController
 
           end
 
-        else
-
-          @success = false
-
         end
-
-
-      else
-
-        @success = false
 
       end
 
@@ -1180,48 +1118,6 @@ class OrderController < ApplicationController
 
   private
 
-
-  def no_drivers_found(order, store_user)
-
-
-    # If no driver was found within valid area cancel the order and notify store/customer
-
-    order.canceled!
-
-    # Re-increment stock quantity of each product if applicable
-
-    order.products.each do |ordered_product|
-
-      ordered_product = eval(ordered_product)
-
-      product = Product.find_by(id: ordered_product[:id])
-
-      if (product != nil) && (product.stock_quantity != nil)
-
-        stock_quantity = product.stock_quantity + ordered_product[:quantity]
-
-        product.update!(stock_quantity: stock_quantity)
-
-      end
-
-    end
-
-    order.update!(order_canceled_reason: 'No drivers found')
-
-    orders = get_store_orders(store_user)
-
-    # Send orders to customer_user and store_user channels
-
-    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
-
-    ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
-
-    # Refund customer the amount he paid
-
-
-
-
-  end
 
   def other_standard_delivery_drivers(store_latitude, store_longitude)
 

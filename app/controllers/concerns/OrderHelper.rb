@@ -5,6 +5,142 @@ module OrderHelper
   require 'net/http'
 
 
+  def find_next_element_index(element, array)
+    index = array.find_index(element) + 1
+    index % array.size
+  end
+
+
+  def drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
+
+    # Driver can be within a 7KM radius maximum
+
+    drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
+    puts "unconfirmed drivers #{unconfirmed_drivers}"
+
+    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+
+    # To be able to accept this order, driver cannot have any ongoing orders
+
+    # Fetch all online drivers who have no orders and who have no ongoing orders
+
+    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
+
+    drivers = drivers.uniq
+
+    drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
+
+    if drivers.length > 0
+
+      # Find the nearest driver to the store and contact him
+
+      driver = drivers.select {|d| !unconfirmed_drivers.include?(d.id)}.first
+
+      if driver != nil
+
+        order.update!(prospective_driver_id: driver.id)
+
+        puts "Contacting new driver #{driver.name} with ID #{driver.id}"
+
+        # Create Delayed Job
+
+        Delayed::Job.enqueue(
+            OrderJob.new(order.id, driver.id),
+            queue: 'order_job_queue',
+            priority: 0,
+            run_at: 30.seconds.from_now
+        )
+
+
+      else
+
+        # Recontacts unconfirmed drivers who are still within valid area
+
+        drivers = drivers.select {|d| unconfirmed_drivers.include?(d.id)}
+
+        driver = drivers[find_next_element_index(order.prospective_driver_id, unconfirmed_drivers)]
+
+        order.update!(prospective_driver_id: driver.id)
+
+        puts "Contacting unconfirmed driver #{driver.name} with ID #{driver.id}"
+
+        Delayed::Job.enqueue(
+            OrderJob.new(order.id, driver.id),
+            queue: 'order_job_queue',
+            priority: 0,
+            run_at: 30.seconds.from_now
+        )
+
+
+
+      end
+
+
+      # The driver will have 30 seconds to accept or reject order
+
+      # If the driver has accepted the order it will be as marked ongoing
+
+      # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
+
+      # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
+
+      # If the driver let the order pass he will be added to unconfirmed drivers list
+
+    else
+
+      no_drivers_found(order, store_user)
+
+    end
+
+  end
+
+
+  def no_drivers_found(order, store_user)
+
+
+    # If no driver was found within valid area cancel the order and notify store/customer
+
+    order.canceled!
+
+    # Re-increment stock quantity of each product if applicable
+
+    order.products.each do |ordered_product|
+
+      ordered_product = eval(ordered_product)
+
+      product = Product.find_by(id: ordered_product[:id])
+
+      if (product != nil) && (product.stock_quantity != nil)
+
+        stock_quantity = product.stock_quantity + ordered_product[:quantity]
+
+        product.update!(stock_quantity: stock_quantity)
+
+      end
+
+    end
+
+    order.update!(order_canceled_reason: 'No drivers found')
+
+    orders = get_store_orders(store_user)
+
+    # Send orders to customer_user and store_user channels
+
+    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+
+    ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+
+    # Refund customer the amount he paid
+
+
+
+
+  end
+
   def get_store_orders(store_user)
 
 
