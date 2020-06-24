@@ -11,28 +11,9 @@ module OrderHelper
   end
 
 
-  def drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
-
-    # Driver can be within a 7KM radius maximum
-
-    drivers_rejected = order.drivers_rejected.map(&:to_i)
-
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+  def contact_drivers(drivers, unconfirmed_drivers, order, store_user)
 
     puts "unconfirmed drivers #{unconfirmed_drivers}"
-
-    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
-
-    # To be able to accept this order, driver cannot have any ongoing orders
-
-    # Fetch all online drivers who have no orders and who have no ongoing orders
-
-    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
-
-    drivers = drivers.uniq
-
-    drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
-
 
     if drivers.length > 0
 
@@ -46,7 +27,6 @@ module OrderHelper
 
         puts "Contacting new driver #{driver.name} with ID #{driver.id}"
 
-        # Create Delayed Job
 
         Delayed::Job.enqueue(
             OrderJob.new(order.id, driver.id),
@@ -58,7 +38,7 @@ module OrderHelper
 
       else
 
-        # Recontacts unconfirmed drivers who are still within valid area
+        # Recontact unconfirmed drivers who are still within valid area
 
         drivers = drivers.select {|d| unconfirmed_drivers.include?(d.id)}
 
@@ -79,22 +59,57 @@ module OrderHelper
 
       end
 
-
-      # The driver will have 30 seconds to accept or reject order
-
-      # If the driver has accepted the order it will be as marked ongoing
-
-      # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
-
-      # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
-
-      # If the driver let the order pass he will be added to unconfirmed drivers list
-
     else
 
       no_drivers_found(order, store_user)
 
     end
+
+
+  end
+
+  def drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
+
+    drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
+    # Driver can be within a 50KM radius maximum
+
+    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+
+    # Fetch all online drivers who have no orders and who have no ongoing orders
+
+    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
+
+    drivers = drivers.uniq
+
+    drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
+    contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+
+  end
+
+  def drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
+
+    # Driver can be within a 7KM radius maximum
+
+    drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
+    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+
+    # Fetch all online drivers who have no orders and who have no ongoing orders
+
+    drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
+
+    drivers = drivers.uniq
+
+    drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
+
+    contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+
 
   end
 

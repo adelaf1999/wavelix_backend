@@ -115,41 +115,7 @@ class OrderController < ApplicationController
 
               if order.exclusive?
 
-                # Driver can be within a 50KM radius maximum
-
-                drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1)
-
-                # Fetch all online drivers who have no orders and who have no ongoing orders
-
-                drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
-
-                drivers = drivers.uniq
-
-                drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
-
-
-                if drivers.length > 0
-
-                  # Find the nearest driver to the store and contact him
-
-                  # The driver will have 30 seconds to accept or reject order
-
-                  # If the driver has accepted the order will be marked ongoing
-
-                  # If the driver rejected the order he will be added to the drivers rejected list and the second nearest
-
-                  # driver will be contacted ( 7KM max distance from store who have sensitive products and 50KM for others ).
-
-                  # If the driver let the order pass he will be added to unconfirmed drivers list
-
-                else
-
-
-                  no_drivers_found(order, store_user)
-
-
-                end
-
+                drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
 
               else
 

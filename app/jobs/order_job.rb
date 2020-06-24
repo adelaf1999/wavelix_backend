@@ -36,6 +36,18 @@ class OrderJob < Struct.new(:order_id, :driver_id)
 
         drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
 
+      else
+
+        if order.exclusive?
+
+          drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
+
+        else
+
+
+
+        end
+
       end
 
 
