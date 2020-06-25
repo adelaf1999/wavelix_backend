@@ -70,7 +70,7 @@ module OrderHelper
 
 
 
-  def other_standard_delivery_drivers(order, store_latitude, store_longitude)
+  def other_standard_delivery_drivers(order, store_latitude, store_longitude, store_user)
 
     # Fetch all online drivers that between 25KM and 50KM away from the store
 
@@ -78,7 +78,9 @@ module OrderHelper
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+    country = store_user.store_country
+
+    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
 
     drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
 
@@ -100,7 +102,7 @@ module OrderHelper
 
     else
 
-      drivers = other_standard_delivery_drivers(order, store_latitude, store_longitude)
+      drivers = other_standard_delivery_drivers(order, store_latitude, store_longitude, store_user)
 
       if drivers.length > 0
 
@@ -129,7 +131,9 @@ module OrderHelper
 
     # Fetch all drivers that are within 25 KM away from the store
 
-    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+    country = store_user.store_country
+
+    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
 
     # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
 
@@ -196,7 +200,9 @@ module OrderHelper
 
     # Driver can be within a 50KM radius maximum
 
-    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+    country = store_user.store_country
+
+    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
 
     # Fetch all online drivers who have no orders and who have no ongoing orders
 
@@ -218,7 +224,9 @@ module OrderHelper
 
     unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
 
-    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1).where.not(id: drivers_rejected)
+    country = store_user.store_country
+
+    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
 
     # Fetch all online drivers who have no orders and who have no ongoing orders
 
