@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_25_090636) do
+ActiveRecord::Schema.define(version: 2020_06_25_131635) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -144,7 +144,6 @@ ActiveRecord::Schema.define(version: 2020_06_25_090636) do
     t.integer "order_type"
     t.integer "store_confirmation_status", default: 0
     t.boolean "store_handles_delivery", null: false
-    t.time "store_arrival_time_limit"
     t.boolean "customer_canceled_order", default: false
     t.string "order_canceled_reason", default: ""
     t.string "driver_received_order_code"
@@ -160,6 +159,7 @@ ActiveRecord::Schema.define(version: 2020_06_25_090636) do
     t.datetime "delivery_time_limit"
     t.text "drivers_rejected", default: [], array: true
     t.text "unconfirmed_drivers", default: [], array: true
+    t.datetime "store_arrival_time_limit"
   end
 
   create_table "phone_numbers", force: :cascade do |t|
