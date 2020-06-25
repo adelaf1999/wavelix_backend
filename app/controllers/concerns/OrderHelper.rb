@@ -42,18 +42,42 @@ module OrderHelper
 
         drivers = drivers.select {|d| unconfirmed_drivers.include?(d.id)}
 
-        driver = drivers[find_next_element_index(order.prospective_driver_id, unconfirmed_drivers)]
+        if drivers.length > 0
 
-        order.update!(prospective_driver_id: driver.id)
+          prospective_driver_id = order.prospective_driver_id
 
-        puts "Contacting unconfirmed driver #{driver.name} with ID #{driver.id}"
+          if unconfirmed_drivers.include?(prospective_driver_id)
 
-        Delayed::Job.enqueue(
-            OrderJob.new(order.id, driver.id),
-            queue: 'order_job_queue',
-            priority: 0,
-            run_at: 30.seconds.from_now
-        )
+            driver = drivers[find_next_element_index(prospective_driver_id, unconfirmed_drivers)]
+
+          else
+
+            # Driver has rejected the order
+
+            # Contact the first unconfirmed driver
+
+            driver = drivers.first
+
+          end
+
+          order.update!(prospective_driver_id: driver.id)
+
+          puts "Contacting unconfirmed driver #{driver.name} with ID #{driver.id}"
+
+          Delayed::Job.enqueue(
+              OrderJob.new(order.id, driver.id),
+              queue: 'order_job_queue',
+              priority: 0,
+              run_at: 30.seconds.from_now
+          )
+
+        else
+
+          no_drivers_found(order, store_user)
+
+        end
+
+
 
 
 

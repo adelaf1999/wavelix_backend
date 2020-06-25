@@ -191,4 +191,8 @@ Rails.application.routes.draw do
 
   post '/can-request-sms' => 'phone_verifications#can_request_sms'
 
+  # Drivers Routes
+
+  post '/decline-order-request' => 'drivers#decline_order_request'
+
 end
