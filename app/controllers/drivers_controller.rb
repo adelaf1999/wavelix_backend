@@ -6,6 +6,7 @@ class DriversController < ApplicationController
 
 
   def accept_order_request
+    
 
     if current_user.customer_user?
 
