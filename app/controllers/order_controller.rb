@@ -60,7 +60,9 @@ class OrderController < ApplicationController
 
                 ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
 
-                ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+                # Send orders to customer_user channel
+
+                # Send push notification to customer/store
 
 
                 # After the x amount of time the store promised to do the delivery
@@ -95,7 +97,9 @@ class OrderController < ApplicationController
 
             ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
 
-            ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+            # Send orders to customer_user channel
+
+            # Send push notification to customer/store
 
 
             has_sensitive_products = store_user.has_sensitive_products
@@ -178,12 +182,11 @@ class OrderController < ApplicationController
 
           @success = true
 
-          # Send orders to customer_user and store_user channels
-
           ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: @orders}
 
-          ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: @orders}
+          # Send orders to customer_user channel
 
+          # Send push notification to customer/store
 
           # Refund customer the amount he paid
 

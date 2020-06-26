@@ -195,4 +195,6 @@ Rails.application.routes.draw do
 
   post '/decline-order-request' => 'drivers#decline_order_request'
 
+  post '/accept-order-request' => 'drivers#accept_order_request'
+
 end

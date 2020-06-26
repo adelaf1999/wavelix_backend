@@ -295,16 +295,13 @@ module OrderHelper
 
     orders = get_store_orders(store_user)
 
-    # Send orders to customer_user and store_user channels
-
     ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
 
-    ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+    # Send orders to customer_user channel
+
+    # Send push notification to  customer/store
 
     # Refund customer the amount he paid
-
-
-
 
   end
 
@@ -471,6 +468,8 @@ module OrderHelper
   end
 
 
+
+
   def calculate_exclusive_delivery_fee_usd(delivery_location, store_location)
 
     # Returns delivery fee from store to delivery location in USD
@@ -507,6 +506,51 @@ module OrderHelper
     travel_time = data['duration']['value'] / 60 # Minutes
 
     0.0189 * travel_time + 0.533 * travel_distance + 2 # in USD
+
+  end
+
+  def estimated_arrival_time_minutes(origin_lat, origin_lng, dest_lat, dest_lng)
+
+    url = 'https://maps.googleapis.com/maps/api/distancematrix'
+
+    conn = Faraday.new(url: url) do |faraday|
+      faraday.response :json
+      faraday.adapter Faraday.default_adapter
+    end
+
+    response = conn.get(
+        'json',
+        units: 'metric',
+        origins: "#{origin_lat},#{origin_lng}",
+        destinations: "#{dest_lat},#{dest_lng}",
+        key: ENV.fetch('GOOGLE_API_KEY')
+    )
+
+    data = response.body['rows'][0]['elements'][0]
+
+
+    data['duration']['value'] / 60 # Minutes
+
+
+  end
+
+  def calculate_distance_meters(loc1, loc2)
+
+    rad_per_deg = Math::PI/180  # PI / 180
+    rkm = 6371                  # Earth radius in kilometers
+    rm = rkm * 1000             # Radius in meters
+
+    dlat_rad = (loc2[:latitude]-loc1[:latitude]) * rad_per_deg  # Delta, converted to rad
+    dlon_rad = (loc2[:longitude]-loc1[:longitude]) * rad_per_deg
+
+
+    lat1_rad = loc1[:latitude] * rad_per_deg
+    lat2_rad = loc2[:latitude] * rad_per_deg
+
+    a = Math.sin(dlat_rad/2)**2 + Math.cos(lat1_rad) * Math.cos(lat2_rad) * Math.sin(dlon_rad/2)**2
+    c = 2 * Math::atan2(Math::sqrt(a), Math::sqrt(1-a))
+
+    rm * c # Delta in Meters
 
   end
 
