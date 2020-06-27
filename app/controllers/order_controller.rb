@@ -5,6 +5,127 @@ class OrderController < ApplicationController
 
   before_action :authenticate_user!
 
+
+  def driver_fulfill_order
+
+    # error_codes
+
+    #  {0: ORDER_CANCELED_ERROR, 1: ORDER_COMPLETE_ERROR, 2: ORDER_ALREADY_FULFILLED_ORDER_ERROR }
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      order = customer_user.orders.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if !order.store_handles_delivery
+
+          if order.ongoing?
+
+            driver_fulfilled_order = order.driver_fulfilled_order
+
+            if driver_fulfilled_order
+
+              @success = false
+              @error_code = 2
+
+            else
+
+              driver_fulfilled_order_code = params[:driver_fulfilled_order_code]
+
+              if order.driver_fulfilled_order_code == driver_fulfilled_order_code
+
+                @success = true
+
+                order.update!(driver_fulfilled_order: true)
+
+                order.complete!
+
+                store_user = StoreUser.find_by(id: order.store_user_id)
+
+                orders = get_store_orders(store_user)
+
+                ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+
+                # Send orders to customer_user channel
+
+                # Notify store that order successful and amount has been successfully deposited to their balance
+
+                # Notify driver that order successful and amount has been successfully deposited to their balance
+
+                increment_store_balance(order)
+
+                driver = Driver.find_by(id: order.driver_id)
+
+                delivery_fee = order.delivery_fee
+
+                delivery_fee_currency = order.delivery_fee_currency
+
+                driver_currency = driver.currency
+
+                if driver_currency == delivery_fee_currency
+
+                  driver.increment!(:balance, delivery_fee)
+
+                else
+
+                  exchange_rates = get_exchange_rates(driver_currency)
+
+                  delivery_fee = delivery_fee / exchange_rates[delivery_fee_currency]
+
+                  driver.increment!(:balance, delivery_fee)
+
+                end
+                
+
+              else
+
+                @success = false
+
+
+              end
+
+            end
+
+          else
+
+            if order.canceled?
+
+              @success = false
+              @error_code = 0
+
+            elsif order.pending?
+
+              @success = false
+
+            elsif order.complete?
+
+              @success = false
+              @error_code = 1
+
+            end
+
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
   def store_fulfill_order
 
     # error_codes
