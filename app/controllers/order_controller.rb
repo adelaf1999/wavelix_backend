@@ -5,6 +5,151 @@ class OrderController < ApplicationController
 
   before_action :authenticate_user!
 
+  def store_fulfill_order
+
+    # error_codes
+
+    #  {0: ORDER_CANCELED_ERROR, 1: ORDER_COMPLETE_ERROR, 2: ORDER_ALREADY_FULFILLED_ORDER_ERROR }
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      order = store_user.orders.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if !order.store_handles_delivery
+
+          if order.ongoing?
+
+            store_fulfilled_order = order.store_fulfilled_order
+
+            if store_fulfilled_order
+
+              @success = false
+              @error_code = 2
+
+            else
+
+              driver_received_order_code = params[:driver_received_order_code]
+
+              if order.driver_received_order_code == driver_received_order_code
+
+                @success = true
+
+                order.update!(store_fulfilled_order: true)
+
+                if order.exclusive?
+
+                  driver = Driver.find_by(id: order.driver_id)
+
+                  has_sensitive_products = store_user.has_sensitive_products
+
+                  delivery_location = order.delivery_location
+
+                  delivery_loc_lat = delivery_location[:latitude]
+
+                  delivery_loc_lng = delivery_location[:longitude]
+
+                  estimated_arrival_time = estimated_arrival_time_minutes(
+                      driver.latitude,
+                      driver.longitude,
+                      delivery_loc_lat,
+                      delivery_loc_lng
+                  )
+
+
+                  if has_sensitive_products
+
+                    delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
+
+                    order.update!(delivery_time_limit: delivery_time_limit)
+
+                    Delayed::Job.enqueue(
+                        CustomerDeliveryJob.new(order.id),
+                        queue: 'customer_delivery_job_queue',
+                        priority: 0,
+                        run_at: delivery_time_limit
+                    )
+
+                  else
+
+                    delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
+
+                    order.update!(delivery_time_limit: delivery_time_limit)
+
+                    Delayed::Job.enqueue(
+                        CustomerDeliveryJob.new(order.id),
+                        queue: 'customer_delivery_job_queue',
+                        priority: 0,
+                        run_at: delivery_time_limit
+                    )
+
+
+                  end
+
+                else
+
+                  delivery_time_limit = (DateTime.now.utc + 36.hours).to_datetime
+
+                  order.update!(delivery_time_limit: delivery_time_limit)
+
+                  Delayed::Job.enqueue(
+                      CustomerDeliveryJob.new(order.id),
+                      queue: 'customer_delivery_job_queue',
+                      priority: 0,
+                      run_at: delivery_time_limit
+                  )
+
+
+                end
+
+              else
+
+                @success = false
+
+              end
+
+            end
+
+          else
+
+            if order.canceled?
+
+              @success = false
+              @error_code = 0
+
+            elsif order.pending?
+
+              @success = false
+
+            elsif order.complete?
+
+              @success = false
+              @error_code = 1
+
+            end
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
 
   def accept_order
 

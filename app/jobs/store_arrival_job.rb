@@ -34,7 +34,7 @@ class StoreArrivalJob < Struct.new(:order_id)
 
       end
 
-      order.update!(order_canceled_reason: 'Order was not fulfilled')
+      order.update!(order_canceled_reason: 'Driver did not arrive to store')
 
       store_user = StoreUser.find_by(id: order.store_user_id)
 
@@ -45,6 +45,12 @@ class StoreArrivalJob < Struct.new(:order_id)
       # Send orders to customer_user channel
 
       # Send push notification to  customer/store/driver
+
+      # Notify store that order was canceled and not to fulfill the order anymore
+
+      # Notify driver that order was canceled
+
+      # Notify customer that the order has been canceled and that he will be refunded the full amount paid
 
       # Refund customer the amount he paid
 
