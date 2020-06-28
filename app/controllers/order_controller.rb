@@ -6,6 +6,57 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def customer_cancel_order
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      order = customer_user.orders.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if order.pending? &&  order.store_unconfirmed?
+
+          @success = true
+
+          order.canceled!
+
+          order.update!(order_canceled_reason: 'Customer canceled order')
+
+          store_user = StoreUser.find_by(id: order.store_user_id)
+
+          orders = get_store_orders(store_user)
+
+          ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+
+          # Send orders to customer_user channel
+
+          # Notify store that order was canceled by the customer
+
+          # Notify customer that the order has been canceled and that he will be refunded the full amount paid
+
+          # Refund customer the full amount he paid
+
+        else
+
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
+
   def driver_fulfill_order
 
     # error_codes

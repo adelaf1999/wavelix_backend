@@ -157,6 +157,8 @@ Rails.application.routes.draw do
 
   post '/driver-fulfill-order' => 'order#driver_fulfill_order'
 
+  post '/customer-cancel-order' => 'order#customer_cancel_order'
+
   # Cart Routes
 
   post '/add-cart' => 'cart#add'
