@@ -24,11 +24,7 @@ class OrderController < ApplicationController
 
           order.update!(order_canceled_reason: 'Customer canceled order')
 
-          store_user = StoreUser.find_by(id: order.store_user_id)
-
-          orders = get_store_orders(store_user)
-
-          ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+          send_store_orders(order)
 
           # Send orders to customer_user channel
 
@@ -94,13 +90,11 @@ class OrderController < ApplicationController
 
                 order.complete!
 
-                store_user = StoreUser.find_by(id: order.store_user_id)
-
-                orders = get_store_orders(store_user)
-
-                ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+                send_store_orders(order)
 
                 # Send orders to customer_user channel
+
+                # Send orders to driver channel
 
                 # Notify store that order successful and amount has been successfully deposited to their balance
 
@@ -246,6 +240,17 @@ class OrderController < ApplicationController
 
                         order.update!(driver_arrived_to_delivery_location: true)
 
+                        # Notify store that driver almost arrived to customer delivery location
+
+                        # Notify customer that the driver almost arrived to delivery location and has picked up their products
+
+                        send_store_orders(order)
+
+                        # Send orders to customer_user channel
+
+                        # Send orders to driver channel
+
+
                         if has_sensitive_products
 
                           Delayed::Job.enqueue(
@@ -282,12 +287,20 @@ class OrderController < ApplicationController
                             delivery_loc_lng
                         )
 
+                        # Notify customer that the driver has picked up their products
+
 
                         if has_sensitive_products
 
                           delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
 
                           order.update!(delivery_time_limit: delivery_time_limit)
+
+                          send_store_orders(order)
+
+                          # Send orders to customer_user channel
+
+                          # Send orders to driver channel
 
                           Delayed::Job.enqueue(
                               CustomerDeliveryJob.new(order.id),
@@ -301,6 +314,12 @@ class OrderController < ApplicationController
                           delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
 
                           order.update!(delivery_time_limit: delivery_time_limit)
+
+                          send_store_orders(order)
+
+                          # Send orders to customer_user channel
+
+                          # Send orders to driver channel
 
                           Delayed::Job.enqueue(
                               CustomerDeliveryJob.new(order.id),
@@ -321,6 +340,12 @@ class OrderController < ApplicationController
                       delivery_time_limit = (DateTime.now.utc + 36.hours).to_datetime
 
                       order.update!(delivery_time_limit: delivery_time_limit)
+
+                      send_store_orders(order)
+
+                      # Send orders to customer_user channel
+
+                      # Send orders to driver channel
 
                       Delayed::Job.enqueue(
                           CustomerDeliveryJob.new(order.id),
@@ -437,15 +462,11 @@ class OrderController < ApplicationController
 
                 order.update!(delivery_time_limit: delivery_time_limit)
 
-                orders = get_store_orders(store_user)
-
-                # Send orders to customer_user and store_user channels
-
-                ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+                send_store_orders(order)
 
                 # Send orders to customer_user channel
 
-                # Send push notification to customer/store
+                # Notify customer that their order was accepted by store
 
 
                 # After the x amount of time the store promised to do the delivery
@@ -472,18 +493,13 @@ class OrderController < ApplicationController
           else
 
 
-            # Mark that the order accepted and send orders to front end
-
             order.store_accepted!
 
-            orders = get_store_orders(store_user)
-
-            ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+            send_store_orders(order)
 
             # Send orders to customer_user channel
 
-            # Send push notification to customer/store
-
+            # Notify customer that their order was accepted by store
 
             has_sensitive_products = store_user.has_sensitive_products
 
@@ -539,6 +555,8 @@ class OrderController < ApplicationController
 
         if order.pending? && order.store_unconfirmed?
 
+          @success = true
+
           order.canceled!
 
           order.store_rejected!
@@ -561,17 +579,13 @@ class OrderController < ApplicationController
 
           order.update!(order_canceled_reason: 'Store canceled order')
 
-          @orders = get_store_orders(store_user)
-
-          @success = true
-
-          ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: @orders}
+          send_store_orders(order)
 
           # Send orders to customer_user channel
 
-          # Send push notification to customer/store
+          # Notify customer that the store rejected the order and that they will be refunded with the full amount paid
 
-          # Refund customer the amount he paid
+          # Refund customer the full amount he paid
 
         else
 

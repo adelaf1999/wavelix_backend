@@ -87,6 +87,8 @@ class DriversController < ApplicationController
 
               driver.update!(latitude: latitude, longitude: longitude)
 
+              # Send driver location to customer and store user channels
+
               orders = driver.orders.where(status: 2, driver_arrived_to_store: false, store_fulfilled_order: false)
 
               orders.each do |order|
@@ -104,6 +106,16 @@ class DriversController < ApplicationController
                 if distance <= 50
 
                   order.update!(driver_arrived_to_store: true)
+
+                  # Notify store that driver has arrived to store
+
+                  # Notify customer that driver has arrived to pick up their products
+
+                  send_store_orders(order)
+
+                  # Send orders to customer_user channel
+
+                  # Send orders to driver channel
 
 
                   if has_sensitive_products
@@ -157,8 +169,17 @@ class DriversController < ApplicationController
 
                 if distance <= 50
 
+                  # Notify store that driver has arrived to customer delivery location
+
+                  # Notify customer that the driver has arrived to delivery location
 
                   order.update!(driver_arrived_to_delivery_location: true)
+
+                  send_store_orders(order)
+
+                  # Send orders to customer_user channel
+
+                  # Send orders to driver channel
 
 
                   if has_sensitive_products
@@ -276,6 +297,9 @@ class DriversController < ApplicationController
 
               order.update!(driver_arrived_to_store: true)
 
+              # Notify store that driver has arrived to store
+
+              # Notify customer that driver has arrived to pick up their products
 
               if has_sensitive_products
 
@@ -286,6 +310,8 @@ class DriversController < ApplicationController
                     run_at: 20.minutes.from_now
                 )
 
+                # Send orders to driver channel
+
 
               else
 
@@ -295,6 +321,8 @@ class DriversController < ApplicationController
                     priority: 0,
                     run_at: 40.minutes.from_now
                 )
+
+                # Send orders to driver channel
 
 
               end
@@ -315,6 +343,12 @@ class DriversController < ApplicationController
 
                 order.update!(store_arrival_time_limit: store_arrival_time_limit)
 
+                send_store_orders(order)
+
+                # Send orders to customer_user channel
+
+                # Send orders to driver channel
+
                 Delayed::Job.enqueue(
                     StoreArrivalJob.new(order.id),
                     queue: 'store_arrival_job_queue',
@@ -327,6 +361,12 @@ class DriversController < ApplicationController
                 store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
 
                 order.update!(store_arrival_time_limit: store_arrival_time_limit)
+
+                send_store_orders(order)
+
+                # Send orders to customer_user channel
+
+                # Send orders to driver channel
 
                 Delayed::Job.enqueue(
                     StoreArrivalJob.new(order.id),
@@ -400,6 +440,8 @@ class DriversController < ApplicationController
             drivers_rejected.push(current_driver.id)
 
             order.update!(drivers_rejected: drivers_rejected)
+
+            # Send orders to driver channel
 
             store_user = StoreUser.find_by(id: order.store_user_id)
 

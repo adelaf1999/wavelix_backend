@@ -4,6 +4,16 @@ module OrderHelper
   require 'faraday_middleware'
   require 'net/http'
 
+  def send_store_orders(order)
+
+    store_user = StoreUser.find_by(id: order.store_user_id)
+
+    orders = get_store_orders(store_user)
+
+    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+
+
+  end
 
   def get_new_driver(order)
 
@@ -27,11 +37,7 @@ module OrderHelper
 
     order.update!(drivers_canceled_order: drivers_canceled_order)
 
-    store_user = StoreUser.find_by(id: order.store_user_id)
-
-    orders = get_store_orders(store_user)
-
-    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+    send_store_orders(order)
 
     # Send orders to customer_user channel
 
@@ -407,13 +413,13 @@ module OrderHelper
 
     order.update!(order_canceled_reason: 'No drivers found')
 
-    orders = get_store_orders(store_user)
-
-    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+    send_store_orders(order)
 
     # Send orders to customer_user channel
 
-    # Send push notification to  customer/store
+    # Notify store that the order was canceled since no drivers were found and that customer will be refunded
+
+    # Notify customer that the order was canceled and that he will be refunded the full amount he paid
 
     # Refund customer the amount he paid
 
