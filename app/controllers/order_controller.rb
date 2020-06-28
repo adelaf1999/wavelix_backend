@@ -22,7 +22,7 @@ class OrderController < ApplicationController
 
           order.canceled!
 
-          order.update!(order_canceled_reason: 'Customer canceled order')
+          order.update!(order_canceled_reason: 'Customer canceled order', customer_canceled_order: true)
 
           send_store_orders(order)
 
