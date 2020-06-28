@@ -10,7 +10,7 @@ class DeliverOrderJob < Struct.new(:order_id)
 
       order.canceled!
 
-      order.update!(order_canceled_reason: 'Driver did not deliver products to customer')
+      order.update!(order_canceled_reason: 'Driver did not deliver product(s) to customer')
 
       store_user = StoreUser.find_by(id: order.store_user_id)
 
@@ -19,6 +19,8 @@ class DeliverOrderJob < Struct.new(:order_id)
       ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
 
       # Send orders to customer_user channel
+
+      # Send orders to driver channel
 
       # Notify store that order was canceled and driver has been requested to return products to store
 

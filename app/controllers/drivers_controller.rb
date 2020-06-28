@@ -4,6 +4,48 @@ class DriversController < ApplicationController
 
   before_action :authenticate_user!
 
+  def cancel_order
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      driver = Driver.find_by(customer_user_id: customer_user.id)
+
+      if driver != nil
+
+        order = driver.orders.find_by(id: params[:order_id])
+
+        if order != nil
+
+          if order.ongoing? && !order.store_fulfilled_order
+
+            @success = true
+
+            get_new_driver(order)
+
+            # Notify customer/store that driver canceled order and that we will be getting a new driver soon
+
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
 
   def update_location
 

@@ -203,4 +203,6 @@ Rails.application.routes.draw do
 
   post '/update-location' => 'drivers#update_location'
 
+  post '/cancel-order' => 'drivers#cancel_order'
+
 end

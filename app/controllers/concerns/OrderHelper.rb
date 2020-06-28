@@ -4,6 +4,71 @@ module OrderHelper
   require 'faraday_middleware'
   require 'net/http'
 
+
+  def get_new_driver(order)
+
+    previous_driver_id = order.driver_id
+
+    order.pending!
+
+    order.update!(
+        driver_arrived_to_store: false,
+        driver_id: nil,
+        prospective_driver_id: nil,
+        drivers_rejected: [],
+        unconfirmed_drivers: [],
+        store_arrival_time_limit: nil,
+        driver_fulfilled_order_code: SecureRandom.hex
+    )
+
+    drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+
+    drivers_canceled_order.push(previous_driver_id)
+
+    order.update!(drivers_canceled_order: drivers_canceled_order)
+
+    store_user = StoreUser.find_by(id: order.store_user_id)
+
+    orders = get_store_orders(store_user)
+
+    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+
+    # Send orders to customer_user channel
+
+    # Send orders to previous driver channel
+
+    has_sensitive_products = store_user.has_sensitive_products
+
+    store_location = store_user.store_address
+
+    store_latitude = store_location[:latitude]
+
+    store_longitude = store_location[:longitude]
+
+    if has_sensitive_products
+
+      drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
+
+    else
+
+
+      if order.exclusive?
+
+        drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
+
+      else
+
+        drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
+
+      end
+
+
+    end
+
+
+
+  end
+
   def is_decimal_number?(arg)
 
     arg = arg.to_s
@@ -134,9 +199,13 @@ module OrderHelper
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
+    drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+
+    invalid_drivers = drivers_rejected + drivers_canceled_order
+
     country = store_user.store_country
 
-    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
+    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
 
     drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
 
@@ -181,15 +250,20 @@ module OrderHelper
 
     store_location = store_user.store_address
 
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+    drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+
+    invalid_drivers = drivers_rejected + drivers_canceled_order
+
 
     # Fetch all drivers that are within 25 KM away from the store
 
     country = store_user.store_country
 
-    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
+    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
 
     # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
 
@@ -250,15 +324,19 @@ module OrderHelper
 
   def drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
 
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+    drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+
+    invalid_drivers = drivers_rejected + drivers_canceled_order
 
     # Driver can be within a 50KM radius maximum
 
     country = store_user.store_country
 
-    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
+    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
 
     # Fetch all online drivers who have no orders and who have no ongoing orders
 
@@ -276,13 +354,17 @@ module OrderHelper
 
     # Driver can be within a 7KM radius maximum
 
+    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
+    drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+
+    invalid_drivers = drivers_rejected + drivers_canceled_order
 
     country = store_user.store_country
 
-    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: drivers_rejected)
+    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
 
     # Fetch all online drivers who have no orders and who have no ongoing orders
 
@@ -359,14 +441,6 @@ module OrderHelper
 
       order[:ordered_at] = timezone.time_with_offset(store_order.created_at).strftime('%Y-%m-%d %-I:%M %p')
 
-
-      driver_canceled_order = store_order.driver_canceled_order
-
-      if driver_canceled_order != nil
-
-        order[:driver_canceled_order] = driver_canceled_order
-
-      end
 
       store_handles_delivery = store_order.store_handles_delivery
 

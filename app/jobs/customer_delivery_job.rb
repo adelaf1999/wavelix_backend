@@ -28,7 +28,7 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
       # Send orders to customer_user channel
 
-      # Send push notification to  customer/store/driver
+      # Send orders to driver channel
 
       # Notify store that order was canceled and driver has been requested to return products to store
 
@@ -37,7 +37,6 @@ class CustomerDeliveryJob < Struct.new(:order_id)
       # Notify customer that the order has been canceled and that he will be refunded the full amount paid
 
       # Refund customer the amount he paid
-
 
     end
 
