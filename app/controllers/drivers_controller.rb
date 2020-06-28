@@ -5,6 +5,182 @@ class DriversController < ApplicationController
   before_action :authenticate_user!
 
 
+  def update_location
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      driver = Driver.find_by(customer_user_id: customer_user.id)
+
+      if driver != nil
+
+        latitude = params[:latitude]
+
+        longitude = params[:longitude]
+
+        if latitude != nil && longitude != nil
+
+          if is_decimal_number?(latitude) && is_decimal_number?(longitude)
+
+            latitude = latitude.to_d
+
+            longitude = longitude.to_d
+
+            geo_location = Geocoder.search([latitude, longitude])
+
+            if geo_location.size > 0
+
+              @success = true
+
+              country = geo_location.first.country_code
+
+              # Driver might cross country borders or travel to a new country
+
+              if country != driver.country
+
+                driver.update!(country: country)
+
+              end
+
+              driver.update!(latitude: latitude, longitude: longitude)
+
+              orders = driver.orders.where(status: 2, driver_arrived_to_store: false, store_fulfilled_order: false)
+
+              orders.each do |order|
+
+                driver_location = {latitude: latitude, longitude: longitude}
+
+                store_user = StoreUser.find_by(id: order.store_user_id)
+
+                has_sensitive_products = store_user.has_sensitive_products
+
+                store_location = store_user.store_address
+
+                distance = calculate_distance_meters(driver_location, store_location)
+
+                if distance <= 50
+
+                  order.update!(driver_arrived_to_store: true)
+
+
+                  if has_sensitive_products
+
+                    Delayed::Job.enqueue(
+                        PickupOrderJob.new(order.id),
+                        queue: 'pickup_order_job_queue',
+                        priority: 0,
+                        run_at: 20.minutes.from_now
+                    )
+
+
+                  else
+
+                    Delayed::Job.enqueue(
+                        PickupOrderJob.new(order.id),
+                        queue: 'pickup_order_job_queue',
+                        priority: 0,
+                        run_at: 40.minutes.from_now
+                    )
+
+
+                  end
+
+
+                end
+
+
+              end
+
+
+              orders = driver.orders.where(
+                  status: 2,
+                  driver_arrived_to_delivery_location: false,
+                  driver_fulfilled_order: false,
+                  store_fulfilled_order: true,
+                  order_type: 1
+              )
+
+              orders.each do |order|
+
+                store_user = StoreUser.find_by(id: order.store_user_id)
+
+                has_sensitive_products = store_user.has_sensitive_products
+
+                driver_location = {latitude: latitude, longitude: longitude}
+
+                delivery_location = order.delivery_location
+
+                distance = calculate_distance_meters(driver_location, delivery_location)
+
+                if distance <= 50
+
+
+                  order.update!(driver_arrived_to_delivery_location: true)
+
+
+                  if has_sensitive_products
+
+                    Delayed::Job.enqueue(
+                        DeliverOrderJob.new(order.id),
+                        queue: 'deliver_order_job_queue',
+                        priority: 0,
+                        run_at: 20.minutes.from_now
+                    )
+
+
+
+                  else
+
+                    Delayed::Job.enqueue(
+                        DeliverOrderJob.new(order.id),
+                        queue: 'deliver_order_job_queue',
+                        priority: 0,
+                        run_at: 40.minutes.from_now
+                    )
+
+
+                  end
+
+
+                end
+
+
+              end
+
+
+
+            else
+
+              @success = false
+
+            end
+
+          else
+
+            @success = false
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
+
   def accept_order_request
     
 
@@ -234,5 +410,6 @@ class DriversController < ApplicationController
     end
 
   end
+
 
 end

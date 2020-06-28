@@ -4,6 +4,14 @@ module OrderHelper
   require 'faraday_middleware'
   require 'net/http'
 
+  def is_decimal_number?(arg)
+
+    arg = arg.to_s
+
+    /^-?(\d+\.?\d*|\d*\.?\d+)$/.match(arg) != nil
+
+  end
+
 
   def increment_store_balance(order)
 

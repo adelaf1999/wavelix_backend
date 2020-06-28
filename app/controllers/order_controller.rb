@@ -35,7 +35,7 @@ class OrderController < ApplicationController
 
               driver_fulfilled_order_code = params[:driver_fulfilled_order_code]
 
-              if order.driver_fulfilled_order_code == driver_fulfilled_order_code
+              if order.driver_fulfilled_order_code == driver_fulfilled_order_code && order.store_fulfilled_order
 
                 @success = true
 
@@ -169,46 +169,83 @@ class OrderController < ApplicationController
 
                   delivery_location = order.delivery_location
 
-                  delivery_loc_lat = delivery_location[:latitude]
+                  driver_location = { latitude: driver.latitude, longitude: driver.longitude }
 
-                  delivery_loc_lng = delivery_location[:longitude]
+                  distance = calculate_distance_meters(driver_location, delivery_location)
 
-                  estimated_arrival_time = estimated_arrival_time_minutes(
-                      driver.latitude,
-                      driver.longitude,
-                      delivery_loc_lat,
-                      delivery_loc_lng
-                  )
+                  if distance <= 50
+
+                    order.update!(driver_arrived_to_delivery_location: true)
+
+                    if has_sensitive_products
+
+                      Delayed::Job.enqueue(
+                          DeliverOrderJob.new(order.id),
+                          queue: 'deliver_order_job_queue',
+                          priority: 0,
+                          run_at: 20.minutes.from_now
+                      )
 
 
-                  if has_sensitive_products
+                    else
 
-                    delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
+                      Delayed::Job.enqueue(
+                          DeliverOrderJob.new(order.id),
+                          queue: 'deliver_order_job_queue',
+                          priority: 0,
+                          run_at: 40.minutes.from_now
+                      )
 
-                    order.update!(delivery_time_limit: delivery_time_limit)
 
-                    Delayed::Job.enqueue(
-                        CustomerDeliveryJob.new(order.id),
-                        queue: 'customer_delivery_job_queue',
-                        priority: 0,
-                        run_at: delivery_time_limit
-                    )
+                    end
 
                   else
 
-                    delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
 
-                    order.update!(delivery_time_limit: delivery_time_limit)
+                    delivery_loc_lat = delivery_location[:latitude]
 
-                    Delayed::Job.enqueue(
-                        CustomerDeliveryJob.new(order.id),
-                        queue: 'customer_delivery_job_queue',
-                        priority: 0,
-                        run_at: delivery_time_limit
+                    delivery_loc_lng = delivery_location[:longitude]
+
+                    estimated_arrival_time = estimated_arrival_time_minutes(
+                        driver.latitude,
+                        driver.longitude,
+                        delivery_loc_lat,
+                        delivery_loc_lng
                     )
 
 
+                    if has_sensitive_products
+
+                      delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
+
+                      order.update!(delivery_time_limit: delivery_time_limit)
+
+                      Delayed::Job.enqueue(
+                          CustomerDeliveryJob.new(order.id),
+                          queue: 'customer_delivery_job_queue',
+                          priority: 0,
+                          run_at: delivery_time_limit
+                      )
+
+                    else
+
+                      delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
+
+                      order.update!(delivery_time_limit: delivery_time_limit)
+
+                      Delayed::Job.enqueue(
+                          CustomerDeliveryJob.new(order.id),
+                          queue: 'customer_delivery_job_queue',
+                          priority: 0,
+                          run_at: delivery_time_limit
+                      )
+
+
+                    end
+
+
                   end
+
 
                 else
 
@@ -521,7 +558,7 @@ class OrderController < ApplicationController
 
             if latitude != nil && longitude != nil
 
-              if is_number?(latitude) && is_number?(longitude)
+              if is_decimal_number?(latitude) && is_decimal_number?(longitude)
 
                 latitude = latitude.to_d
 
@@ -929,7 +966,7 @@ class OrderController < ApplicationController
 
                     if latitude != nil && longitude != nil
 
-                      if is_number?(latitude) && is_number?(longitude)
+                      if is_decimal_number?(latitude) && is_decimal_number?(longitude)
 
                         latitude = latitude.to_d
 
@@ -1776,11 +1813,7 @@ class OrderController < ApplicationController
 
   end
 
-  def is_number?(arg)
 
-    arg.is_a?(Numeric)
-
-  end
 
   def is_quantity_valid?(quantity, product)
 

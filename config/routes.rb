@@ -201,4 +201,6 @@ Rails.application.routes.draw do
 
   post '/accept-order-request' => 'drivers#accept_order_request'
 
+  post '/update-location' => 'drivers#update_location'
+
 end
