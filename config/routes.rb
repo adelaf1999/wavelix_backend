@@ -159,6 +159,8 @@ Rails.application.routes.draw do
 
   post '/customer-cancel-order' => 'order#customer_cancel_order'
 
+  post '/customer-confirm-order' => 'order#customer_confirm_order'
+
   # Cart Routes
 
   post '/add-cart' => 'cart#add'

@@ -6,6 +6,49 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def customer_confirm_order
+
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      order = customer_user.orders.find_by(id: params[:order_id])
+      
+      if order != nil
+
+        if order.store_handles_delivery && order.ongoing?
+
+          @success = true
+
+          order.complete!
+
+          increment_store_balance(order)
+
+          send_store_orders(order)
+
+          # Send orders to customer_user channel
+
+          # Notify store that the order was confirmed by the customer and the amount was successfully deposited to their balance
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
+
   def customer_cancel_order
 
     if current_user.customer_user?
