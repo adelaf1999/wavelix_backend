@@ -65,80 +65,63 @@ class DriversController < ApplicationController
 
           if is_decimal_number?(latitude) && is_decimal_number?(longitude)
 
+            @success = true
+
             latitude = latitude.to_d
 
             longitude = longitude.to_d
 
-            geo_location = Geocoder.search([latitude, longitude])
+            driver.update!(latitude: latitude, longitude: longitude)
 
-            if geo_location.size > 0
+            # Send driver location to customer and store user channels
 
-              @success = true
+            orders = driver.orders.where(status: 2, driver_arrived_to_store: false, store_fulfilled_order: false)
 
-              country = geo_location.first.country_code
+            orders.each do |order|
 
-              # Driver might cross country borders or travel to a new country
+              driver_location = {latitude: latitude, longitude: longitude}
 
-              if country != driver.country
+              store_user = StoreUser.find_by(id: order.store_user_id)
 
-                driver.update!(country: country)
+              has_sensitive_products = store_user.has_sensitive_products
 
-              end
+              store_location = store_user.store_address
 
-              driver.update!(latitude: latitude, longitude: longitude)
+              distance = calculate_distance_meters(driver_location, store_location)
 
-              # Send driver location to customer and store user channels
+              if distance <= 50
 
-              orders = driver.orders.where(status: 2, driver_arrived_to_store: false, store_fulfilled_order: false)
+                order.update!(driver_arrived_to_store: true)
 
-              orders.each do |order|
+                # Notify store that driver has arrived to store
 
-                driver_location = {latitude: latitude, longitude: longitude}
+                # Notify customer that driver has arrived to pick up their products
 
-                store_user = StoreUser.find_by(id: order.store_user_id)
+                send_store_orders(order)
 
-                has_sensitive_products = store_user.has_sensitive_products
+                # Send orders to customer_user channel
 
-                store_location = store_user.store_address
-
-                distance = calculate_distance_meters(driver_location, store_location)
-
-                if distance <= 50
-
-                  order.update!(driver_arrived_to_store: true)
-
-                  # Notify store that driver has arrived to store
-
-                  # Notify customer that driver has arrived to pick up their products
-
-                  send_store_orders(order)
-
-                  # Send orders to customer_user channel
-
-                  # Send orders to driver channel
+                # Send orders to driver channel
 
 
-                  if has_sensitive_products
+                if has_sensitive_products
 
-                    Delayed::Job.enqueue(
-                        PickupOrderJob.new(order.id),
-                        queue: 'pickup_order_job_queue',
-                        priority: 0,
-                        run_at: 20.minutes.from_now
-                    )
-
-
-                  else
-
-                    Delayed::Job.enqueue(
-                        PickupOrderJob.new(order.id),
-                        queue: 'pickup_order_job_queue',
-                        priority: 0,
-                        run_at: 40.minutes.from_now
-                    )
+                  Delayed::Job.enqueue(
+                      PickupOrderJob.new(order.id),
+                      queue: 'pickup_order_job_queue',
+                      priority: 0,
+                      run_at: 20.minutes.from_now
+                  )
 
 
-                  end
+                else
+
+                  Delayed::Job.enqueue(
+                      PickupOrderJob.new(order.id),
+                      queue: 'pickup_order_job_queue',
+                      priority: 0,
+                      run_at: 40.minutes.from_now
+                  )
 
 
                 end
@@ -146,78 +129,74 @@ class DriversController < ApplicationController
 
               end
 
-
-              orders = driver.orders.where(
-                  status: 2,
-                  driver_arrived_to_delivery_location: false,
-                  driver_fulfilled_order: false,
-                  store_fulfilled_order: true,
-                  order_type: 1
-              )
-
-              orders.each do |order|
-
-                store_user = StoreUser.find_by(id: order.store_user_id)
-
-                has_sensitive_products = store_user.has_sensitive_products
-
-                driver_location = {latitude: latitude, longitude: longitude}
-
-                delivery_location = order.delivery_location
-
-                distance = calculate_distance_meters(driver_location, delivery_location)
-
-                if distance <= 50
-
-                  # Notify store that driver has arrived to customer delivery location
-
-                  # Notify customer that the driver has arrived to delivery location
-
-                  order.update!(driver_arrived_to_delivery_location: true)
-
-                  send_store_orders(order)
-
-                  # Send orders to customer_user channel
-
-                  # Send orders to driver channel
-
-
-                  if has_sensitive_products
-
-                    Delayed::Job.enqueue(
-                        DeliverOrderJob.new(order.id),
-                        queue: 'deliver_order_job_queue',
-                        priority: 0,
-                        run_at: 20.minutes.from_now
-                    )
-
-
-
-                  else
-
-                    Delayed::Job.enqueue(
-                        DeliverOrderJob.new(order.id),
-                        queue: 'deliver_order_job_queue',
-                        priority: 0,
-                        run_at: 40.minutes.from_now
-                    )
-
-
-                  end
-
-
-                end
-
-
-              end
-
-
-
-            else
-
-              @success = false
 
             end
+
+
+            orders = driver.orders.where(
+                status: 2,
+                driver_arrived_to_delivery_location: false,
+                driver_fulfilled_order: false,
+                store_fulfilled_order: true,
+                order_type: 1
+            )
+
+            orders.each do |order|
+
+              store_user = StoreUser.find_by(id: order.store_user_id)
+
+              has_sensitive_products = store_user.has_sensitive_products
+
+              driver_location = {latitude: latitude, longitude: longitude}
+
+              delivery_location = order.delivery_location
+
+              distance = calculate_distance_meters(driver_location, delivery_location)
+
+              if distance <= 50
+
+                # Notify store that driver has arrived to customer delivery location
+
+                # Notify customer that the driver has arrived to delivery location
+
+                order.update!(driver_arrived_to_delivery_location: true)
+
+                send_store_orders(order)
+
+                # Send orders to customer_user channel
+
+                # Send orders to driver channel
+
+
+                if has_sensitive_products
+
+                  Delayed::Job.enqueue(
+                      DeliverOrderJob.new(order.id),
+                      queue: 'deliver_order_job_queue',
+                      priority: 0,
+                      run_at: 20.minutes.from_now
+                  )
+
+
+
+                else
+
+                  Delayed::Job.enqueue(
+                      DeliverOrderJob.new(order.id),
+                      queue: 'deliver_order_job_queue',
+                      priority: 0,
+                      run_at: 40.minutes.from_now
+                  )
+
+
+                end
+
+
+              end
+
+
+            end
+            
 
           else
 
@@ -245,7 +224,7 @@ class DriversController < ApplicationController
 
 
   def accept_order_request
-    
+
 
     if current_user.customer_user?
 
