@@ -6,6 +6,64 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def search_store_orders
+
+   if current_user.store_user?
+
+     store_user = StoreUser.find_by(store_id: current_user.id)
+
+     search = params[:search]
+
+     @orders = []
+
+     if search != nil
+
+       search = search.strip
+
+       if search.length > 0
+
+         store_orders = store_user.orders
+
+         orders_by_customer_name =  store_orders.joins(:customer_user).where("full_name ILIKE ?", "%#{search}%")
+
+         order_ids = []
+
+         orders_by_customer_name.each do |store_order|
+
+           order_ids.push(store_order.id)
+
+         end
+
+         orders_by_driver_name = store_orders.joins(:driver).where("name ILIKE ?", "%#{search}%")
+
+
+         orders_by_driver_name.each do |store_order|
+
+           order_ids.push(store_order.id)
+
+         end
+
+
+         order_ids.uniq!
+
+         combined_orders_search = Order.where(id: order_ids).order(created_at: :desc)
+
+         combined_orders_search.each do |store_order|
+
+           @orders.push(get_store_order(store_order, store_user))
+
+         end
+
+
+       end
+
+     end
+
+   end
+
+  end
+
+
   def customer_confirm_order
 
 

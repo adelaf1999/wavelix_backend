@@ -161,6 +161,8 @@ Rails.application.routes.draw do
 
   post '/customer-confirm-order' => 'order#customer_confirm_order'
 
+  post '/search-store-orders' => 'order#search_store_orders'
+
   # Cart Routes
 
   post '/add-cart' => 'cart#add'
