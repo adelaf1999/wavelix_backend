@@ -45,7 +45,88 @@ class OrderController < ApplicationController
 
         order_ids.uniq!
 
-        combined_orders_search = Order.where(id: order_ids).order(created_at: :desc)
+
+        filter_status = params[:filter_status]
+
+
+        if filter_status != nil
+
+          if is_whole_number?(filter_status)
+
+            filter_status = filter_status.to_i
+
+            if [0, 1, 2, 3].include?(filter_status)
+
+              combined_orders_search = Order.where(id: order_ids, status: filter_status)
+
+
+            else
+
+              combined_orders_search = Order.where(id: order_ids)
+
+            end
+
+          else
+
+            combined_orders_search = Order.where(id: order_ids)
+
+          end
+
+        else
+
+          combined_orders_search = Order.where(id: order_ids)
+
+        end
+
+
+        sort = params[:sort]
+
+
+        if sort != nil
+
+          sort_options = [0, 1]
+
+          if is_whole_number?(sort)
+
+            sort = sort.to_i
+
+            if sort_options.include?(sort)
+
+              if sort == 0
+
+                combined_orders_search = combined_orders_search.order(created_at: :asc)
+
+              else
+
+                combined_orders_search = combined_orders_search.order(created_at: :desc)
+
+              end
+
+            else
+
+              combined_orders_search = combined_orders_search.order(created_at: :desc)
+
+            end
+
+
+          else
+
+            combined_orders_search = combined_orders_search.order(created_at: :desc)
+
+
+          end
+
+
+
+        else
+
+          combined_orders_search = combined_orders_search.order(created_at: :desc)
+
+        end
+
+        
+
+
 
         combined_orders_search.each do |store_order|
 
@@ -2003,6 +2084,20 @@ class OrderController < ApplicationController
       'saturday'
     elsif local_time.sunday?
       'sunday'
+    end
+
+  end
+
+  def is_whole_number?(arg)
+
+    # 0, 1, 2, 3
+
+    res = /^(?<num>\d+)$/.match(arg)
+
+    if res == nil
+      false
+    else
+      true
     end
 
   end
