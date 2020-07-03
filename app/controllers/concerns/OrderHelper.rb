@@ -426,6 +426,25 @@ module OrderHelper
   end
 
 
+  def get_timezone_name(store_user)
+
+    store_address = store_user.store_address
+
+    store_latitude = store_address[:latitude]
+
+    store_longitude = store_address[:longitude]
+
+    Rails.cache.fetch("(#{store_latitude},#{store_longitude}).timezone_name", expires_in: 0) do
+
+      timezone = Timezone.lookup(store_latitude, store_longitude)
+
+      timezone.name
+
+    end
+
+  end
+
+
   def get_store_order(store_order, store_user)
 
     store_address = store_user.store_address

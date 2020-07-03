@@ -124,7 +124,30 @@ class OrderController < ApplicationController
 
         end
 
-        
+        date = params[:date]
+
+        if date != nil
+
+          begin
+
+            date = Date.parse(date)
+
+            timezone = get_timezone_name(store_user)
+
+            begin_day = date.to_datetime.in_time_zone(timezone).beginning_of_day
+
+            end_day = date.to_datetime.in_time_zone(timezone).end_of_day
+
+            combined_orders_search = combined_orders_search.where('created_at BETWEEN ? AND ?', begin_day, end_day)
+
+          rescue
+
+            puts 'Continue'
+
+          end
+
+
+        end
 
 
 
