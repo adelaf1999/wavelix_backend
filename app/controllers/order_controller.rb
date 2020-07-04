@@ -296,7 +296,7 @@ class OrderController < ApplicationController
 
                 send_store_orders(order)
 
-                # Send orders to customer_user channel
+                send_customer_orders(order)
 
                 # Send orders to driver channel
 
