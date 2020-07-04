@@ -676,6 +676,21 @@ module OrderHelper
       end
 
 
+      if customer_order.store_unconfirmed?
+
+        order[:store_confirmation_status_label] = 'Unconfirmed'
+
+      elsif customer_order.store_rejected?
+
+        order[:store_confirmation_status_label] = 'Rejected'
+
+      elsif customer_order.store_accepted?
+
+        order[:store_confirmation_status_label] = 'Accepted'
+
+      end
+
+
       order[:store_confirmation_status] = customer_order.store_confirmation_status
 
       order_type = customer_order.order_type
@@ -709,6 +724,7 @@ module OrderHelper
                           id: ordered_product[:id],
                           quantity: ordered_product[:quantity],
                           price: product_price,
+                          currency: default_currency,
                           product_options: ordered_product[:product_options],
                           name: product.name,
                           picture: product.main_picture.url
@@ -720,7 +736,6 @@ module OrderHelper
       order[:products] = products
 
       order[:id] = customer_order.id
-
 
       total_price = customer_order.total_price
 
