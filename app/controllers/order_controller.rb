@@ -230,7 +230,7 @@ class OrderController < ApplicationController
 
           send_store_orders(order)
 
-          # Send orders to customer_user channel
+          send_customer_orders(order)
 
           # Notify store that order was canceled by the customer
 

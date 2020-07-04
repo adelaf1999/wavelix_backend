@@ -15,6 +15,18 @@ module OrderHelper
 
   end
 
+
+  def send_customer_orders(order)
+
+    customer_user = CustomerUser.find_by(id: order.customer_user_id)
+
+    orders = get_customer_orders(customer_user)
+
+    ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+
+  end
+
+
   def get_new_driver(order)
 
     previous_driver_id = order.driver_id
