@@ -450,7 +450,7 @@ class OrderController < ApplicationController
 
                         send_store_orders(order)
 
-                        # Send orders to customer_user channel
+                        send_customer_orders(order)
 
                         # Send orders to driver channel
 
@@ -502,7 +502,7 @@ class OrderController < ApplicationController
 
                           send_store_orders(order)
 
-                          # Send orders to customer_user channel
+                          send_customer_orders(order)
 
                           # Send orders to driver channel
 
@@ -521,7 +521,7 @@ class OrderController < ApplicationController
 
                           send_store_orders(order)
 
-                          # Send orders to customer_user channel
+                          send_customer_orders(order)
 
                           # Send orders to driver channel
 
@@ -547,7 +547,7 @@ class OrderController < ApplicationController
 
                       send_store_orders(order)
 
-                      # Send orders to customer_user channel
+                      send_customer_orders(order)
 
                       # Send orders to driver channel
 
@@ -668,7 +668,7 @@ class OrderController < ApplicationController
 
                 send_store_orders(order)
 
-                # Send orders to customer_user channel
+                send_customer_orders(order)
 
                 # Notify customer that their order was accepted by store
 
@@ -701,7 +701,7 @@ class OrderController < ApplicationController
 
             send_store_orders(order)
 
-            # Send orders to customer_user channel
+            send_customer_orders(order)
 
             # Notify customer that their order was accepted by store
 
@@ -785,7 +785,7 @@ class OrderController < ApplicationController
 
           send_store_orders(order)
 
-          # Send orders to customer_user channel
+          send_customer_orders(order)
 
           # Notify customer that the store rejected the order and that they will be refunded with the full amount paid
 

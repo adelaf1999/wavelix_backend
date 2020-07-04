@@ -51,7 +51,7 @@ module OrderHelper
 
     send_store_orders(order)
 
-    # Send orders to customer_user channel
+    send_customer_orders(order)
 
     # Send orders to previous driver channel
 
@@ -427,7 +427,7 @@ module OrderHelper
 
     send_store_orders(order)
 
-    # Send orders to customer_user channel
+    send_customer_orders(order)
 
     # Notify store that the order was canceled since no drivers were found and that customer will be refunded
 
