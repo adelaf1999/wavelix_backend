@@ -570,6 +570,176 @@ module OrderHelper
 
   end
 
+
+  def convert_amount(amount, from_currency, to_currency)
+
+
+    if from_currency == to_currency
+
+      amount
+
+    else
+
+      exchange_rates = get_exchange_rates(to_currency)
+
+      amount / exchange_rates[from_currency]
+
+
+    end
+
+
+  end
+
+
+  def get_customer_orders(customer_user)
+
+    orders = []
+
+    customer_user.orders.order(created_at: :desc).each do |customer_order|
+
+      order = {}
+
+      store = {}
+
+      store_user = StoreUser.find_by(id: customer_order.store_user_id)
+
+      store[:name] = store_user.store_name
+
+      store[:logo] = store_user.store.profile.profile_picture.url
+
+      order[:store] = store
+
+      default_currency = customer_user.default_currency
+
+      order[:currency] = default_currency
+
+      delivery_location = customer_order.delivery_location
+
+      latitude = delivery_location[:latitude]
+
+      longitude = delivery_location[:longitude]
+
+      timezone = Timezone.lookup(latitude, longitude)
+
+      order[:created_at] = customer_order.created_at
+
+      order[:ordered_at] = timezone.time_with_offset(customer_order.created_at).strftime('%Y-%m-%d %-I:%M %p')
+
+      store_handles_delivery = customer_order.store_handles_delivery
+
+      order[:store_handles_delivery] = store_handles_delivery
+
+
+      if store_handles_delivery
+
+        delivery_time_limit = customer_order.delivery_time_limit
+
+        if delivery_time_limit != nil
+
+          order[:delivery_time_limit] = timezone.time_with_offset(delivery_time_limit).strftime('%Y-%m-%d %-I:%M %p')
+
+        end
+
+      else
+
+        order[:driver_fulfilled_order] = customer_order.driver_fulfilled_order
+
+        order[:store_fulfilled_order] = customer_order.store_fulfilled_order
+
+        if customer_order.driver_id != nil
+
+          driver = Driver.find_by(id: customer_order.driver_id)
+
+          order[:driver_name] = driver.name
+
+        end
+
+
+
+        delivery_fee = customer_order.delivery_fee
+
+        delivery_fee_currency = customer_order.delivery_fee_currency
+
+        delivery_fee = convert_amount(delivery_fee, delivery_fee_currency, default_currency)
+
+        order[:delivery_fee] = delivery_fee
+
+
+      end
+
+      order_canceled_reason = customer_order.order_canceled_reason
+
+      if order_canceled_reason.length > 0
+
+        order[:order_canceled_reason] = order_canceled_reason
+
+      end
+
+
+      order[:store_confirmation_status] = customer_order.store_confirmation_status
+
+      order_type = customer_order.order_type
+
+      if order_type != nil
+
+        order[:order_type] = customer_order.order_type
+
+      end
+
+
+      order[:status] = customer_order.status
+
+      products = []
+
+      customer_order.products.each do |ordered_product|
+
+        ordered_product = eval(ordered_product)
+
+        product = Product.find_by(id: ordered_product[:id])
+
+
+        product_price = ordered_product[:price]
+
+        product_currency = ordered_product[:currency]
+
+
+        product_price = convert_amount(product_price, product_currency, default_currency)
+
+        products.push({
+                          id: ordered_product[:id],
+                          quantity: ordered_product[:quantity],
+                          price: product_price,
+                          product_options: ordered_product[:product_options],
+                          name: product.name,
+                          picture: product.main_picture.url
+                      })
+
+
+      end
+
+      order[:products] = products
+
+      order[:id] = customer_order.id
+
+
+      total_price = customer_order.total_price
+
+      total_price_currency = customer_order.total_price_currency
+
+      total_price = convert_amount(total_price, total_price_currency, default_currency)
+
+      order[:total_price] = total_price
+      
+
+      orders.push(order)
+
+
+    end
+
+    orders
+
+  end
+
   def get_store_orders(store_user)
 
     orders = []
@@ -585,6 +755,9 @@ module OrderHelper
     orders
 
   end
+
+
+
 
 
   def calculate_standard_delivery_fee_usd(distance)

@@ -820,7 +820,9 @@ class OrderController < ApplicationController
 
     else
 
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
+      @orders = get_customer_orders(customer_user)
 
     end
 
