@@ -188,7 +188,7 @@ class OrderController < ApplicationController
 
           send_store_orders(order)
 
-          # Send orders to customer_user channel
+          send_customer_orders(order)
 
           # Notify store that the order was confirmed by the customer and the amount was successfully deposited to their balance
 
