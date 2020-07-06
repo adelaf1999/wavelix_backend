@@ -587,7 +587,7 @@ class DriversController < ApplicationController
             else
 
               @success = false
-              @message = 'Invalid currency'
+              @message = 'Invalid location'
               return
 
             end
