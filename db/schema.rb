@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_28_132458) do
+ActiveRecord::Schema.define(version: 2020_07_06_074334) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -102,6 +102,10 @@ ActiveRecord::Schema.define(version: 2020_06_28_132458) do
     t.decimal "latitude", precision: 10, scale: 6, null: false
     t.decimal "longitude", precision: 10, scale: 6, null: false
     t.string "country", null: false
+    t.text "driver_license_pictures", null: false
+    t.text "national_id_pictures", null: false
+    t.text "profile_picture", null: false
+    t.text "vehicle_registration_document_pictures", null: false
     t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
   end
 

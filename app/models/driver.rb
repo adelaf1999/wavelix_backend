@@ -10,6 +10,12 @@ class Driver < ApplicationRecord
 
   enum status: { offline: 0, online: 1 }
 
+  mount_uploaders :driver_license_pictures, ImageUploader
 
+  mount_uploaders :national_id_pictures, ImageUploader
+
+  mount_uploader :profile_picture, ImageUploader
+
+  mount_uploaders :vehicle_registration_document_pictures, ImageUploader
 
 end
