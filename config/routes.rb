@@ -211,4 +211,6 @@ Rails.application.routes.draw do
 
   post '/cancel-order' => 'drivers#cancel_order'
 
+  post '/register-driver' => 'drivers#register'
+
 end
