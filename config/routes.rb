@@ -203,14 +203,16 @@ Rails.application.routes.draw do
 
   # Drivers Routes
 
-  post '/decline-order-request' => 'drivers#decline_order_request'
-
-  post '/accept-order-request' => 'drivers#accept_order_request'
-
-  post '/update-location' => 'drivers#update_location'
-
-  post '/cancel-order' => 'drivers#cancel_order'
-
   post '/register-driver' => 'drivers#register'
+
+  # Drive Routes
+
+  post '/cancel-order' => 'drive#cancel_order'
+
+  post '/update-location' => 'drive#update_location'
+
+  post '/accept-order-request' => 'drive#accept_order_request'
+
+  post '/decline-order-request' => 'drive#decline_order_request'
 
 end
