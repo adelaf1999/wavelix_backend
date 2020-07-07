@@ -1,4 +1,4 @@
-class DriversController < ApplicationController
+class DriverController < ApplicationController
 
   include OrderHelper
 

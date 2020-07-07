@@ -203,9 +203,9 @@ Rails.application.routes.draw do
 
   # Drivers Routes
 
-  post '/register-driver' => 'drivers#register'
+  post '/register-driver' => 'driver#register'
 
-  get '/drivers-index' => 'drivers#index'
+  get '/driver-index' => 'driver#index'
 
   # Drive Routes
 
