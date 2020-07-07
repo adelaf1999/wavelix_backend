@@ -216,6 +216,8 @@ class DriverController < ApplicationController
 
         @is_registered = false
 
+        @currencies = get_currencies
+
       else
 
         @is_registered = true
