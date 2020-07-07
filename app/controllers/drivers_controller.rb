@@ -203,6 +203,37 @@ class DriversController < ApplicationController
 
   end
 
+
+  def index
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      current_driver = customer_user.driver
+
+      if current_driver == nil
+
+        @is_registered = false
+
+      else
+
+        @is_registered = true
+
+        @driver_verified = current_driver.driver_verified
+
+        @name = current_driver.name
+
+        @profile_picture = current_driver.profile_picture.url
+
+
+      end
+
+
+    end
+
+  end
+
   private
 
   def is_picture_valid?(picture)
