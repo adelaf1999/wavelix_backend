@@ -10,8 +10,8 @@ if @name != nil
     node(:name) { @name }
 end
 
-if @profile_picture != nil
-    node(:profile_picture) { @profile_picture }
+if @profile_picture_url != nil
+    node(:profile_picture_url) { @profile_picture_url }
 end
 
 if @currencies != nil

@@ -165,12 +165,18 @@ class DriverController < ApplicationController
           end
 
 
+          driver.customer_user_id = customer_user.id
 
-          customer_user.driver = driver
-
-          if customer_user.save!
+          if driver.save!
 
             @success = true
+
+            ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+                is_registered: true,
+                driver_verified: driver.driver_verified,
+                name: driver.name,
+                profile_picture_url: driver.profile_picture.url
+            }
 
           else
 
@@ -194,6 +200,7 @@ class DriverController < ApplicationController
       else
 
         @success = false
+
         @message = 'Already Registered'
 
       end
@@ -226,11 +233,9 @@ class DriverController < ApplicationController
 
         @name = current_driver.name
 
-        @profile_picture = current_driver.profile_picture.url
-
+        @profile_picture_url = current_driver.profile_picture.url
 
       end
-
 
     end
 
