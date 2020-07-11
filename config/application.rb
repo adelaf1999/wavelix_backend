@@ -39,7 +39,7 @@ module TheProductLand
 
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins 'localhost:19006', ENV.fetch("DEVELOPMENT_WEBSITE_URL")
+        origins 'localhost:19006', ENV.fetch("DEVELOPMENT_WEBSITE_URL"), ENV.fetch("PRODUCTION_WEBSITE_URL")
         resource '*',
                  headers: :any,
                  expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'],
@@ -52,7 +52,7 @@ module TheProductLand
 
     # config.action_cable.disable_request_forgery_protection = true
 
-    config.action_cable.allowed_request_origins = ['http://localhost:19006', ENV.fetch("DEVELOPMENT_WEBSITE_URL")]
+    config.action_cable.allowed_request_origins = ['http://localhost:19006', ENV.fetch("DEVELOPMENT_WEBSITE_URL"), ENV.fetch("PRODUCTION_WEBSITE_URL")]
 
 
     # config.action_cable.allowed_request_origins = ['https://rubyonrails.com', %r{http://ruby.*}]
