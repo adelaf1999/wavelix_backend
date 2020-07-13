@@ -256,29 +256,49 @@ module OrderHelper
 
       else
 
-        # The driver can only accept standard orders from other customers whose delivery location are within
+        # Driver can accept other standard orders if he has picked up all products
 
-        # 25 KM away from the store location of the first order and whose store location is within 25 KM away
+        # For the current ongoing standard orders he might have
 
-        # from the delivery location of the first order
+        unpicked_orders = driver.orders.where(status: 2, order_type: 0, store_fulfilled_order: false)
 
-        first_order = standard_orders.first
+        if unpicked_orders.length > 0
 
-        first_order_store_location = StoreUser.find_by(id: first_order.store_user_id).store_address
+          false
 
-        first_order_delivery_location = first_order.delivery_location
+        else
 
-        delivery_location = order.delivery_location
+          # The driver can only accept standard orders from other customers whose delivery location are within
 
-        # First order store location distance to the new order delivery location
+          # 25 KM away from the store location of the first order and whose store location is within 25 KM away
 
-        d1 = calculate_distance_km(first_order_store_location, delivery_location)
+          # from the delivery location of the first order
 
-        # New order store location distance to the delivery location of first order
+          first_order = standard_orders.first
 
-        d2 = calculate_distance_km(store_location, first_order_delivery_location)
+          first_order_store_location = StoreUser.find_by(id: first_order.store_user_id).store_address
 
-        d1 <= 25 && d2 <= 25
+          first_order_delivery_location = first_order.delivery_location
+
+          delivery_location = order.delivery_location
+
+          # First order store location distance to the new order delivery location
+
+          d1 = calculate_distance_km(first_order_store_location, delivery_location)
+
+          # New order store location distance to the delivery location of first order
+
+          d2 = calculate_distance_km(store_location, first_order_delivery_location)
+
+          d1 <= 25 && d2 <= 25
+
+
+        end
+
+
+
+
+
 
       end
 
