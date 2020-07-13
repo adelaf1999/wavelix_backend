@@ -8,7 +8,11 @@ class OrderJob < Struct.new(:order_id, :driver_id)
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-    if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver_id && !drivers_rejected.include?(driver_id)
+    if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver_id
+
+      drivers_rejected.push(driver_id)
+
+      order.update!(drivers_rejected: drivers_rejected)
 
       store_user = StoreUser.find_by(id: order.store_user_id)
 
