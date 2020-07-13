@@ -1,5 +1,7 @@
 module OrderHelper
 
+  include MoneyHelper
+
   require 'faraday'
   require 'faraday_middleware'
   require 'net/http'
@@ -10,7 +12,9 @@ module OrderHelper
 
     orders = get_store_orders(store_user)
 
-    ActionCable.server.broadcast "orders_channel_#{order.store_user_id}", {orders: orders}
+    store = store_user.store
+
+    ActionCable.server.broadcast "store_orders_channel_#{store.id}", {orders: orders}
 
 
   end
@@ -22,7 +26,9 @@ module OrderHelper
 
     orders = get_customer_orders(customer_user)
 
-    ActionCable.server.broadcast "orders_channel_#{order.customer_user_id}", {orders: orders}
+    customer = customer_user.customer
+
+    ActionCable.server.broadcast "customer_orders_channel_#{customer.id}", {orders: orders}
 
   end
 
@@ -128,6 +134,10 @@ module OrderHelper
 
 
   def contact_drivers(drivers, order, store_user)
+
+    drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+    puts  "Drivers Rejected #{drivers_rejected}"
 
     if drivers.length > 0
 
