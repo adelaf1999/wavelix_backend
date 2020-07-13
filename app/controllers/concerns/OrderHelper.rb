@@ -31,6 +31,8 @@ module OrderHelper
 
     previous_driver_id = order.driver_id
 
+    store_user = StoreUser.find_by(id: order.store_user_id)
+
     order.pending!
 
     order.update!(
@@ -38,7 +40,6 @@ module OrderHelper
         driver_id: nil,
         prospective_driver_id: nil,
         drivers_rejected: [],
-        unconfirmed_drivers: [],
         store_arrival_time_limit: nil,
         driver_fulfilled_order_code: SecureRandom.hex
     )
@@ -126,77 +127,24 @@ module OrderHelper
   end
 
 
-  def contact_drivers(drivers, unconfirmed_drivers, order, store_user)
-
-    puts "unconfirmed drivers #{unconfirmed_drivers}"
+  def contact_drivers(drivers, order, store_user)
 
     if drivers.length > 0
 
       # Find the nearest driver to the store and contact him
 
-      driver = drivers.select {|d| !unconfirmed_drivers.include?(d.id)}.first
+      driver = drivers.first
 
-      if driver != nil
+      order.update!(prospective_driver_id: driver.id)
 
-        order.update!(prospective_driver_id: driver.id)
+      puts "Contacting new driver #{driver.name} with ID #{driver.id}"
 
-        puts "Contacting new driver #{driver.name} with ID #{driver.id}"
-
-
-        Delayed::Job.enqueue(
-            OrderJob.new(order.id, driver.id),
-            queue: 'order_job_queue',
-            priority: 0,
-            run_at: 30.seconds.from_now
-        )
-
-
-      else
-
-        # Recontact unconfirmed drivers who are still within valid area
-
-        drivers = drivers.select {|d| unconfirmed_drivers.include?(d.id)}
-
-        if drivers.length > 0
-
-          prospective_driver_id = order.prospective_driver_id
-
-          if unconfirmed_drivers.include?(prospective_driver_id)
-
-            driver = drivers[find_next_element_index(prospective_driver_id, unconfirmed_drivers)]
-
-          else
-
-            # Driver has rejected the order
-
-            # Contact the first unconfirmed driver
-
-            driver = drivers.first
-
-          end
-
-          order.update!(prospective_driver_id: driver.id)
-
-          puts "Contacting unconfirmed driver #{driver.name} with ID #{driver.id}"
-
-          Delayed::Job.enqueue(
-              OrderJob.new(order.id, driver.id),
-              queue: 'order_job_queue',
-              priority: 0,
-              run_at: 30.seconds.from_now
-          )
-
-        else
-
-          no_drivers_found(order, store_user)
-
-        end
-
-
-
-
-
-      end
+      Delayed::Job.enqueue(
+          OrderJob.new(order.id, driver.id),
+          queue: 'order_job_queue',
+          priority: 0,
+          run_at: 30.seconds.from_now
+      )
 
     else
 
@@ -236,12 +184,12 @@ module OrderHelper
 
   end
 
-  def contact_standard_drivers(drivers, unconfirmed_drivers, order, store_user, store_latitude, store_longitude)
+  def contact_standard_drivers(drivers,  order, store_user, store_latitude, store_longitude)
 
 
     if drivers.length > 0
 
-      contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+      contact_drivers(drivers, order, store_user)
 
     else
 
@@ -249,7 +197,7 @@ module OrderHelper
 
       if drivers.length > 0
 
-        contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+        contact_drivers(drivers,  order, store_user)
 
       else
 
@@ -268,14 +216,11 @@ module OrderHelper
 
     store_location = store_user.store_address
 
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
-
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
     drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
 
     invalid_drivers = drivers_rejected + drivers_canceled_order
-
 
     # Fetch all drivers that are within 25 KM away from the store
 
@@ -335,14 +280,12 @@ module OrderHelper
     drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
 
 
-    contact_standard_drivers(drivers, unconfirmed_drivers, order, store_user, store_latitude, store_longitude)
+    contact_standard_drivers(drivers, order, store_user, store_latitude, store_longitude)
 
 
   end
 
   def drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
-
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
@@ -364,15 +307,13 @@ module OrderHelper
 
     drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
 
-    contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+    contact_drivers(drivers, order, store_user)
 
   end
 
   def drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
 
     # Driver can be within a 7KM radius maximum
-
-    unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)
 
@@ -392,7 +333,7 @@ module OrderHelper
 
     drivers = drivers.sort_by{|driver| driver.distance_to([store_latitude, store_longitude])}
 
-    contact_drivers(drivers, unconfirmed_drivers, order, store_user)
+    contact_drivers(drivers, order, store_user)
 
 
   end
@@ -756,7 +697,7 @@ module OrderHelper
       total_price = convert_amount(total_price, total_price_currency, default_currency)
 
       order[:total_price] = total_price
-      
+
 
       orders.push(order)
 

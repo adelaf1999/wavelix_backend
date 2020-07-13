@@ -240,19 +240,9 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
-
           if order.pending? && order.driver_id == nil && order.prospective_driver_id == current_driver.id && !drivers_rejected.include?(current_driver.id)
 
             @success = true
-
-            if unconfirmed_drivers.include?(current_driver.id)
-
-              unconfirmed_drivers.delete(current_driver.id)
-
-              order.update!(unconfirmed_drivers: unconfirmed_drivers)
-
-            end
 
             driver_location = {latitude: current_driver.latitude, longitude: current_driver.longitude}
 
@@ -402,19 +392,9 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          unconfirmed_drivers = order.unconfirmed_drivers.map(&:to_i)
-
           if order.pending? && order.driver_id == nil && order.prospective_driver_id == current_driver.id && !drivers_rejected.include?(current_driver.id)
 
             @success = true
-
-            if unconfirmed_drivers.include?(current_driver.id)
-
-              unconfirmed_drivers.delete(current_driver.id)
-
-              order.update!(unconfirmed_drivers: unconfirmed_drivers)
-
-            end
 
             drivers_rejected.push(current_driver.id)
 

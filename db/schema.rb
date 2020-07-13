@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_06_081417) do
+ActiveRecord::Schema.define(version: 2020_07_13_131821) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -162,7 +162,6 @@ ActiveRecord::Schema.define(version: 2020_07_06_081417) do
     t.integer "prospective_driver_id"
     t.datetime "delivery_time_limit"
     t.text "drivers_rejected", default: [], array: true
-    t.text "unconfirmed_drivers", default: [], array: true
     t.datetime "store_arrival_time_limit"
     t.text "drivers_canceled_order", default: [], array: true
   end
