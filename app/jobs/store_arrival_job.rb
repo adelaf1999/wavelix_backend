@@ -10,11 +10,15 @@ class StoreArrivalJob < Struct.new(:order_id)
 
     driver_arrived_to_store = order.driver_arrived_to_store
 
-    if !driver_arrived_to_store && store_fulfilled_order
+    if store_fulfilled_order
 
-      order.update!(driver_arrived_to_store: true)
+      if !driver_arrived_to_store
 
-    elsif !driver_arrived_to_store && !store_fulfilled_order
+        order.update!(driver_arrived_to_store: true)
+
+      end
+
+    else
 
       get_new_driver(order)
 
@@ -24,7 +28,9 @@ class StoreArrivalJob < Struct.new(:order_id)
 
       # Notify customer that a new driver will be assigned for the order because the previous failed to arrive to store on time
 
+
     end
+
 
   end
 

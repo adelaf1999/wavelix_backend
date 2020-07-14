@@ -84,48 +84,27 @@ class DriveController < ApplicationController
 
               store_user = StoreUser.find_by(id: order.store_user_id)
 
-              has_sensitive_products = store_user.has_sensitive_products
-
               store_location = store_user.store_address
 
               distance = calculate_distance_meters(driver_location, store_location)
 
-              if distance <= 50
+              if distance <= 100
 
                 order.update!(driver_arrived_to_store: true)
 
-                # Notify store that driver has arrived to store
+                if distance >= 20
 
-                # Notify customer that driver has arrived to pick up their products
+                  # Notify store that driver is about to arrive to store
+
+                  # Notify customer that driver is about to arrive to store to pick up their products
+
+                end
 
                 send_store_orders(order)
 
                 send_customer_orders(order)
 
                 # Send orders to driver channel
-
-
-                if has_sensitive_products
-
-                  Delayed::Job.enqueue(
-                      PickupOrderJob.new(order.id),
-                      queue: 'pickup_order_job_queue',
-                      priority: 0,
-                      run_at: 20.minutes.from_now
-                  )
-
-
-                else
-
-                  Delayed::Job.enqueue(
-                      PickupOrderJob.new(order.id),
-                      queue: 'pickup_order_job_queue',
-                      priority: 0,
-                      run_at: 40.minutes.from_now
-                  )
-
-
-                end
 
 
               end
@@ -146,52 +125,29 @@ class DriveController < ApplicationController
 
               store_user = StoreUser.find_by(id: order.store_user_id)
 
-              has_sensitive_products = store_user.has_sensitive_products
-
               driver_location = {latitude: latitude, longitude: longitude}
 
               delivery_location = order.delivery_location
 
               distance = calculate_distance_meters(driver_location, delivery_location)
 
-              if distance <= 50
-
-                # Notify store that driver has arrived to customer delivery location
-
-                # Notify customer that the driver has arrived to delivery location
+              if distance <= 100
 
                 order.update!(driver_arrived_to_delivery_location: true)
+
+                if distance >= 20
+
+                  # Notify store that driver is about to arrive to customer delivery location
+
+                  # Notify customer that the driver is about to arrive to delivery location
+
+                end
 
                 send_store_orders(order)
 
                 send_customer_orders(order)
 
                 # Send orders to driver channel
-
-
-                if has_sensitive_products
-
-                  Delayed::Job.enqueue(
-                      DeliverOrderJob.new(order.id),
-                      queue: 'deliver_order_job_queue',
-                      priority: 0,
-                      run_at: 20.minutes.from_now
-                  )
-
-
-
-                else
-
-                  Delayed::Job.enqueue(
-                      DeliverOrderJob.new(order.id),
-                      queue: 'deliver_order_job_queue',
-                      priority: 0,
-                      run_at: 40.minutes.from_now
-                  )
-
-
-                end
-
 
               end
 
@@ -262,92 +218,92 @@ class DriveController < ApplicationController
 
             order.ongoing!
 
-            if distance <= 50
+
+            # Notify driver not to forget to get the QR Code of the order scanned by the store so we know he arrived
+
+            # And picked up the products within the time limit
+
+
+            # Notify store that a driver was assigned for the order
+
+            # And to scan the Order QR Code on the driver's phone when he arrives so we know they fulfilled the order
+
+
+
+            estimated_arrival_time = estimated_arrival_time_minutes(
+                current_driver.latitude,
+                current_driver.longitude,
+                store_latitude,
+                store_longitude
+            )
+
+
+            if distance <= 100
 
               order.update!(driver_arrived_to_store: true)
 
-              # Notify store that driver has arrived to store
+              if distance >= 20
 
-              # Notify customer that driver has arrived to pick up their products
+                # Notify store that driver is about to arrive
 
-              if has_sensitive_products
-
-                Delayed::Job.enqueue(
-                    PickupOrderJob.new(order.id),
-                    queue: 'pickup_order_job_queue',
-                    priority: 0,
-                    run_at: 20.minutes.from_now
-                )
-
-                # Send orders to driver channel
-
-
-              else
-
-                Delayed::Job.enqueue(
-                    PickupOrderJob.new(order.id),
-                    queue: 'pickup_order_job_queue',
-                    priority: 0,
-                    run_at: 40.minutes.from_now
-                )
-
-                # Send orders to driver channel
-
+                # Notify customer that driver is about to arrive to pickup their products
 
               end
 
+            end
 
-            else
 
-              estimated_arrival_time = estimated_arrival_time_minutes(
-                  current_driver.latitude,
-                  current_driver.longitude,
-                  store_latitude,
-                  store_longitude
-              )
 
-              if has_sensitive_products
+            if has_sensitive_products
+
+
+              if estimated_arrival_time > 5
 
                 store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
 
-                order.update!(store_arrival_time_limit: store_arrival_time_limit)
-
-                send_store_orders(order)
-
-                send_customer_orders(order)
-
-                # Send orders to driver channel
-
-                Delayed::Job.enqueue(
-                    StoreArrivalJob.new(order.id),
-                    queue: 'store_arrival_job_queue',
-                    priority: 0,
-                    run_at: store_arrival_time_limit
-                )
-
               else
 
-                store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
-
-                order.update!(store_arrival_time_limit: store_arrival_time_limit)
-
-                send_store_orders(order)
-
-                send_customer_orders(order)
-
-                # Send orders to driver channel
-
-                Delayed::Job.enqueue(
-                    StoreArrivalJob.new(order.id),
-                    queue: 'store_arrival_job_queue',
-                    priority: 0,
-                    run_at: store_arrival_time_limit
-                )
+                store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 30.minutes).to_datetime
 
               end
 
 
+              order.update!(store_arrival_time_limit: store_arrival_time_limit)
+
+              send_store_orders(order)
+
+              send_customer_orders(order)
+
+              # Send orders to driver channel
+
+              Delayed::Job.enqueue(
+                  StoreArrivalJob.new(order.id),
+                  queue: 'store_arrival_job_queue',
+                  priority: 0,
+                  run_at: store_arrival_time_limit
+              )
+
+            else
+
+              store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
+
+              order.update!(store_arrival_time_limit: store_arrival_time_limit)
+
+              send_store_orders(order)
+
+              send_customer_orders(order)
+
+              # Send orders to driver channel
+
+              Delayed::Job.enqueue(
+                  StoreArrivalJob.new(order.id),
+                  queue: 'store_arrival_job_queue',
+                  priority: 0,
+                  run_at: store_arrival_time_limit
+              )
+
             end
+
 
 
           else

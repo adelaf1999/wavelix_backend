@@ -428,6 +428,8 @@ class OrderController < ApplicationController
 
                     order.update!(store_fulfilled_order: true)
 
+                    # Notify customer that driver has picked up their products from the store
+
                     if order.exclusive?
 
                       driver = Driver.find_by(id: order.driver_id)
@@ -440,13 +442,17 @@ class OrderController < ApplicationController
 
                       distance = calculate_distance_meters(driver_location, delivery_location)
 
-                      if distance <= 50
+                      if distance <= 100
 
                         order.update!(driver_arrived_to_delivery_location: true)
 
-                        # Notify store that driver almost arrived to customer delivery location
+                        if distance >= 20
 
-                        # Notify customer that the driver almost arrived to delivery location and has picked up their products
+                          # Notify store that driver is about to arrive to customer delivery location
+
+                          # Notify customer that the driver is about to arrive to delivery location
+
+                        end
 
                         send_store_orders(order)
 
@@ -454,89 +460,62 @@ class OrderController < ApplicationController
 
                         # Send orders to driver channel
 
+                      end
 
-                        if has_sensitive_products
+                      delivery_loc_lat = delivery_location[:latitude]
 
-                          Delayed::Job.enqueue(
-                              DeliverOrderJob.new(order.id),
-                              queue: 'deliver_order_job_queue',
-                              priority: 0,
-                              run_at: 20.minutes.from_now
-                          )
+                      delivery_loc_lng = delivery_location[:longitude]
 
-
-                        else
-
-                          Delayed::Job.enqueue(
-                              DeliverOrderJob.new(order.id),
-                              queue: 'deliver_order_job_queue',
-                              priority: 0,
-                              run_at: 40.minutes.from_now
-                          )
+                      estimated_arrival_time = estimated_arrival_time_minutes(
+                          driver.latitude,
+                          driver.longitude,
+                          delivery_loc_lat,
+                          delivery_loc_lng
+                      )
 
 
-                        end
+                      if has_sensitive_products
+
+                        delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
+
+                        order.update!(delivery_time_limit: delivery_time_limit)
+
+                        send_store_orders(order)
+
+                        send_customer_orders(order)
+
+                        # Send orders to driver channel
+
+                        Delayed::Job.enqueue(
+                            CustomerDeliveryJob.new(order.id),
+                            queue: 'customer_delivery_job_queue',
+                            priority: 0,
+                            run_at: delivery_time_limit
+                        )
 
                       else
 
+                        delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
 
-                        delivery_loc_lat = delivery_location[:latitude]
+                        order.update!(delivery_time_limit: delivery_time_limit)
 
-                        delivery_loc_lng = delivery_location[:longitude]
+                        send_store_orders(order)
 
-                        estimated_arrival_time = estimated_arrival_time_minutes(
-                            driver.latitude,
-                            driver.longitude,
-                            delivery_loc_lat,
-                            delivery_loc_lng
+                        send_customer_orders(order)
+
+                        # Send orders to driver channel
+
+                        Delayed::Job.enqueue(
+                            CustomerDeliveryJob.new(order.id),
+                            queue: 'customer_delivery_job_queue',
+                            priority: 0,
+                            run_at: delivery_time_limit
                         )
-
-                        # Notify customer that the driver has picked up their products
-
-
-                        if has_sensitive_products
-
-                          delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
-
-                          order.update!(delivery_time_limit: delivery_time_limit)
-
-                          send_store_orders(order)
-
-                          send_customer_orders(order)
-
-                          # Send orders to driver channel
-
-                          Delayed::Job.enqueue(
-                              CustomerDeliveryJob.new(order.id),
-                              queue: 'customer_delivery_job_queue',
-                              priority: 0,
-                              run_at: delivery_time_limit
-                          )
-
-                        else
-
-                          delivery_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
-
-                          order.update!(delivery_time_limit: delivery_time_limit)
-
-                          send_store_orders(order)
-
-                          send_customer_orders(order)
-
-                          # Send orders to driver channel
-
-                          Delayed::Job.enqueue(
-                              CustomerDeliveryJob.new(order.id),
-                              queue: 'customer_delivery_job_queue',
-                              priority: 0,
-                              run_at: delivery_time_limit
-                          )
-
-
-                        end
 
 
                       end
+
+
 
 
                     else

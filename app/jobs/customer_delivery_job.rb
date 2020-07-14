@@ -10,15 +10,20 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
     driver_arrived = order.driver_arrived_to_delivery_location
 
-    if !driver_arrived && driver_fulfilled_order
 
-      order.update!(driver_arrived_to_delivery_location: true)
+    if driver_fulfilled_order
 
-    elsif !driver_arrived && !driver_fulfilled_order
+      if !driver_arrived
+
+        order.update!(driver_arrived_to_delivery_location: true)
+
+      end
+
+    else
 
       order.canceled!
 
-      order.update!(order_canceled_reason: 'Driver did not arrive to delivery location')
+      order.update!(order_canceled_reason: 'Driver did not fulfill order')
 
       send_store_orders(order)
 
@@ -35,6 +40,9 @@ class CustomerDeliveryJob < Struct.new(:order_id)
       # Refund customer the amount he paid
 
     end
+
+
+
 
   end
 
