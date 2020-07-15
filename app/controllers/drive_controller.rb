@@ -6,6 +6,102 @@ class DriveController < ApplicationController
 
   before_action :authenticate_user!
 
+
+  def pickup_order
+
+    # error_codes
+
+    #  {0: DRIVING_OUTSIDE_REGISTERED_COUNTRY }
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      driver = Driver.find_by(customer_user_id: customer_user.id)
+
+      if driver != nil
+
+        driver_verified = driver.driver_verified
+
+        if driver_verified
+
+          latitude = params[:latitude]
+
+          longitude = params[:longitude]
+
+          if latitude != nil && longitude != nil
+
+            if is_decimal_number?(latitude) && is_decimal_number?(longitude)
+
+              latitude = latitude.to_d
+
+              longitude = longitude.to_d
+
+              geo_location = Geocoder.search([latitude, longitude])
+
+              if geo_location.size > 0
+
+                geo_location_country_code = geo_location.first.country_code
+
+                if geo_location_country_code == driver.country
+
+                  @success = true
+
+                  driver.online!
+
+                  driver.update!(latitude: latitude, longitude: longitude)
+
+                else
+
+                  @success = false
+
+                  @error_code = 0
+
+                end
+
+
+              else
+
+                @success = false
+
+              end
+
+
+            else
+
+              @success = false
+
+            end
+
+
+          else
+
+            @success = false
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+  end
+
+
+
   def cancel_order
 
     if current_user.customer_user?

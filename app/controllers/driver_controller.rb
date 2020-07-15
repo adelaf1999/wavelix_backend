@@ -108,8 +108,6 @@ class DriverController < ApplicationController
 
               driver.country = geo_location_country_code
 
-              driver.current_country = geo_location_country_code
-
               driver.latitude = latitude
 
               driver.longitude = longitude
