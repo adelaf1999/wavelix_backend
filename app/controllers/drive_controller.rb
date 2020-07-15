@@ -7,11 +7,11 @@ class DriveController < ApplicationController
   before_action :authenticate_user!
 
 
-  def pickup_order
+  def can_pickup_order
 
     # error_codes
 
-    #  {0: DRIVING_OUTSIDE_REGISTERED_COUNTRY }
+    #  {0: DRIVING_OUTSIDE_REGISTERED_COUNTRY, 1: HAS_INCOMPLETE_EXCLUSIVE_ORDER, 2: HAS_UNPICKED_STANDARD_ORDERS }
 
     if current_user.customer_user?
 
@@ -45,11 +45,42 @@ class DriveController < ApplicationController
 
                 if geo_location_country_code == driver.country
 
-                  @success = true
+                  # Driver can pickup new order if he does not have any exclusive orders ongoing
 
-                  driver.online!
+                  # And does not have any ongoing standard orders that are not fulfilled by store
 
-                  driver.update!(latitude: latitude, longitude: longitude)
+                  exclusive_orders = driver.orders.where(status: 2, order_type: 1)
+
+                  standard_orders = driver.orders.where(status: 2, order_type: 0, store_fulfilled_order: false)
+
+                  if exclusive_orders.length >  0 || standard_orders.length > 0
+
+                    @success = false
+
+                    if exclusive_orders.length > 0
+
+
+                      @error_code = 1
+
+                    else
+
+
+                      @error_code = 2
+
+                    end
+
+
+                  else
+
+                    @success = true
+
+                    driver.online!
+
+                    driver.update!(latitude: latitude, longitude: longitude)
+
+                  end
+
+
 
                 else
 
@@ -295,6 +326,8 @@ class DriveController < ApplicationController
           if order.pending? && order.driver_id == nil && order.prospective_driver_id == current_driver.id && !drivers_rejected.include?(current_driver.id)
 
             @success = true
+
+            current_driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
 
             driver_location = {latitude: current_driver.latitude, longitude: current_driver.longitude}
 

@@ -217,6 +217,6 @@ Rails.application.routes.draw do
 
   post '/decline-order-request' => 'drive#decline_order_request'
 
-  post '/pickup-order' => 'drive#pickup_order'
+  post '/can-pickup-order' => 'drive#can_pickup_order'
 
 end
