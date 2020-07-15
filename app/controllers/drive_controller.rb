@@ -37,8 +37,6 @@ class DriveController < ApplicationController
 
               order.update!(drivers_rejected: drivers_rejected)
 
-              # Send orders to driver channel
-
               store_user = StoreUser.find_by(id: order.store_user_id)
 
               has_sensitive_products = store_user.has_sensitive_products
