@@ -133,6 +133,15 @@ module OrderHelper
   end
 
 
+  def can_contact_driver?(driver_id)
+
+    # Driver can only be contacted with a new order request if he has no other pending order request
+
+    Order.all.where(driver_id: nil, status: 1, prospective_driver_id: driver_id).length == 0
+
+  end
+
+
   def contact_drivers(drivers, order, store_user)
 
     drivers_rejected = order.drivers_rejected.map(&:to_i)
@@ -141,20 +150,40 @@ module OrderHelper
 
     if drivers.length > 0
 
-      # Find the nearest driver to the store and contact him
+      # Find the nearest available driver to the store and contact him
 
-      driver = drivers.first
+      driver_found = false
 
-      order.update!(prospective_driver_id: driver.id)
+      drivers.each do |driver|
 
-      puts "Contacting new driver #{driver.name} with ID #{driver.id}"
+        if can_contact_driver?(driver.id)
 
-      Delayed::Job.enqueue(
-          OrderJob.new(order.id, driver.id),
-          queue: 'order_job_queue',
-          priority: 0,
-          run_at: 30.seconds.from_now
-      )
+          order.update!(prospective_driver_id: driver.id)
+
+          puts "Contacting new driver #{driver.name} with ID #{driver.id}"
+
+          Delayed::Job.enqueue(
+              OrderJob.new(order.id, driver.id),
+              queue: 'order_job_queue',
+              priority: 0,
+              run_at: 30.seconds.from_now
+          )
+
+          driver_found = true
+
+          break
+
+        end
+
+      end
+
+
+      if !driver_found
+
+        no_drivers_found(order, store_user)
+
+      end
+
 
     else
 
