@@ -7,6 +7,31 @@ class DriveController < ApplicationController
   before_action :authenticate_user!
 
 
+  def driver_go_offline
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      driver = Driver.find_by(customer_user_id: customer_user.id)
+
+      if driver != nil
+
+        driver_verified = driver.driver_verified
+
+        if driver_verified && driver.online?
+
+          driver.offline!
+
+        end
+
+      end
+
+    end
+
+  end
+
+
   def can_pickup_order
 
     # error_codes

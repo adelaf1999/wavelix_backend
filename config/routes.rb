@@ -219,4 +219,6 @@ Rails.application.routes.draw do
 
   post '/can-pickup-order' => 'drive#can_pickup_order'
 
+  post '/driver-go-offline' => 'drive#driver_go_offline'
+
 end
