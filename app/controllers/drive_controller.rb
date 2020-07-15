@@ -23,6 +23,56 @@ class DriveController < ApplicationController
 
           driver.offline!
 
+          # If driver has pending order requests add him to drivers rejected and find a new driver
+
+          orders = Order.all.where(driver_id: nil, status: 1, prospective_driver_id: driver.id)
+
+          orders.each do |order|
+
+            drivers_rejected = order.drivers_rejected.map(&:to_i)
+
+            if !drivers_rejected.include?(driver.id)
+
+              drivers_rejected.push(driver.id)
+
+              order.update!(drivers_rejected: drivers_rejected)
+
+              # Send orders to driver channel
+
+              store_user = StoreUser.find_by(id: order.store_user_id)
+
+              has_sensitive_products = store_user.has_sensitive_products
+
+              store_location = store_user.store_address
+
+              store_latitude = store_location[:latitude]
+
+              store_longitude = store_location[:longitude]
+
+              if has_sensitive_products
+
+                drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
+
+              else
+
+                if order.exclusive?
+
+                  drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
+
+                else
+
+                  drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
+
+                end
+
+              end
+
+
+            end
+
+
+          end
+
         end
 
       end
