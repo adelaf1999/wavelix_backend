@@ -207,6 +207,8 @@ Rails.application.routes.draw do
 
   get '/driver-index' => 'driver#index'
 
+  get '/driver-profile-picture' => 'driver#profile_picture'
+
   # Drive Routes
 
   post '/cancel-order' => 'drive#cancel_order'

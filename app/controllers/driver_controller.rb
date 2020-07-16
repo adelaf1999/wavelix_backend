@@ -208,6 +208,26 @@ class DriverController < ApplicationController
 
   end
 
+  def profile_picture
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      current_driver = customer_user.driver
+
+      if current_driver != nil
+
+        @profile_picture = current_driver.profile_picture.url
+
+      end
+
+
+    end
+
+
+  end
+
 
   def index
 
