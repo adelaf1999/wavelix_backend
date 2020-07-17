@@ -1,6 +1,6 @@
 class PostBroadcastJob < ApplicationJob
 
-  queue_as :default
+  queue_as :post_broadcast_queue
 
   def perform(user_id)
 
