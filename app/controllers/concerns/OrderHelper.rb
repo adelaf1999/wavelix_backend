@@ -162,9 +162,15 @@ module OrderHelper
 
           puts "Contacting new driver #{driver.name} with ID #{driver.id}"
 
+
           ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
              contacting_driver: true,
-             order_id: order.id
+             order_id: order.id,
+             store_latitude: store_user.store_address[:latitude],
+             store_longitude: store_user.store_address[:longitude],
+             delivery_location_latitude: order.delivery_location[:latitude],
+             delivery_location_longitude: order.delivery_location[:longitude],
+             store_name: store_user.store_name
           }
 
           Delayed::Job.enqueue(
