@@ -10,9 +10,17 @@ class OrderJob < Struct.new(:order_id, :driver_id)
 
     if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver_id && !drivers_rejected.include?(driver_id)
 
+
+      driver = Driver.find_by(id: driver_id)
+
+      ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+          contacting_driver: false
+      }
+
       drivers_rejected.push(driver_id)
 
       order.update!(drivers_rejected: drivers_rejected)
+
 
       store_user = StoreUser.find_by(id: order.store_user_id)
 
