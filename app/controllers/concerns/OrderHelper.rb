@@ -457,7 +457,7 @@ module OrderHelper
 
     store_longitude = store_address[:longitude]
 
-    Rails.cache.fetch("(#{store_latitude},#{store_longitude}).timezone_name", expires_in: 0) do
+    Rails.cache.fetch("(store_user_#{store_user.id}).timezone_name", expires_in: 0) do
 
       timezone = Timezone.lookup(store_latitude, store_longitude)
 
@@ -468,22 +468,16 @@ module OrderHelper
   end
 
 
+
   def get_store_order(store_order, store_user)
-
-    store_address = store_user.store_address
-
-    store_latitude = store_address[:latitude]
-
-    store_longitude = store_address[:longitude]
 
     order = {}
 
-    timezone = Timezone.lookup(store_latitude, store_longitude)
+    timezone = get_timezone_name(store_user)
 
     order[:created_at] = store_order.created_at
 
-    order[:ordered_at] = timezone.time_with_offset(store_order.created_at).strftime('%Y-%m-%d %-I:%M %p')
-
+    order[:ordered_at] = store_order.created_at.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d %-I:%M %p')
 
     store_handles_delivery = store_order.store_handles_delivery
 
