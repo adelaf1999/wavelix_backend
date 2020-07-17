@@ -132,7 +132,7 @@ class OrderController < ApplicationController
 
             date = Date.parse(date)
 
-            timezone = get_timezone_name(store_user)
+            timezone = get_store_timezone_name(store_user)
 
             begin_day = date.to_datetime.in_time_zone(timezone).beginning_of_day
 

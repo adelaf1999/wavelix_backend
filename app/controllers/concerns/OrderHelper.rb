@@ -449,7 +449,7 @@ module OrderHelper
   end
 
 
-  def get_timezone_name(store_user)
+  def get_store_timezone_name(store_user)
 
     store_address = store_user.store_address
 
@@ -467,13 +467,25 @@ module OrderHelper
 
   end
 
+  def location_timezone_name(latitude, longitude)
+
+    Rails.cache.fetch("(#{latitude},#{longitude}).timezone_name", expires_in: 0) do
+
+      timezone = Timezone.lookup(latitude, longitude)
+
+      timezone.name
+
+    end
+
+  end
+
 
 
   def get_store_order(store_order, store_user)
 
     order = {}
 
-    timezone = get_timezone_name(store_user)
+    timezone = get_store_timezone_name(store_user)
 
     order[:created_at] = store_order.created_at
 
@@ -489,7 +501,7 @@ module OrderHelper
 
       if delivery_time_limit != nil
 
-        order[:delivery_time_limit] = timezone.time_with_offset(delivery_time_limit).strftime('%Y-%m-%d %-I:%M %p')
+        order[:delivery_time_limit] = delivery_time_limit.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d %-I:%M %p')
 
       end
 
@@ -636,11 +648,11 @@ module OrderHelper
 
       longitude = delivery_location[:longitude]
 
-      timezone = Timezone.lookup(latitude, longitude)
+      timezone = location_timezone_name(latitude, longitude)
 
       order[:created_at] = customer_order.created_at
 
-      order[:ordered_at] = timezone.time_with_offset(customer_order.created_at).strftime('%Y-%m-%d %-I:%M %p')
+      order[:ordered_at] = customer_order.created_at.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d %-I:%M %p')
 
       store_handles_delivery = customer_order.store_handles_delivery
 
@@ -653,7 +665,7 @@ module OrderHelper
 
         if delivery_time_limit != nil
 
-          order[:delivery_time_limit] = timezone.time_with_offset(delivery_time_limit).strftime('%Y-%m-%d %-I:%M %p')
+          order[:delivery_time_limit] = delivery_time_limit.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d %-I:%M %p')
 
         end
 
