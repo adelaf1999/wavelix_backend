@@ -161,7 +161,10 @@ module OrderHelper
           order.update!(prospective_driver_id: driver.id)
 
           puts "Contacting new driver #{driver.name} with ID #{driver.id}"
+          
+          delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
 
+          order_type = order.order_type
 
           ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
              contacting_driver: true,
@@ -170,7 +173,10 @@ module OrderHelper
              store_longitude: store_user.store_address[:longitude],
              delivery_location_latitude: order.delivery_location[:latitude],
              delivery_location_longitude: order.delivery_location[:longitude],
-             store_name: store_user.store_name
+             store_name: store_user.store_name,
+             delivery_fee: delivery_fee,
+             order_type: order_type,
+             currency: driver.currency
           }
 
           Delayed::Job.enqueue(
