@@ -532,6 +532,10 @@ class DriveController < ApplicationController
 
             order.update!(drivers_rejected: drivers_rejected)
 
+            ActionCable.server.broadcast "driver_channel_#{current_driver.customer_user_id}", {
+                contacting_driver: false
+            }
+
             # Send orders to driver channel
 
             FindNewDriverJob.perform_later(order.id)
