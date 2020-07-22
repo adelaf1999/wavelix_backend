@@ -807,6 +807,172 @@ module OrderHelper
   end
 
 
+  def get_driver_order(driver, order)
+
+    driver_order = {}
+
+    # Order Location Information
+
+    ## Customer location
+
+    delivery_location_latitude = order.delivery_location[:latitude]
+
+    delivery_location_longitude = order.delivery_location[:longitude]
+
+    customer_location = {}
+
+    customer_location[:latitude] = delivery_location_latitude
+
+    customer_location[:longitude] = delivery_location_longitude
+
+    driver_order[:customer_location] = customer_location
+
+
+    ## Store Location
+
+    store_user = StoreUser.find_by(id: order.store_user_id)
+
+    store_location = {}
+
+    store_latitude = store_user.store_address[:latitude]
+
+    store_longitude = store_user.store_address[:longitude]
+
+    store_location[:latitude] = store_latitude
+
+    store_location[:longitude] = store_longitude
+
+    driver_order[:store_location] = store_location
+
+
+    # Order General Information
+
+    driver_order[:id] = order.id
+
+    driver_order[:status] = order.status
+
+    timezone = location_timezone_name(delivery_location_latitude, delivery_location_longitude)
+
+    driver_order[:created_at] = order.created_at
+
+    driver_order[:ordered_at] = order.created_at.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d %-I:%M %p')
+
+    delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
+
+    driver_order[:deliver_fee] = delivery_fee
+
+    driver_order[:delivery_fee_currency] = driver.currency
+
+    driver_order[:order_type] = order.order_type
+
+    order_canceled_reason = order.order_canceled_reason
+
+    if order_canceled_reason.length > 0
+
+      driver_order[:order_canceled_reason] = order_canceled_reason
+
+    end
+
+    driver_order[:driver_received_order_code] = order.driver_received_order_code
+
+    driver_order[:driver_fulfilled_order_code] = order.driver_fulfilled_order_code
+
+    driver_order[:store_fulfilled_order] = order.store_fulfilled_order
+
+    driver_order[:driver_fulfilled_order] = order.driver_fulfilled_order
+
+    delivery_time_limit = order.delivery_time_limit
+
+    if delivery_time_limit != nil
+
+      delivery_time_limit = delivery_time_limit.to_datetime
+
+      elapsed_seconds = ((delivery_time_limit - (DateTime.now.utc).to_datetime) * 24 * 60 * 60).to_i
+
+      if elapsed_seconds < 0
+
+        driver_order[:delivery_time_left] = 0
+
+      else
+
+        driver_order[:delivery_time_left] = elapsed_seconds
+
+      end
+
+    end
+
+
+    store_arrival_time_limit = order.store_arrival_time_limit
+
+    if store_arrival_time_limit != nil
+
+      store_arrival_time_limit = store_arrival_time_limit.to_datetime
+
+      elapsed_seconds = ((store_arrival_time_limit - (DateTime.now.utc).to_datetime) * 24 * 60 * 60).to_i
+
+      if elapsed_seconds < 0
+
+        driver_order[:store_arrival_time_left] = 0
+
+      else
+
+        driver_order[:store_arrival_time_left] = elapsed_seconds
+
+      end
+
+
+    end
+
+
+
+    # Store Information
+
+    store = {}
+
+    store[:name] = store_user.store_name
+
+    store[:number] = store_user.store_number
+
+    driver_order[:store] = store
+
+
+    # Customer Information
+
+    customer_user = CustomerUser.find_by(id: order.customer_user_id)
+
+    customer = {}
+
+    customer[:name] = customer_user.full_name
+
+    customer[:number] = customer_user.phone_number
+
+    driver_order[:customer] = customer
+
+
+    driver_order
+
+
+
+  end
+
+
+  def get_driver_orders(driver)
+
+    driver_orders = []
+
+    driver.orders.order(created_at: :desc).each do |order|
+
+      driver_order = get_driver_order(driver, order)
+
+      driver_orders.push(driver_order)
+
+    end
+
+    driver_orders
+
+  end
+
+
 
 
 

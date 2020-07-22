@@ -223,4 +223,6 @@ Rails.application.routes.draw do
 
   get '/driver-go-offline' => 'drive#driver_go_offline'
 
+  get '/driver-orders' => 'drive#driver_orders'
+
 end

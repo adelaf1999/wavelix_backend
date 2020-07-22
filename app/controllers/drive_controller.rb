@@ -7,6 +7,29 @@ class DriveController < ApplicationController
   before_action :authenticate_user!
 
 
+
+  def driver_orders
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      driver = Driver.find_by(customer_user_id: customer_user.id)
+
+      if driver != nil
+
+        @orders =  get_driver_orders(driver)
+
+        @driver_id = driver.id
+
+      end
+
+
+    end
+
+  end
+
+
   def driver_go_offline
 
     if current_user.customer_user?
