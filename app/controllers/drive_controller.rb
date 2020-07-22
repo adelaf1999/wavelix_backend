@@ -271,7 +271,6 @@ class DriveController < ApplicationController
 
             driver.update!(latitude: latitude, longitude: longitude)
 
-            # Send driver location to customer and store user channels
 
             orders = driver.orders.where(status: 2, driver_arrived_to_store: false, store_fulfilled_order: false)
 
@@ -301,7 +300,7 @@ class DriveController < ApplicationController
 
                 send_customer_orders(order)
 
-                # Send orders to driver channel
+                send_driver_orders(driver)
 
 
               end
@@ -344,7 +343,7 @@ class DriveController < ApplicationController
 
                 send_customer_orders(order)
 
-                # Send orders to driver channel
+                send_driver_orders(driver)
 
               end
 
@@ -383,9 +382,9 @@ class DriveController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      current_driver = customer_user.driver
+      driver = customer_user.driver
 
-      if current_driver != nil
+      if driver != nil
 
         order = Order.find_by(id: params[:order_id])
 
@@ -393,13 +392,13 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          if order.pending? && order.driver_id == nil && order.prospective_driver_id == current_driver.id && !drivers_rejected.include?(current_driver.id)
+          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id)
 
             @success = true
 
-            current_driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
+            driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
 
-            driver_location = {latitude: current_driver.latitude, longitude: current_driver.longitude}
+            driver_location = {latitude: driver.latitude, longitude: driver.longitude}
 
             store_user = StoreUser.find_by(id: order.store_user_id)
 
@@ -413,7 +412,7 @@ class DriveController < ApplicationController
 
             distance = calculate_distance_meters(driver_location, store_location)
 
-            order.update!(driver_id: current_driver.id)
+            order.update!(driver_id: driver.id)
 
             order.ongoing!
 
@@ -430,8 +429,8 @@ class DriveController < ApplicationController
 
 
             estimated_arrival_time = estimated_arrival_time_minutes(
-                current_driver.latitude,
-                current_driver.longitude,
+                driver.latitude,
+                driver.longitude,
                 store_latitude,
                 store_longitude
             )
@@ -473,7 +472,7 @@ class DriveController < ApplicationController
 
               send_customer_orders(order)
 
-              # Send orders to driver channel
+              send_driver_orders(driver)
 
               Delayed::Job.enqueue(
                   StoreArrivalJob.new(order.id),
@@ -492,7 +491,7 @@ class DriveController < ApplicationController
 
               send_customer_orders(order)
 
-              # Send orders to driver channel
+              send_driver_orders(driver)
 
               Delayed::Job.enqueue(
                   StoreArrivalJob.new(order.id),
@@ -537,9 +536,9 @@ class DriveController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      current_driver = customer_user.driver
+      driver = customer_user.driver
 
-      if current_driver != nil
+      if driver != nil
 
         order = Order.find_by(id: params[:order_id])
 
@@ -547,19 +546,18 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          if order.pending? && order.driver_id == nil && order.prospective_driver_id == current_driver.id && !drivers_rejected.include?(current_driver.id)
+          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id)
 
             @success = true
 
-            drivers_rejected.push(current_driver.id)
+            drivers_rejected.push(driver.id)
 
             order.update!(drivers_rejected: drivers_rejected)
 
-            ActionCable.server.broadcast "driver_channel_#{current_driver.customer_user_id}", {
+            ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
                 contacting_driver: false
             }
 
-            # Send orders to driver channel
 
             FindNewDriverJob.perform_later(order.id)
 

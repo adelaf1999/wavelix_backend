@@ -298,15 +298,15 @@ class OrderController < ApplicationController
 
                 send_customer_orders(order)
 
-                # Send orders to driver channel
+                driver = Driver.find_by(id: order.driver_id)
+
+                send_driver_orders(driver)
 
                 # Notify store that order successful and amount has been successfully deposited to their balance
 
                 # Notify driver that order successful and amount has been successfully deposited to their balance
 
                 increment_store_balance(order)
-
-                driver = Driver.find_by(id: order.driver_id)
 
                 delivery_fee = order.delivery_fee
 
@@ -430,9 +430,9 @@ class OrderController < ApplicationController
 
                     # Notify customer that driver has picked up their products from the store
 
-                    if order.exclusive?
+                    driver = Driver.find_by(id: order.driver_id)
 
-                      driver = Driver.find_by(id: order.driver_id)
+                    if order.exclusive?
 
                       has_sensitive_products = store_user.has_sensitive_products
 
@@ -458,7 +458,7 @@ class OrderController < ApplicationController
 
                         send_customer_orders(order)
 
-                        # Send orders to driver channel
+                        send_driver_orders(driver)
 
                       end
 
@@ -484,7 +484,7 @@ class OrderController < ApplicationController
 
                         send_customer_orders(order)
 
-                        # Send orders to driver channel
+                        send_driver_orders(driver)
 
                         Delayed::Job.enqueue(
                             CustomerDeliveryJob.new(order.id),
@@ -503,7 +503,7 @@ class OrderController < ApplicationController
 
                         send_customer_orders(order)
 
-                        # Send orders to driver channel
+                        send_driver_orders(driver)
 
                         Delayed::Job.enqueue(
                             CustomerDeliveryJob.new(order.id),
@@ -528,7 +528,7 @@ class OrderController < ApplicationController
 
                       send_customer_orders(order)
 
-                      # Send orders to driver channel
+                      send_driver_orders(driver)
 
                       Delayed::Job.enqueue(
                           CustomerDeliveryJob.new(order.id),
