@@ -875,7 +875,7 @@ module OrderHelper
 
     delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
 
-    driver_order[:deliver_fee] = delivery_fee
+    driver_order[:delivery_fee] = delivery_fee
 
     driver_order[:delivery_fee_currency] = driver.currency
 
