@@ -74,7 +74,9 @@ module OrderHelper
 
     send_customer_orders(order)
 
-    # Send orders to previous driver channel
+    previous_driver = Driver.find_by(id: previous_driver_id)
+
+    send_driver_orders(previous_driver)
 
     has_sensitive_products = store_user.has_sensitive_products
 

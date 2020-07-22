@@ -29,7 +29,9 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
       send_customer_orders(order)
 
-      # Send orders to driver channel
+      driver = Driver.find_by(id: order.driver_id)
+
+      send_driver_orders(driver)
 
       # Notify store that order was canceled and driver has been requested to return products to store
 
