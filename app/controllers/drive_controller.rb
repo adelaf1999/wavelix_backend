@@ -219,11 +219,36 @@ class DriveController < ApplicationController
 
           if order.ongoing? && !order.store_fulfilled_order
 
+            # Notify customer/store that driver canceled order and that we will be getting a new driver soon
+
             @success = true
 
-            get_new_driver(order)
+            order.pending!
 
-            # Notify customer/store that driver canceled order and that we will be getting a new driver soon
+            order.update!(
+                driver_arrived_to_store: false,
+                driver_id: nil,
+                prospective_driver_id: nil,
+                drivers_rejected: [],
+                store_arrival_time_limit: nil,
+                driver_fulfilled_order_code: SecureRandom.hex
+            )
+
+            drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+
+            drivers_canceled_order.push(driver.id)
+
+            order.update!(drivers_canceled_order: drivers_canceled_order)
+
+            send_store_orders(order)
+
+            send_customer_orders(order)
+
+            send_driver_orders(driver)
+
+            FindNewDriverJob.perform_later(order.id)
+
+
 
           end
 
