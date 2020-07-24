@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_15_105546) do
+ActiveRecord::Schema.define(version: 2020_07_24_130034) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(version: 2020_07_15_105546) do
     t.string "default_currency", default: "USD"
     t.boolean "phone_number_verified", default: false
     t.string "phone_number"
+    t.string "stripe_customer_token"
   end
 
   create_table "days", force: :cascade do |t|
