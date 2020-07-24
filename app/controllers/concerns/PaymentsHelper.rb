@@ -2,6 +2,16 @@ module PaymentsHelper
 
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
+
+  def has_saved_card?(customer_token)
+
+    customer = Stripe::Customer.retrieve(customer_token)
+
+    customer.default_source != nil
+
+
+  end
+
   def create_stripe_customer(name, email, customer_user_id)
 
     customer = Stripe::Customer.create({
