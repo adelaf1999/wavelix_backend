@@ -15,6 +15,12 @@ class CustomerUser < ApplicationRecord
         self.phone_number_verified
     end
 
+    def payment_source_setup?
+
+        has_saved_card?(self.stripe_customer_token)
+
+    end
+
 
     private
 
