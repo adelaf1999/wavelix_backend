@@ -1,5 +1,8 @@
 Rails.application.routes.draw do
 
+  mount StripeEvent::Engine, at: '/stripe-webhooks'
+
+
   mount_devise_token_auth_for 'Customer', controllers: {
     registrations: 'auth/customers/registrations'
   }, at: 'customer_auth', :skip => [
@@ -224,5 +227,12 @@ Rails.application.routes.draw do
   get '/driver-go-offline' => 'drive#driver_go_offline'
 
   get '/driver-orders' => 'drive#driver_orders'
+
+
+  # Payments Routes
+
+  post '/add-card' => 'payments#add_card'
+
+
 
 end

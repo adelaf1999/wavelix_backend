@@ -2,6 +2,15 @@ module PaymentsHelper
 
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
+  def create_setup_intent(customer_token)
+
+   Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {
+       card: {
+           request_three_d_secure: 'any'
+       }
+   }})
+
+  end
 
   def has_saved_card?(customer_token)
 

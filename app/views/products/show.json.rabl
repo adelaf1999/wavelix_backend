@@ -48,4 +48,13 @@ if @handles_delivery != nil
     node(:handles_delivery) { @handles_delivery }
 end
 
+if  @has_saved_card != nil
+    node(:has_saved_card) {  @has_saved_card }
+end
+
+if @setup_intent_id != nil
+    node(:setup_intent_id) { @setup_intent_id }
+end
+
+
 node(:maximum_delivery_distance) { @maximum_delivery_distance }

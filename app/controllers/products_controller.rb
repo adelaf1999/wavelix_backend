@@ -111,6 +111,15 @@ class ProductsController < ApplicationController
 
                         end
 
+                        @has_saved_card = customer_user.payment_source_setup?
+
+                        if !@has_saved_card
+
+                            @setup_intent_id = customer_user.setup_payment_source.id
+
+                        end
+
+
 
                     else
 

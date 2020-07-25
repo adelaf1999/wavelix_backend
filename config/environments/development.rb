@@ -58,6 +58,8 @@ Rails.application.configure do
 
   config.action_mailer.delivery_method = :smtp
 
+  config.hosts << ENV.fetch('NGROK_HOST')
+
   config.action_mailer.smtp_settings = {
       user_name:      ENV.fetch("DEVELOPMENT_EMAIL"),
       password:       ENV.fetch("DEVELOPMENT_EMAIL_PASSWORD"),
