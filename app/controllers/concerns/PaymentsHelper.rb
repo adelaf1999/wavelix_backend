@@ -2,6 +2,57 @@ module PaymentsHelper
 
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
+
+  def delete_existing_card(customer_token)
+
+    customer = Stripe::Customer.retrieve(customer_token)
+
+    customer_card = customer.default_source
+
+    if customer_card != nil
+
+      Stripe::Customer.delete_source(customer_token, customer_card)
+
+    end
+
+  end
+
+  def is_token_id_valid?(token_id)
+
+    begin
+
+      Stripe::Token.retrieve(token_id)
+
+      true
+
+    rescue => e
+
+      false
+
+    end
+
+
+  end
+
+  def is_setup_intent_valid?(setup_intent_id)
+
+    begin
+
+      Stripe::SetupIntent.retrieve(setup_intent_id)
+
+      true
+
+    rescue => e
+
+       false
+
+    end
+
+
+
+
+  end
+
   def create_setup_intent(customer_token)
 
    Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {

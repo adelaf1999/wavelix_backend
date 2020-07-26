@@ -19,5 +19,22 @@ StripeEvent.configure do |events|
   end
 
 
+  events.subscribe 'setup_intent.setup_failed' do |event|
+
+    customer_user = CustomerUser.find_by(stripe_customer_token: event.data.object.customer)
+
+    if customer_user != nil
+
+      # sanity check
+
+      ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: false}
+
+    end
+
+
+  end
+
+
+
 
 end

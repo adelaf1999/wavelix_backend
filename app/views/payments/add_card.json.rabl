@@ -10,8 +10,8 @@ if @error_code != nil
     node(:error_code) { @error_code }
 end
 
-if @next_action != nil
-    node(:next_action) { @next_action }
+if @redirect_url != nil
+    node(:redirect_url) { @redirect_url }
 end
 
 if  @error_message != nil

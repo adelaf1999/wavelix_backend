@@ -2,7 +2,7 @@ class PaymentsController < ApplicationController
 
   before_action :authenticate_user!
 
-  include PaymentsHelper # Stripe lib becomes usable when including this since it contains API key config
+  include PaymentsHelper
 
   def add_card
 
@@ -20,76 +20,86 @@ class PaymentsController < ApplicationController
 
       if setup_intent_id != nil && token_id != nil && !setup_intent_id.empty? && !token_id.empty?
 
-        begin
+        if is_setup_intent_valid?(setup_intent_id) && is_token_id_valid?(token_id)
+
+          begin
+
+            # If the customer already has a payment source, delete it to create a new one
+
+            delete_existing_card(stripe_customer_token)
+
+            card = Stripe::Customer.create_source(stripe_customer_token, {source: token_id})
+
+            result = Stripe::SetupIntent.confirm(
+                setup_intent_id,
+                {
+                    payment_method: card.id,
+                    return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL')
+                }
+            )
+
+            status = result.status
+
+            if status == 'succeeded'
+
+              @success = true
+
+            elsif status == 'requires_action'
+
+              @success = false
+
+              @error_code = 0
+
+              next_action = result.next_action
+
+              @redirect_url = next_action.redirect_to_url.url
 
 
-          # Check if customer already has payment source, if has one replace
+            elsif status == 'requires_payment_method'
 
-          card = Stripe::Customer.create_source(stripe_customer_token, {source: token_id})
+              @success = false
 
-          result = Stripe::SetupIntent.confirm(setup_intent_id, {payment_method: card.id})
+              @error_code = 1
 
-          status = result.status
+            end
 
-          if status == 'succeeded'
+          rescue Stripe::CardError => e
 
-            # has_card: true
-
-            @success = true
-
-          elsif status == 'requires_action'
-
-            # has_card: true/false?
+            # puts "Status is: #{e.http_status}"
+            # puts "Type is: #{e.error.type}"
+            # puts "Charge ID is: #{e.error.charge}"
+            # # The following fields are optional
+            # puts "Code is: #{e.error.code}" if e.error.code
+            # puts "Decline code is: #{e.error.decline_code}" if e.error.decline_code
+            # puts "Param is: #{e.error.param}" if e.error.param
+            # puts "Message is: #{e.error.message}" if e.error.message
 
             @success = false
 
-            @error_code = 0
+            @error_code = 2
 
-            @next_action = result.next_action
+            if e.error.message
 
+              @error_message =  e.error.message
 
-          elsif status == 'requires_payment_method'
+            end
+
+          rescue => e
 
             @success = false
 
-            @error_code = 1
-
           end
 
-        rescue Stripe::CardError => e
 
-          # puts "Status is: #{e.http_status}"
-          # puts "Type is: #{e.error.type}"
-          # puts "Charge ID is: #{e.error.charge}"
-          # # The following fields are optional
-          # puts "Code is: #{e.error.code}" if e.error.code
-          # puts "Decline code is: #{e.error.decline_code}" if e.error.decline_code
-          # puts "Param is: #{e.error.param}" if e.error.param
-          # puts "Message is: #{e.error.message}" if e.error.message
+
+
+        else
 
           @success = false
 
-          @error_code = 2
-
-          if e.error.message
-
-            @error_message =  e.error.message
-
-          end
-
-        rescue Stripe::RateLimitError => e
-          @success = false
-        rescue Stripe::InvalidRequestError => e
-          @success = false
-        rescue Stripe::AuthenticationError => e
-          @success = false
-        rescue Stripe::APIConnectionError => e
-          @success = false
-        rescue Stripe::StripeError => e
-          @success = false
-        rescue => e
-          @success = false
         end
+
+
 
       else
 
