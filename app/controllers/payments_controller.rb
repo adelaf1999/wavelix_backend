@@ -6,7 +6,7 @@ class PaymentsController < ApplicationController
 
   def add_card
 
-    # error_codes {0 : AUTHENTICATION_REQUIRED, 1: PAYMENT_METHOD_SETUP_FAILED, 2: CARD_ERROR }
+    # error_codes {0 : AUTHENTICATION_REQUIRED, 1: CARD_ERROR }
 
     if current_user.customer_user?
 
@@ -59,8 +59,6 @@ class PaymentsController < ApplicationController
 
               @success = false
 
-              @error_code = 1
-
             end
 
           rescue Stripe::CardError => e
@@ -76,7 +74,7 @@ class PaymentsController < ApplicationController
 
             @success = false
 
-            @error_code = 2
+            @error_code = 1
 
             if e.error.message
 

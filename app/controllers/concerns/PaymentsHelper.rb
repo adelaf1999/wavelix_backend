@@ -55,11 +55,17 @@ module PaymentsHelper
 
   def create_setup_intent(customer_token)
 
-   Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {
-       card: {
-           request_three_d_secure: 'any'
-       }
-   }})
+
+    Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session'})
+
+
+    # Commented Code Below is used when testing for 3D secure implmentation
+
+   # Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {
+   #     card: {
+   #         request_three_d_secure: 'any'
+   #     }
+   # }})
 
   end
 
