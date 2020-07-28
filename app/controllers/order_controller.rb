@@ -1284,21 +1284,20 @@ class OrderController < ApplicationController
                                 if distance <= maximum_delivery_distance
 
 
-                                  @success = handles_delivery_order(
+                                  can_place_order = handles_delivery_order(
                                       has_sensitive_products,
                                       store_latitude,
                                       store_longitude,
-                                      store_schedule,
-                                      product,
-                                      quantity,
-                                      delivery_location,
-                                      store_user,
-                                      customer_user,
-                                      geo_location_country_code,
-                                      product_options
+                                      store_schedule
                                   )
 
-                                  if !@success
+                                  if can_place_order
+
+
+                                  else
+
+
+                                    @success = false
 
                                     @error_code = 5
 
@@ -1323,25 +1322,27 @@ class OrderController < ApplicationController
 
                               else
 
-                                @success = handles_delivery_order(
+                                can_place_order = handles_delivery_order(
                                     has_sensitive_products,
                                     store_latitude,
                                     store_longitude,
-                                    store_schedule,
-                                    product,
-                                    quantity,
-                                    delivery_location,
-                                    store_user,
-                                    customer_user,
-                                    geo_location_country_code,
-                                    product_options
+                                    store_schedule
                                 )
 
-                                if !@success
+                                if can_place_order
+
+
+                                else
+
+                                  @success = false
 
                                   @error_code = 5
 
                                 end
+
+
+
+
 
                               end
 
@@ -1356,23 +1357,15 @@ class OrderController < ApplicationController
 
                                   # Only exclusive delivery available
 
+                                  can_place_order = does_not_handle_delivery_order(1, store_schedule, store_location)
 
-                                  @success = does_not_handle_delivery_order(
-                                      1,
-                                      store_schedule,
-                                      product_options,
-                                      delivery_location,
-                                      store_user,
-                                      customer_user,
-                                      geo_location_country_code,
-                                      product,
-                                      quantity,
-                                      store_location,
-                                      distance
-                                  )
+                                  if can_place_order
 
 
-                                  if !@success
+
+                                  else
+
+                                    @success = false
 
                                     @error_code = 5
 
@@ -1408,20 +1401,20 @@ class OrderController < ApplicationController
 
                                       else
 
+                                        can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_location)
 
-                                        @success = does_not_handle_delivery_order(
-                                            order_type,
-                                            store_schedule,
-                                            product_options,
-                                            delivery_location,
-                                            store_user,
-                                            customer_user,
-                                            geo_location_country_code,
-                                            product,
-                                            quantity,
-                                            store_location,
-                                            distance
-                                        )
+
+                                        if can_place_order
+
+
+
+                                        else
+
+                                          @success = false
+
+                                          @error_code = 5
+
+                                        end
 
 
                                       end
@@ -1429,21 +1422,17 @@ class OrderController < ApplicationController
 
                                     elsif order_type == 1
 
-                                      @success = does_not_handle_delivery_order(
-                                          order_type,
-                                          store_schedule,
-                                          product_options,
-                                          delivery_location,
-                                          store_user,
-                                          customer_user,
-                                          geo_location_country_code,
-                                          product,
-                                          quantity,
-                                          store_location,
-                                          distance
-                                      )
 
-                                      if !@success
+                                      can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_location)
+
+
+                                      if can_place_order
+
+
+
+                                      else
+
+                                        @success = false
 
                                         @error_code = 5
 
@@ -1644,19 +1633,7 @@ class OrderController < ApplicationController
 
   end
 
-  def does_not_handle_delivery_order(
-      order_type,
-      store_schedule,
-      product_options,
-      delivery_location,
-      store_user,
-      customer_user,
-      country_code,
-      product,
-      quantity,
-      store_location,
-      distance
-  )
+  def does_not_handle_delivery_order(order_type, store_schedule, store_location)
 
 
     store_latitude = store_location[:latitude]
@@ -1672,47 +1649,6 @@ class OrderController < ApplicationController
 
       # Order is created and remains pending until the store accepts or rejects the order the next day even if store closed
 
-      # If the stock quantity of a product was not nil it will be decremented after an order is created
-
-      ordered_product = {
-          id: product.id,
-          quantity: quantity,
-          price: product.price,
-          currency: product.currency,
-          product_options: product_options,
-          name: product.name
-      }
-
-
-      delivery_fee_usd = calculate_standard_delivery_fee_usd(distance)
-
-      total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
-
-
-      # Charge customer credit card using total price usd and if successful create order else handle error
-
-      Order.create!(
-          products: [ordered_product],
-          delivery_location: delivery_location,
-          store_user_id: store_user.id,
-          customer_user_id: customer_user.id,
-          country: country_code,
-          store_handles_delivery: false,
-          order_type: order_type,
-          delivery_fee: delivery_fee_usd,
-          total_price: total_price_usd
-      )
-
-
-      if product.stock_quantity != nil
-
-        stock_quantity = product.stock_quantity - quantity
-
-        product.update!(stock_quantity: stock_quantity)
-
-      end
-
-
       true
 
 
@@ -1720,7 +1656,6 @@ class OrderController < ApplicationController
     elsif order_type == 1
 
       # If store is closed order is not created
-
 
       day =  store_schedule.days.find_by(week_day: get_day_of_week(local_time))
 
@@ -1800,59 +1735,7 @@ class OrderController < ApplicationController
         end
 
 
-        if can_order_1 || can_order_2
-
-
-          # If the stock quantity of a product was not nil it will be decremented after an order is created
-
-          ordered_product = {
-              id: product.id,
-              quantity: quantity,
-              price: product.price,
-              currency: product.currency,
-              product_options: product_options,
-              name: product.name
-          }
-
-
-          delivery_fee_usd = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
-
-          total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
-
-          # Charge customer credit card using total price usd and if successful create order else handle error
-
-          Order.create!(
-              products: [ordered_product],
-              delivery_location: delivery_location,
-              store_user_id: store_user.id,
-              customer_user_id: customer_user.id,
-              country: country_code,
-              store_handles_delivery: false,
-              order_type: order_type,
-              delivery_fee: delivery_fee_usd,
-              total_price: total_price_usd
-          )
-
-
-
-
-          if product.stock_quantity != nil
-
-            stock_quantity = product.stock_quantity - quantity
-
-            product.update!(stock_quantity: stock_quantity)
-
-          end
-
-
-          true
-
-
-        else
-
-          false
-
-        end
+        can_order_1 || can_order_2
 
 
 
@@ -1870,14 +1753,7 @@ class OrderController < ApplicationController
       has_sensitive_products,
       store_latitude,
       store_longitude,
-      store_schedule,
-      product,
-      quantity,
-      delivery_location,
-      store_user,
-      customer_user,
-      country_code,
-      product_options
+      store_schedule
   )
 
 
@@ -1967,53 +1843,7 @@ class OrderController < ApplicationController
         end
 
 
-        if can_order_1 || can_order_2
-
-
-          # If the stock quantity of a product was not nil it will be decremented after an order is created
-
-          ordered_product = {
-              id: product.id,
-              quantity: quantity,
-              price: product.price,
-              currency: product.currency,
-              product_options: product_options,
-              name: product.name
-          }
-
-
-          total_price_usd = product_total_usd(product.price, product.currency, quantity)
-
-          # Charge customer credit card using total price usd and if successful create order else handle error
-
-          Order.create!(
-              products: [ordered_product],
-              delivery_location: delivery_location,
-              store_user_id: store_user.id,
-              customer_user_id: customer_user.id,
-              country: country_code,
-              store_handles_delivery: true,
-              total_price: total_price_usd
-          )
-
-
-          if product.stock_quantity != nil
-
-            stock_quantity = product.stock_quantity - quantity
-
-            product.update!(stock_quantity: stock_quantity)
-
-          end
-
-
-          true
-
-
-        else
-
-          false
-
-        end
+        can_order_1 || can_order_2
 
 
 
@@ -2023,43 +1853,6 @@ class OrderController < ApplicationController
     else
 
       # Order is created and remains pending until the store accepts or rejects the order the next day even if store closed
-
-      # If the stock quantity of a product was not nil it will be decremented after an order is created
-
-
-      ordered_product = {
-          id: product.id,
-          quantity: quantity,
-          price: product.price,
-          currency: product.currency,
-          product_options: product_options,
-          name: product.name
-      }
-
-      total_price_usd = product_total_usd(product.price, product.currency, quantity)
-
-
-      # Charge customer credit card using total price usd and if successful create order else handle error
-
-      Order.create!(
-          products: [ordered_product],
-          delivery_location: delivery_location,
-          store_user_id: store_user.id,
-          customer_user_id: customer_user.id,
-          country: country_code,
-          store_handles_delivery: true,
-          total_price: total_price_usd
-      )
-
-
-      if product.stock_quantity != nil
-
-        stock_quantity = product.stock_quantity - quantity
-
-        product.update!(stock_quantity: stock_quantity)
-
-      end
-
 
       true
 
