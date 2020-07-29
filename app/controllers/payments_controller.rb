@@ -44,7 +44,7 @@ class PaymentsController < ApplicationController
 
               @success = true
 
-            elsif status == 'requires_action'
+            elsif status == 'requires_action' || result.next_action != nil
 
               @success = false
 

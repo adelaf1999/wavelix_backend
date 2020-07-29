@@ -3,6 +3,15 @@ module PaymentsHelper
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
 
+  def get_customer_card(customer_token)
+
+    customer = Stripe::Customer.retrieve(customer_token)
+
+    customer.default_source
+
+
+  end
+
   def delete_existing_card(customer_token)
 
     customer = Stripe::Customer.retrieve(customer_token)

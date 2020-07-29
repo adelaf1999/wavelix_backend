@@ -6,6 +6,15 @@ if @error_code != nil
     node(:error_code) { @error_code }
 end
 
+if @redirect_url != nil
+  node(:redirect_url) {  @redirect_url }
+end
+
+
+if @error_message != nil
+    node(:error_message) { @error_message }
+end
+
 if @product != nil
     node(:product) { @product }
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_24_130034) do
+ActiveRecord::Schema.define(version: 2020_07_29_151843) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -134,6 +134,22 @@ ActiveRecord::Schema.define(version: 2020_07_24_130034) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "order_requests", force: :cascade do |t|
+    t.text "products", null: false, array: true
+    t.text "delivery_location", null: false
+    t.integer "store_user_id", null: false
+    t.integer "customer_user_id", null: false
+    t.string "country", null: false
+    t.boolean "store_handles_delivery", null: false
+    t.decimal "total_price", null: false
+    t.string "total_price_currency", default: "USD"
+    t.integer "order_type"
+    t.decimal "delivery_fee"
+    t.string "delivery_fee_currency", default: "USD"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "orders", force: :cascade do |t|
     t.text "products", null: false, array: true
     t.integer "driver_id"
@@ -164,6 +180,7 @@ ActiveRecord::Schema.define(version: 2020_07_24_130034) do
     t.text "drivers_rejected", default: [], array: true
     t.datetime "store_arrival_time_limit"
     t.text "drivers_canceled_order", default: [], array: true
+    t.integer "order_request_id", null: false
   end
 
   create_table "phone_numbers", force: :cascade do |t|

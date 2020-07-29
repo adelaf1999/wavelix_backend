@@ -1,7 +1,10 @@
 class OrderController < ApplicationController
 
   include OrderHelper
+
   include MoneyHelper
+
+  include PaymentsHelper
 
   before_action :authenticate_user!
 
@@ -1065,6 +1068,8 @@ class OrderController < ApplicationController
 
     # { 3: INVALID_PRODUCT_OPTIONS, 4: INVALID_DELIVERY_LOCATION, 5: STORE_CLOSED_ERROR  }
 
+    # { 6: CARD_AUTH_REQUIRED, 7: CARD_ERROR }
+
     if current_user.customer_user?
 
 
@@ -1091,7 +1096,7 @@ class OrderController < ApplicationController
 
         customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-        if customer_user.phone_number_verified?
+        if customer_user.phone_number_verified? && customer_user.payment_source_setup?
 
           if product != nil
 
@@ -1286,12 +1291,21 @@ class OrderController < ApplicationController
 
                                   can_place_order = handles_delivery_order(
                                       has_sensitive_products,
-                                      store_latitude,
-                                      store_longitude,
-                                      store_schedule
+                                      store_schedule,
+                                      store_user
                                   )
 
                                   if can_place_order
+
+                                    create_order_request(
+                                        handles_delivery,
+                                        product,
+                                        quantity,
+                                        product_options,
+                                        delivery_location,
+                                        store_user,
+                                        customer_user
+                                    )
 
 
                                   else
@@ -1324,12 +1338,22 @@ class OrderController < ApplicationController
 
                                 can_place_order = handles_delivery_order(
                                     has_sensitive_products,
-                                    store_latitude,
-                                    store_longitude,
-                                    store_schedule
+                                    store_schedule,
+                                    store_user
                                 )
 
                                 if can_place_order
+
+
+                                  create_order_request(
+                                      handles_delivery,
+                                      product,
+                                      quantity,
+                                      product_options,
+                                      delivery_location,
+                                      store_user,
+                                      customer_user
+                                  )
 
 
                                 else
@@ -1357,10 +1381,22 @@ class OrderController < ApplicationController
 
                                   # Only exclusive delivery available
 
-                                  can_place_order = does_not_handle_delivery_order(1, store_schedule, store_location)
+                                  can_place_order = does_not_handle_delivery_order(1, store_schedule, store_user)
 
                                   if can_place_order
 
+                                    create_order_request(
+                                        handles_delivery,
+                                        product,
+                                        quantity,
+                                        product_options,
+                                        delivery_location,
+                                        store_user,
+                                        customer_user,
+                                        1,
+                                        distance,
+                                        store_location
+                                    )
 
 
                                   else
@@ -1401,11 +1437,23 @@ class OrderController < ApplicationController
 
                                       else
 
-                                        can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_location)
+                                        can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_user)
 
 
                                         if can_place_order
 
+
+                                          create_order_request(
+                                              handles_delivery,
+                                              product,
+                                              quantity,
+                                              product_options,
+                                              delivery_location,
+                                              store_user,
+                                              customer_user,
+                                              order_type,
+                                              distance
+                                          )
 
 
                                         else
@@ -1423,11 +1471,23 @@ class OrderController < ApplicationController
                                     elsif order_type == 1
 
 
-                                      can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_location)
+                                      can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_user)
 
 
                                       if can_place_order
 
+                                        create_order_request(
+                                            handles_delivery,
+                                            product,
+                                            quantity,
+                                            product_options,
+                                            delivery_location,
+                                            store_user,
+                                            customer_user,
+                                            order_type,
+                                            distance,
+                                            store_location
+                                        )
 
 
                                       else
@@ -1552,6 +1612,218 @@ class OrderController < ApplicationController
 
 
 
+  def create_order_request(
+      handles_delivery,
+      product,
+      quantity,
+      product_options,
+      delivery_location,
+      store_user,
+      customer_user,
+      order_type = nil,
+      distance = nil,
+      store_location = nil
+  )
+
+
+    if handles_delivery
+
+
+      ordered_product = {
+          id: product.id,
+          quantity: quantity,
+          price: product.price,
+          currency: product.currency,
+          product_options: product_options,
+          name: product.name
+      }
+
+      total_price_usd = product_total_usd(product.price, product.currency, quantity)
+
+      order_request = OrderRequest.create!(
+          products: [ordered_product],
+          delivery_location: delivery_location,
+          store_user_id: store_user.id,
+          customer_user_id: customer_user.id,
+          country: product.store_country,
+          store_handles_delivery: true,
+          total_price: total_price_usd
+      )
+
+
+      charge_customer_card(total_price_usd, customer_user, order_request)
+
+
+
+    else
+
+
+      if order_type == 0
+
+
+        ordered_product = {
+            id: product.id,
+            quantity: quantity,
+            price: product.price,
+            currency: product.currency,
+            product_options: product_options,
+            name: product.name
+        }
+
+        delivery_fee_usd = calculate_standard_delivery_fee_usd(distance)
+
+        total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
+
+        order_request = OrderRequest.create!(
+            products: [ordered_product],
+            delivery_location: delivery_location,
+            store_user_id: store_user.id,
+            customer_user_id: customer_user.id,
+            country: product.store_country,
+            store_handles_delivery: false,
+            order_type: order_type,
+            delivery_fee: delivery_fee_usd,
+            total_price: total_price_usd
+        )
+
+        charge_customer_card(total_price_usd, customer_user, order_request)
+
+
+
+      elsif order_type == 1
+
+        ordered_product = {
+            id: product.id,
+            quantity: quantity,
+            price: product.price,
+            currency: product.currency,
+            product_options: product_options,
+            name: product.name
+        }
+
+
+        delivery_fee_usd = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+        total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
+
+
+
+        order_request = OrderRequest.create!(
+            products: [ordered_product],
+            delivery_location: delivery_location,
+            store_user_id: store_user.id,
+            customer_user_id: customer_user.id,
+            country: product.store_country,
+            store_handles_delivery: false,
+            order_type: order_type,
+            delivery_fee: delivery_fee_usd,
+            total_price: total_price_usd
+        )
+
+
+        charge_customer_card(total_price_usd, customer_user, order_request)
+
+
+
+
+      end
+
+
+    end
+
+
+
+
+  end
+
+
+  def charge_customer_card(total_price_usd, customer_user, order_request)
+
+    begin
+
+
+      total_price_cents = total_price_usd * 100
+
+      total_price_cents = total_price_cents.round.to_i
+
+      stripe_customer_id = customer_user.stripe_customer_token
+
+      customer_card_id = get_customer_card(stripe_customer_id)
+
+      payment_intent = Stripe::PaymentIntent.create(
+          {
+              amount: total_price_cents,
+              currency: 'usd',
+              customer: stripe_customer_id,
+              payment_method: customer_card_id,
+              off_session: false,
+              metadata: {
+                  order_request_id: order_request.id
+              }
+          }
+      )
+
+      result = Stripe::PaymentIntent.confirm(
+          payment_intent.id,
+          {
+              return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL')
+          }
+      )
+
+
+      status = result.status
+
+      if status == 'succeeded'
+
+        @success = true
+
+        OrderRequest.create_order(order_request)
+
+
+      elsif status == 'requires_source_action' || result.next_action != nil
+
+        @success = false
+
+        @error_code = 6
+
+        next_action = result.next_action
+
+        @redirect_url = next_action.redirect_to_url.url
+
+
+
+      elsif status == 'requires_payment_method'
+
+        @success = false
+
+      end
+
+
+
+    rescue Stripe::CardError => e
+
+      @success = false
+
+      @error_code = 7
+
+      if e.error.message
+
+        @error_message =  e.error.message
+
+      end
+
+    rescue => e
+
+      @success = false
+
+    end
+
+
+
+  end
+
+
+
   def is_delivery_time_limit_valid?(time, time_unit)
 
     res1 = /^(?<num>\d+)$/.match(time_unit)
@@ -1633,16 +1905,11 @@ class OrderController < ApplicationController
 
   end
 
-  def does_not_handle_delivery_order(order_type, store_schedule, store_location)
+  def does_not_handle_delivery_order(order_type, store_schedule, store_user)
 
+    timezone = get_store_timezone_name(store_user)
 
-    store_latitude = store_location[:latitude]
-
-    store_longitude = store_location[:longitude]
-
-    timezone = Timezone.lookup(store_latitude, store_longitude)
-
-    local_time = timezone.time_with_offset(Time.now)
+    local_time = Time.now.to_datetime.in_time_zone(timezone)
 
     if order_type == 0
 
@@ -1749,17 +2016,11 @@ class OrderController < ApplicationController
   end
 
 
-  def handles_delivery_order(
-      has_sensitive_products,
-      store_latitude,
-      store_longitude,
-      store_schedule
-  )
+  def handles_delivery_order(has_sensitive_products, store_schedule, store_user)
 
+    timezone = get_store_timezone_name(store_user)
 
-    timezone = Timezone.lookup(store_latitude, store_longitude)
-
-    local_time = timezone.time_with_offset(Time.now)
+    local_time = Time.now.to_datetime.in_time_zone(timezone)
 
     if has_sensitive_products
 
