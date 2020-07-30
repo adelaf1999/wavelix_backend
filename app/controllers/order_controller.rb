@@ -1756,7 +1756,7 @@ class OrderController < ApplicationController
               currency: 'usd',
               customer: stripe_customer_id,
               payment_method: customer_card_id,
-              off_session: false,
+              setup_future_usage: 'on_session',
               metadata: {
                   order_request_id: order_request.id
               }
@@ -1766,7 +1766,8 @@ class OrderController < ApplicationController
       result = Stripe::PaymentIntent.confirm(
           payment_intent.id,
           {
-              return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL')
+              return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL'),
+              off_session: false
           }
       )
 

@@ -30,9 +30,12 @@ StripeEvent.configure do |events|
 
     if order_request != nil && customer_user != nil
 
-      OrderRequest.create_order(order_request)
+      if OrderRequest.create_order(order_request)
 
-      ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: true}
+        ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: true}
+
+      end
+
 
 
     end
