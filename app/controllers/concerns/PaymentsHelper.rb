@@ -3,6 +3,25 @@ module PaymentsHelper
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
 
+  def refund_order(order)
+
+    # Refer to stripe docs for more info: https://stripe.com/docs/refunds
+
+    total_price_usd = order.total_price
+
+    total_price_cents = total_price_usd * 100
+
+    total_price_cents = total_price_cents.round.to_i
+
+    Stripe::Refund.create({
+                              payment_intent: order.stripe_payment_intent,
+                              amount: total_price_cents
+                          })
+
+
+  end
+
+
   def get_customer_card(customer_token)
 
     customer = Stripe::Customer.retrieve(customer_token)
