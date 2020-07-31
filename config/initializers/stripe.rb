@@ -28,9 +28,11 @@ StripeEvent.configure do |events|
 
     customer_user = CustomerUser.find_by(stripe_customer_token: event.data.object.customer)
 
+    payment_intent_id = event.data.object.id
+    
     if order_request != nil && customer_user != nil
 
-      if OrderRequest.create_order(order_request)
+      if OrderRequest.create_order(order_request, payment_intent_id)
 
         ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: true}
 

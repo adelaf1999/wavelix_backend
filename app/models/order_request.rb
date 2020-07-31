@@ -5,11 +5,14 @@ class OrderRequest < ApplicationRecord
   serialize :delivery_location, Hash
 
 
-  def self.create_order(order_request)
+  def self.create_order(order_request, payment_intent_id)
 
     if Order.find_by(order_request_id: order_request.id) == nil
 
       order = Order.new
+
+
+      order.stripe_payment_intent = payment_intent_id
 
       order.order_request_id = order_request.id
 

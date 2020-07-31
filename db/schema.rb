@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_29_151843) do
+ActiveRecord::Schema.define(version: 2020_07_31_084306) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -181,6 +181,7 @@ ActiveRecord::Schema.define(version: 2020_07_29_151843) do
     t.datetime "store_arrival_time_limit"
     t.text "drivers_canceled_order", default: [], array: true
     t.integer "order_request_id", null: false
+    t.string "stripe_payment_intent", null: false
   end
 
   create_table "phone_numbers", force: :cascade do |t|
