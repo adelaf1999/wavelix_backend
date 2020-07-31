@@ -2,6 +2,8 @@ module OrderHelper
 
   include MoneyHelper
 
+  include PaymentsHelper
+
   require 'faraday'
   require 'faraday_middleware'
   require 'net/http'
@@ -466,7 +468,7 @@ module OrderHelper
 
     # Notify customer that the order was canceled and that he will be refunded the full amount he paid
 
-    # Refund customer the amount he paid
+    refund_order(order)
 
   end
 

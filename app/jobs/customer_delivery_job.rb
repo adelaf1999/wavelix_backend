@@ -2,6 +2,8 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
   include OrderHelper
 
+  include PaymentsHelper
+
   def perform
 
     order = Order.find_by(id: order_id)
@@ -39,7 +41,7 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
       # Notify customer that the order has been canceled and that he will be refunded the full amount paid
 
-      # Refund customer the amount he paid
+      refund_order(order)
 
     end
 

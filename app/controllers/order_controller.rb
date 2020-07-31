@@ -239,7 +239,7 @@ class OrderController < ApplicationController
 
           # Notify customer that the order has been canceled and that he will be refunded the full amount paid
 
-          # Refund customer the full amount he paid
+          refund_order(order)
 
         else
 
@@ -771,7 +771,7 @@ class OrderController < ApplicationController
 
           # Notify customer that the store rejected the order and that they will be refunded with the full amount paid
 
-          # Refund customer the full amount he paid
+          refund_order(order)
 
         else
 
