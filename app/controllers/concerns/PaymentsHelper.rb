@@ -3,6 +3,14 @@ module PaymentsHelper
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
 
+  def get_drivers_commission_fee
+    5
+  end
+
+  def get_products_commission_fee
+    5.9
+  end
+
   def refund_order(order)
 
     # Refer to stripe docs for more info: https://stripe.com/docs/refunds

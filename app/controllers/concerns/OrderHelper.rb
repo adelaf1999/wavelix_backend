@@ -121,26 +121,74 @@ module OrderHelper
   end
 
 
+  def increment_driver_balance(order, driver)
+
+    delivery_fee = order.delivery_fee.to_f.round(2)
+
+    our_commission_fee = get_drivers_commission_fee.to_f / 100.0
+
+    # Subtract our commission fee from delivery fee
+
+    delivery_fee = delivery_fee - ( our_commission_fee * delivery_fee )
+
+    # Convert delivery fee to driver balance currency
+
+    delivery_fee = convert_amount(delivery_fee, 'USD', driver.currency)
+
+    delivery_fee = delivery_fee.round(2)
+
+    driver.increment!(:balance, delivery_fee)
+
+  end
+
+
   def increment_store_balance(order)
-
-    # Increment store balance by looping on each ordered product and multiplying price by quantity
-
-    increment = 0
-
-    order.products.each do |ordered_product|
-
-      # The currency of the ordered_products is the same as the store user balance currency
-
-      ordered_product = eval(ordered_product)
-
-      increment += ordered_product[:price] * ordered_product[:quantity]
-
-    end
 
     store_user = StoreUser.find_by(id: order.store_user_id)
 
-    store_user.increment!(:balance, increment)
+    store_handles_delivery = order.store_handles_delivery
 
+    payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+    balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
+
+    # Get total amount charged and the net amount remaining after stripe fees applied
+
+    total_amount = balance_transaction.amount.to_f / 100.to_f
+
+    net_amount = balance_transaction.net.to_f / 100.to_f
+
+    # Calculate the commission fee charged by stripe
+
+    stripe_commission_fee = ((total_amount - (net_amount + 0.3)) / (total_amount)) * 100
+
+    stripe_commission_fee = stripe_commission_fee.round(1)
+
+    # Calculate remaining commission fee for us
+
+    our_commission_fee = get_products_commission_fee - stripe_commission_fee
+
+
+    # Calculate net amount for store, it might include the delivery fee so subtract that if needed
+
+    if store_handles_delivery
+
+      net_amount = (net_amount - ( (our_commission_fee / 100) * net_amount )).round(2)
+
+    else
+
+      net_amount = (net_amount - order.delivery_fee.to_f).round(2)
+
+      net_amount = (net_amount - ( (our_commission_fee / 100) * net_amount )).round(2)
+
+
+    end
+
+    # Convert the net amount to store user currency
+
+    net_amount = convert_amount(net_amount, 'USD', store_user.currency)
+
+    store_user.increment!(:balance, net_amount)
 
 
   end

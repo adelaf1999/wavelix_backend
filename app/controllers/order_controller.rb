@@ -311,25 +311,7 @@ class OrderController < ApplicationController
 
                 increment_store_balance(order)
 
-                delivery_fee = order.delivery_fee
-
-                delivery_fee_currency = order.delivery_fee_currency
-
-                driver_currency = driver.currency
-
-                if driver_currency == delivery_fee_currency
-
-                  driver.increment!(:balance, delivery_fee)
-
-                else
-
-                  exchange_rates = get_exchange_rates(driver_currency)
-
-                  delivery_fee = delivery_fee / exchange_rates[delivery_fee_currency]
-
-                  driver.increment!(:balance, delivery_fee)
-
-                end
+                increment_driver_balance(order, driver)
 
 
               else
