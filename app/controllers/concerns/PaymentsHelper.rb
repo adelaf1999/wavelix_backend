@@ -30,6 +30,17 @@ module PaymentsHelper
   end
 
 
+  def get_customer_card_info(customer_token)
+
+    customer = Stripe::Customer.retrieve(customer_token)
+
+    card_id = customer.default_source
+
+    Stripe::Customer.retrieve_source(customer_token, card_id)
+
+  end
+
+
   def get_customer_card(customer_token)
 
     customer = Stripe::Customer.retrieve(customer_token)

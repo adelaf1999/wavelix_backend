@@ -4,6 +4,8 @@ class CustomerSettingsController < ApplicationController
 
   include MoneyHelper
 
+  include PaymentsHelper
+
 
   def change_default_currency
 
@@ -53,6 +55,21 @@ class CustomerSettingsController < ApplicationController
         @default_currency = customer_user.default_currency
 
         @currencies = get_currencies
+
+        stripe_customer_token = customer_user.stripe_customer_token
+
+        if customer_user.payment_source_setup?
+
+          card_info = get_customer_card_info(stripe_customer_token)
+
+          @card_info = {
+              brand: card_info.brand,
+              last4: card_info.last4
+          }
+
+
+        end
+
 
       end
 
