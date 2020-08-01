@@ -51,13 +51,30 @@ StripeEvent.configure do |events|
 
   events.subscribe 'setup_intent.succeeded' do |event|
 
-    customer_user = CustomerUser.find_by(stripe_customer_token: event.data.object.customer)
+    stripe_customer_token = event.data.object.customer
+
+    card_id = event.data.object.payment_method
+
+    customer_user = CustomerUser.find_by(stripe_customer_token: stripe_customer_token)
+
+    card = Stripe::Customer.retrieve_source(stripe_customer_token, card_id)
+
 
     if customer_user != nil
 
       # sanity check
 
       ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: true}
+      
+
+      ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {
+          setup_intent_success: true,
+          card_info: {
+              brand: card.brand,
+              last4: card.last4
+          }
+      }
+
 
     end
 
@@ -74,6 +91,9 @@ StripeEvent.configure do |events|
       # sanity check
 
       ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: false}
+
+      ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {setup_intent_success: false}
+
 
     end
 

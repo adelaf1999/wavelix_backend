@@ -75,6 +75,13 @@ class PaymentsController < ApplicationController
 
               @success = true
 
+              @card_info = {
+                  brand: card.brand,
+                  last4: card.last4
+              }
+
+
+
             elsif status == 'requires_action' || result.next_action != nil
 
               @success = false
