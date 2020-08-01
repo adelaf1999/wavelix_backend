@@ -4,6 +4,37 @@ class PaymentsController < ApplicationController
 
   include PaymentsHelper
 
+
+  def destroy_card
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      customer_token = customer_user.stripe_customer_token
+
+      stripe_customer = Stripe::Customer.retrieve(customer_token)
+
+      customer_card = stripe_customer.default_source
+
+       if customer_card != nil
+         
+         Stripe::Customer.delete_source(customer_token, customer_card)
+
+         @success = true
+
+
+       else
+
+         @success = false
+
+       end
+
+    end
+
+
+  end
+
   def add_card
 
     # error_codes {0 : AUTHENTICATION_REQUIRED, 1: CARD_ERROR }

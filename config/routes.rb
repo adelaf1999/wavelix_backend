@@ -233,6 +233,8 @@ Rails.application.routes.draw do
 
   post '/add-card' => 'payments#add_card'
 
+  delete '/destroy-card' => 'payments#destroy_card'
+
 
 
 end
