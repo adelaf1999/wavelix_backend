@@ -81,24 +81,7 @@ module PaymentsHelper
 
   end
 
-  def is_setup_intent_valid?(setup_intent_id)
 
-    begin
-
-      Stripe::SetupIntent.retrieve(setup_intent_id)
-
-      true
-
-    rescue => e
-
-       false
-
-    end
-
-
-
-
-  end
 
   def create_setup_intent(customer_token)
 

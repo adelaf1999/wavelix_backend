@@ -45,13 +45,11 @@ class PaymentsController < ApplicationController
 
       stripe_customer_token = customer_user.stripe_customer_token
 
-      setup_intent_id = params[:setup_intent_id]
-
       token_id = params[:token_id]
 
-      if setup_intent_id != nil && token_id != nil && !setup_intent_id.empty? && !token_id.empty?
+      if token_id != nil && !token_id.empty?
 
-        if is_setup_intent_valid?(setup_intent_id) && is_token_id_valid?(token_id)
+        if is_token_id_valid?(token_id)
 
           begin
 
@@ -60,6 +58,8 @@ class PaymentsController < ApplicationController
             delete_existing_card(stripe_customer_token)
 
             card = Stripe::Customer.create_source(stripe_customer_token, {source: token_id})
+
+            setup_intent_id = create_setup_intent(stripe_customer_token).id
 
             result = Stripe::SetupIntent.confirm(
                 setup_intent_id,
