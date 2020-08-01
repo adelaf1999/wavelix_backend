@@ -65,7 +65,7 @@ StripeEvent.configure do |events|
       # sanity check
 
       ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: true}
-      
+
 
       ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {
           setup_intent_success: true,
