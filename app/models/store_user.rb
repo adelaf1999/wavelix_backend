@@ -1,5 +1,7 @@
 class StoreUser < ApplicationRecord
 
+    include OrderHelper
+
     belongs_to :store, touch: true
     mount_uploader :store_business_license, BusinessLicenseUploader
     serialize :store_address, Hash
@@ -9,6 +11,13 @@ class StoreUser < ApplicationRecord
     has_one :schedule, dependent: :destroy
     after_create :save_street_name
 
+
+    def get_minimum_product_price
+
+        minimum_product_price = convert_amount(0.5, 'USD', self.currency)
+        minimum_product_price.to_f.round(2)
+
+    end
 
     def get_categories
 

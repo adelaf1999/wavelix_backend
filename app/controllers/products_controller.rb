@@ -5,6 +5,7 @@ class ProductsController < ApplicationController
 
     include MoneyHelper
 
+
     def show
 
         if current_user.customer_user?
@@ -259,7 +260,7 @@ class ProductsController < ApplicationController
 
 
 
-                    if is_valid_price?(price.to_s)
+                    if is_valid_price?(price.to_s, store_user)
 
                         product.price = price.to_d
 
@@ -640,7 +641,7 @@ class ProductsController < ApplicationController
                     @success = true
                     @product = product.to_json
                     @product_pictures = product.get_images.to_json
-
+                    @minimum_product_price = store_user.get_minimum_product_price
 
                 else
 
@@ -820,7 +821,7 @@ class ProductsController < ApplicationController
 
                         if price != nil
 
-                            if !is_valid_price?(price.to_s)
+                            if !is_valid_price?(price.to_s, store_user)
 
 
                                 @success = false
@@ -1116,7 +1117,7 @@ class ProductsController < ApplicationController
                         description = ''
                     end
 
-                    if can_save &&   ( price == nil || !is_valid_price?(price.to_s) )
+                    if can_save &&   ( price == nil || !is_valid_price?(price.to_s, store_user) )
                         can_save = false
                     else
                         price = price.to_d
@@ -1621,21 +1622,22 @@ class ProductsController < ApplicationController
 
     end
 
-    def is_valid_price?(arg)
+    def is_valid_price?(price, store_user)
 
-        # price must be a number greater than 0
+        # price must be a number greater than or equal to the minimum product price
 
-        if /^\d+([.]\d+)?$/.match(arg) == nil
+        if /^\d+([.]\d+)?$/.match(price) == nil
+
             false
+
         else
 
-            arg = arg.to_d
+            price = price.to_f.round(2)
 
-            if arg == 0
-                false
-            else
-                true
-            end
+            minimum_product_price = store_user.get_minimum_product_price
+
+            price >= minimum_product_price
+
 
         end
     end

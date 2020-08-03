@@ -186,6 +186,8 @@ class CategoriesController < ApplicationController
 
                 @success = true
 
+                @minimum_product_price = store_user.get_minimum_product_price
+
             else
 
                 @success = false
