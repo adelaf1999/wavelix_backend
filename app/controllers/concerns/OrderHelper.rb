@@ -591,7 +591,47 @@ module OrderHelper
 
         driver = Driver.find_by(id: store_order.driver_id)
 
-        order[:driver_name] = driver.name
+        driver_information = {}
+
+        driver_information[:name] = driver.name
+
+        driver_information[:profile_picture] = driver.profile_picture.url
+
+        driver_license_pictures = []
+
+        national_id_pictures = []
+
+        vehicle_registration_pictures = []
+
+        driver.driver_license_pictures.each do |picture|
+
+          driver_license_pictures.push(picture.url)
+
+        end
+
+        driver.national_id_pictures.each do |picture|
+
+          national_id_pictures.push(picture.url)
+
+
+        end
+
+
+        driver.vehicle_registration_document_pictures.each do |picture|
+
+
+          vehicle_registration_pictures.push(picture.url)
+
+        end
+
+        driver_information[:license_pictures] = driver_license_pictures
+
+        driver_information[:national_id_pictures] = national_id_pictures
+
+        driver_information[:vehicle_registration_pictures] = vehicle_registration_pictures
+
+        order[:driver] = driver_information
+
 
       end
 
