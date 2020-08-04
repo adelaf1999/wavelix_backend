@@ -93,6 +93,10 @@ class CustomerSettingsController < ApplicationController
 
         @currencies = get_currencies
 
+        @building_name = customer_user.building_name
+
+        @apartment_floor = customer_user.apartment_floor
+
         stripe_customer_token = customer_user.stripe_customer_token
 
         if customer_user.payment_source_setup?

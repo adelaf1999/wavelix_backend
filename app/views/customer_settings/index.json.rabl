@@ -10,3 +10,10 @@ if @currencies != nil
     node(:currencies) { @currencies }
 end
 
+if @building_name != nil
+    node(:building_name) { @building_name }
+end
+
+if  @apartment_floor != nil
+    node(:apartment_floor) {  @apartment_floor }
+end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_04_102040) do
+ActiveRecord::Schema.define(version: 2020_08_04_120643) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -55,8 +55,8 @@ ActiveRecord::Schema.define(version: 2020_08_04_102040) do
     t.datetime "updated_at", precision: 6, null: false
     t.integer "customer_id"
     t.text "home_address", null: false
-    t.string "building_name"
-    t.string "apartment_floor"
+    t.string "building_name", default: ""
+    t.string "apartment_floor", default: ""
     t.string "country", null: false
     t.string "default_currency", default: "USD"
     t.boolean "phone_number_verified", default: false
