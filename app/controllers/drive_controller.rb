@@ -83,6 +83,8 @@ class DriveController < ApplicationController
 
     #  {0: DRIVING_OUTSIDE_REGISTERED_COUNTRY, 1: HAS_INCOMPLETE_EXCLUSIVE_ORDER, 2: HAS_UNPICKED_STANDARD_ORDERS }
 
+    # { 3: ACCOUNT_BLOCKED }
+
     if current_user.customer_user?
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
@@ -142,11 +144,24 @@ class DriveController < ApplicationController
 
                   else
 
-                    @success = true
+                    if driver.account_blocked
 
-                    driver.online!
+                      @success = false
 
-                    driver.update!(latitude: latitude, longitude: longitude)
+                      @error_code = 3
+
+                    else
+
+                      @success = true
+
+                      driver.online!
+
+                      driver.update!(latitude: latitude, longitude: longitude)
+
+                    end
+
+
+
 
                   end
 
@@ -417,7 +432,7 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id)
+          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && !driver.account_blocked
 
             @success = true
 

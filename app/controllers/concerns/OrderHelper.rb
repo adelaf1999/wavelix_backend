@@ -293,7 +293,7 @@ module OrderHelper
 
     country = store_user.store_country
 
-    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
+    drivers = Driver.in_range(25..50, :origin => [store_latitude, store_longitude]).where(status: 1, country: country, account_blocked: false).where.not(id: invalid_drivers)
 
     drivers = drivers.includes(:orders).where(orders: { driver_id: nil }) + drivers.includes(:orders).where.not(orders: {status: 2})
 
@@ -348,7 +348,7 @@ module OrderHelper
 
     country = store_user.store_country
 
-    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
+    drivers = Driver.within(25, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country, account_blocked: false).where.not(id: invalid_drivers)
 
     # Fetch all online drivers who have no orders and dont have any exclusive orders ongoing
 
@@ -439,7 +439,7 @@ module OrderHelper
 
     country = store_user.store_country
 
-    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
+    drivers = Driver.within(50, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country, account_blocked: false).where.not(id: invalid_drivers)
 
     # Fetch all online drivers who have no orders and who have no ongoing orders
 
@@ -465,7 +465,7 @@ module OrderHelper
 
     country = store_user.store_country
 
-    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country).where.not(id: invalid_drivers)
+    drivers = Driver.within(7, :origin=> [store_latitude, store_longitude]).where(status: 1, country: country, account_blocked: false).where.not(id: invalid_drivers)
 
     # Fetch all online drivers who have no orders and who have no ongoing orders
 

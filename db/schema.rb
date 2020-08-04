@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_07_31_084306) do
+ActiveRecord::Schema.define(version: 2020_08_04_090655) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -107,6 +107,7 @@ ActiveRecord::Schema.define(version: 2020_07_31_084306) do
     t.text "national_id_pictures", null: false
     t.text "profile_picture", null: false
     t.text "vehicle_registration_document_pictures", null: false
+    t.boolean "account_blocked", default: false
     t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
   end
 
