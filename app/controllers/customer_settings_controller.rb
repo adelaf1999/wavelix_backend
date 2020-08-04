@@ -5,6 +5,25 @@ class CustomerSettingsController < ApplicationController
   include MoneyHelper
 
   include PaymentsHelper
+  
+
+  def update_building_name
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      building_name = params[:building_name]
+
+      if building_name != nil
+
+        customer_user.update!(building_name: building_name)
+
+      end
+
+    end
+
+  end
 
 
   def change_default_currency
