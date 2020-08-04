@@ -669,7 +669,9 @@ module OrderHelper
 
     customer = {
         name: customer_user.full_name,
-        phone_number: customer_user.phone_number
+        phone_number: customer_user.phone_number,
+        building_name: customer_user.building_name,
+        apartment_floor: customer_user.apartment_floor
     }
 
     order[:customer] = customer
