@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_04_120643) do
+ActiveRecord::Schema.define(version: 2020_08_04_130605) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -183,6 +183,8 @@ ActiveRecord::Schema.define(version: 2020_08_04_120643) do
     t.text "drivers_canceled_order", default: [], array: true
     t.integer "order_request_id", null: false
     t.string "stripe_payment_intent", null: false
+    t.string "tracking_website_url", default: ""
+    t.string "tracking_number", default: ""
   end
 
   create_table "phone_numbers", force: :cascade do |t|
