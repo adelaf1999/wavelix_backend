@@ -5,7 +5,25 @@ class CustomerSettingsController < ApplicationController
   include MoneyHelper
 
   include PaymentsHelper
-  
+
+
+  def update_apartment_floor
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      apartment_floor = params[:apartment_floor]
+
+      if apartment_floor != nil
+
+        customer_user.update!(apartment_floor: apartment_floor)
+
+      end
+
+    end
+
+  end
 
   def update_building_name
 

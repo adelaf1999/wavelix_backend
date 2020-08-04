@@ -184,6 +184,8 @@ Rails.application.routes.draw do
 
   patch '/update-building-name' => 'customer_settings#update_building_name'
 
+  patch '/update-apartment-floor' => 'customer_settings#update_apartment_floor'
+
   # Stores Routes
 
   get '/get-store-currency' => 'stores#get_store_currency'

@@ -176,8 +176,7 @@ module  Auth
                       @resource.customer_user.building_name = building_name
                     end
 
-                    if apartment_floor != nil && apartment_floor.to_s.length > 0 && is_positive_integer?(apartment_floor.to_s)
-                      apartment_floor = apartment_floor.to_i
+                    if apartment_floor != nil && apartment_floor.to_s.length > 0
                       @resource.customer_user.apartment_floor = apartment_floor
                     end
 
