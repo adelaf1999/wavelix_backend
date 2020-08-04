@@ -1054,6 +1054,10 @@ module OrderHelper
 
     customer[:number] = customer_user.phone_number
 
+    customer[:building_name] = customer_user.building_name
+
+    customer[:apartment_floor] = customer_user.apartment_floor
+
     driver_order[:customer] = customer
 
 
