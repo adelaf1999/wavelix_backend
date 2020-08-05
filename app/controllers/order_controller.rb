@@ -9,6 +9,60 @@ class OrderController < ApplicationController
   before_action :authenticate_user!
 
 
+  def add_tracking_information
+
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      order = store_user.orders.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if order.store_handles_delivery && order.ongoing?
+
+          tracking_website_url = params[:tracking_website_url]
+
+          if tracking_website_url != nil
+
+            order.update!(tracking_website_url: tracking_website_url)
+
+          end
+
+          tracking_number = params[:tracking_number]
+
+          if tracking_number != nil
+
+            order.update!(tracking_number: tracking_number)
+
+          end
+
+          @success = true
+
+          send_store_orders(order)
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+
+        @success = false
+
+      end
+
+
+    end
+
+
+
+  end
+
+
   def search_store_orders
 
     if current_user.store_user?

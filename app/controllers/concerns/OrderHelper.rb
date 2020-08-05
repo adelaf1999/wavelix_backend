@@ -577,6 +577,11 @@ module OrderHelper
 
       end
 
+      order[:tracking_website_url] = store_order.tracking_website_url
+
+      order[:tracking_number] = store_order.tracking_number
+
+
     else
 
       order[:driver_arrived_to_delivery_location] = store_order.driver_arrived_to_delivery_location
