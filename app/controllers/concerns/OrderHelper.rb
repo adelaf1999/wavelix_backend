@@ -788,6 +788,11 @@ module OrderHelper
 
         end
 
+        order[:tracking_website_url] = customer_order.tracking_website_url
+
+        order[:tracking_number] = customer_order.tracking_number
+
+
       else
 
         order[:driver_fulfilled_order] = customer_order.driver_fulfilled_order
