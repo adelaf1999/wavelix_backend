@@ -173,20 +173,49 @@ module OrderHelper
 
     if store_handles_delivery
 
+      total_fee =  (balance_transaction.fee.to_f / 100.to_f) +   ( (our_commission_fee / 100) * net_amount )
+
+      total_fee = total_fee.to_f.round(2)
+
       net_amount = (net_amount - ( (our_commission_fee / 100) * net_amount )).round(2)
+
+      net_amount = convert_amount(net_amount, 'USD', store_user.currency)
+
+      total_fee = convert_amount(total_fee, 'USD', store_user.currency)
+
+
+      Payment.create!(
+                 amount: net_amount + total_fee,
+                 fee: total_fee,
+                 net: net_amount,
+                 currency: store_user.currency,
+                 store_user_id: store_user.id
+      )
 
     else
 
       net_amount = (net_amount - order.delivery_fee.to_f).round(2)
 
+      total_fee =  (balance_transaction.fee.to_f / 100.to_f) +   ( (our_commission_fee / 100) * net_amount )
+
+      total_fee = total_fee.to_f.round(2)
+
       net_amount = (net_amount - ( (our_commission_fee / 100) * net_amount )).round(2)
+
+      net_amount = convert_amount(net_amount, 'USD', store_user.currency)
+
+      total_fee = convert_amount(total_fee, 'USD', store_user.currency)
+
+      Payment.create!(
+          amount: net_amount + total_fee,
+          fee: total_fee,
+          net: net_amount,
+          currency: store_user.currency,
+          store_user_id: store_user.id
+      )
 
 
     end
-
-    # Convert the net amount to store user currency
-
-    net_amount = convert_amount(net_amount, 'USD', store_user.currency)
 
     store_user.increment!(:balance, net_amount)
 
