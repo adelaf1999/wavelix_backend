@@ -123,21 +123,37 @@ module OrderHelper
 
   def increment_driver_balance(order, driver)
 
-    delivery_fee = order.delivery_fee.to_f.round(2)
+    net_amount = order.delivery_fee.to_f.round(2)
 
     our_commission_fee = get_drivers_commission_fee.to_f / 100.0
 
-    # Subtract our commission fee from delivery fee
+    # Subtract our commission fee from net amount
 
-    delivery_fee = delivery_fee - ( our_commission_fee * delivery_fee )
+    fee = our_commission_fee * net_amount
 
-    # Convert delivery fee to driver balance currency
+    fee = fee.to_f.round(2)
 
-    delivery_fee = convert_amount(delivery_fee, 'USD', driver.currency)
+    net_amount = net_amount - fee
 
-    delivery_fee = delivery_fee.round(2)
+    # Convert net amount and fee to driver balance currency
 
-    driver.increment!(:balance, delivery_fee)
+    net_amount = convert_amount(net_amount, 'USD', driver.currency)
+
+    fee = convert_amount(fee, 'USD', driver.currency)
+
+    net_amount = net_amount.round(2)
+
+    driver.increment!(:balance, net_amount)
+
+    Payment.create!(
+        amount: net_amount + fee,
+        fee: fee,
+        net: net_amount,
+        currency: driver.currency,
+        store_user_id: driver.id
+    )
+
+
 
   end
 
