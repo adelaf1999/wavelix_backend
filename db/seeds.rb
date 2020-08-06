@@ -5,3 +5,14 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
+
+if Rails.env.production? || Rails.env.development?
+
+  if EarningAccount.find_by(currency: 'USD').nil?
+
+    EarningAccount.create!(currency: 'USD')
+
+  end
+
+
+end
