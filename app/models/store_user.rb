@@ -3,12 +3,23 @@ class StoreUser < ApplicationRecord
     include OrderHelper
 
     belongs_to :store, touch: true
+
     mount_uploader :store_business_license, BusinessLicenseUploader
+
     serialize :store_address, Hash
+
     has_many :categories
+
     enum status: {unverified: 0, verified: 1}
+
     has_many :orders
+
     has_one :schedule, dependent: :destroy
+
+    has_many :payments
+
+    has_many :withdrawals
+
     after_create :save_street_name
 
 

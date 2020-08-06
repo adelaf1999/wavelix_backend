@@ -8,6 +8,10 @@ class Driver < ApplicationRecord
 
   has_many :orders
 
+  has_many :payments
+
+  has_many :withdrawals
+
   enum status: { offline: 0, online: 1 }
 
   mount_uploader :profile_picture, ImageUploader

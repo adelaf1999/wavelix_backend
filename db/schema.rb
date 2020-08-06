@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_04_130605) do
+ActiveRecord::Schema.define(version: 2020_08_06_122629) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -111,6 +111,13 @@ ActiveRecord::Schema.define(version: 2020_08_04_130605) do
     t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
   end
 
+  create_table "earnings", force: :cascade do |t|
+    t.decimal "amount", null: false
+    t.string "currency", default: "USD"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
   create_table "follows", force: :cascade do |t|
     t.integer "follower_id"
     t.integer "followed_id"
@@ -185,6 +192,17 @@ ActiveRecord::Schema.define(version: 2020_08_04_130605) do
     t.string "stripe_payment_intent", null: false
     t.string "tracking_website_url", default: ""
     t.string "tracking_number", default: ""
+  end
+
+  create_table "payments", force: :cascade do |t|
+    t.decimal "amount", null: false
+    t.decimal "fee", null: false
+    t.decimal "net", null: false
+    t.string "currency", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.integer "store_user_id"
+    t.integer "driver_id"
   end
 
   create_table "phone_numbers", force: :cascade do |t|
@@ -291,6 +309,15 @@ ActiveRecord::Schema.define(version: 2020_08_04_130605) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
     t.index ["username"], name: "index_users_on_username", unique: true
+  end
+
+  create_table "withdrawals", force: :cascade do |t|
+    t.decimal "amount", null: false
+    t.string "currency", null: false
+    t.integer "store_user_id"
+    t.integer "driver_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
 end
