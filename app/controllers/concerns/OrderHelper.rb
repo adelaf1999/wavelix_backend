@@ -135,6 +135,12 @@ module OrderHelper
 
     net_amount = net_amount - fee
 
+    # Create Earning and increment earning wallet in USD
+
+    Earning.create!(amount: fee)
+
+    increment_earning_account_usd(fee)
+
     # Convert net amount and fee to driver balance currency
 
     net_amount = convert_amount(net_amount, 'USD', driver.currency)
@@ -154,6 +160,25 @@ module OrderHelper
     )
 
 
+
+  end
+
+
+  def increment_earning_account_usd(amount)
+
+    earning_account = EarningAccount.find_by(currency: 'USD')
+
+    if earning_account == nil
+
+      earning_account = EarningAccount.create!(currency: 'USD')
+
+      earning_account.increment!(:balance, amount)
+
+    else
+
+      earning_account.increment!(:balance, amount)
+
+    end
 
   end
 
@@ -189,11 +214,23 @@ module OrderHelper
 
     if store_handles_delivery
 
-      total_fee =  (balance_transaction.fee.to_f / 100.to_f) +   ( (our_commission_fee / 100) * net_amount )
+      application_fee = (our_commission_fee / 100) * net_amount
+
+      application_fee = application_fee.to_f.round(2)
+
+      total_fee =  (balance_transaction.fee.to_f / 100.to_f) + application_fee
 
       total_fee = total_fee.to_f.round(2)
 
-      net_amount = (net_amount - ( (our_commission_fee / 100) * net_amount )).round(2)
+      net_amount = (net_amount - application_fee).round(2)
+
+      # Create Earning and increment earning wallet in USD
+
+      Earning.create!(amount: application_fee)
+
+      increment_earning_account_usd(application_fee)
+
+      # Create Store Payment
 
       net_amount = convert_amount(net_amount, 'USD', store_user.currency)
 
@@ -210,13 +247,30 @@ module OrderHelper
 
     else
 
+
+      # Subtract delivery fee from net amount
+
       net_amount = (net_amount - order.delivery_fee.to_f).round(2)
 
-      total_fee =  (balance_transaction.fee.to_f / 100.to_f) +   ( (our_commission_fee / 100) * net_amount )
+      application_fee = (our_commission_fee / 100) * net_amount
+
+      application_fee = application_fee.to_f.round(2)
+
+      total_fee =  (balance_transaction.fee.to_f / 100.to_f) + application_fee
 
       total_fee = total_fee.to_f.round(2)
 
-      net_amount = (net_amount - ( (our_commission_fee / 100) * net_amount )).round(2)
+
+      # Create Earning and increment earning wallet in USD
+
+      Earning.create!(amount: application_fee)
+
+      increment_earning_account_usd(application_fee)
+
+
+      # Create Store Payment
+
+      net_amount = (net_amount - application_fee).round(2)
 
       net_amount = convert_amount(net_amount, 'USD', store_user.currency)
 
