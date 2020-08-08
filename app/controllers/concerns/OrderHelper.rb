@@ -156,7 +156,7 @@ module OrderHelper
         fee: fee,
         net: net_amount,
         currency: driver.currency,
-        store_user_id: driver.id
+        driver_id: driver.id
     )
 
 
