@@ -16,7 +16,7 @@ class StoreBalancesController < ApplicationController
 
       @payments = []
 
-      store_user.payments.each do |payment|
+      store_user.payments.order(created_at: :desc).each do |payment|
 
         timezone = get_store_timezone_name(store_user)
 
