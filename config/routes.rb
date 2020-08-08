@@ -244,7 +244,7 @@ Rails.application.routes.draw do
 
   # Store Balances Routes
 
-  get '/store-balances' => 'store_balances#index'
+  get '/store-balances' => 'balances#store_balances'
 
 
 end

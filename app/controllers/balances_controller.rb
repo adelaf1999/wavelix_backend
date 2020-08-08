@@ -1,10 +1,10 @@
-class StoreBalancesController < ApplicationController
+class BalancesController < ApplicationController
 
   before_action :authenticate_user!
 
   include OrderHelper
 
-  def index
+  def store_balances
 
     if current_user.store_user?
 
@@ -23,10 +23,10 @@ class StoreBalancesController < ApplicationController
         date = payment.created_at.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d')
 
         @payments.push({
-                          amount: payment.amount.to_f.round(2),
-                          fee: payment.fee.to_f.round(2),
-                          net: payment.net.to_f.round(2),
-                          date: date
+                           amount: payment.amount.to_f.round(2),
+                           fee: payment.fee.to_f.round(2),
+                           net: payment.net.to_f.round(2),
+                           date: date
                        })
 
       end
@@ -34,6 +34,5 @@ class StoreBalancesController < ApplicationController
     end
 
   end
-
 
 end
