@@ -151,12 +151,19 @@ module OrderHelper
 
     driver.increment!(:balance, net_amount)
 
+    # Since driver wont be far from store they will share same timezone
+
+    store_user = StoreUser.find_by(id: order.store_user_id)
+
+    timezone = get_store_timezone_name(store_user)
+
     Payment.create!(
         amount: net_amount + fee,
         fee: fee,
         net: net_amount,
         currency: driver.currency,
-        driver_id: driver.id
+        driver_id: driver.id,
+        timezone: timezone
     )
 
 
@@ -209,6 +216,10 @@ module OrderHelper
 
     our_commission_fee = get_products_commission_fee - stripe_commission_fee
 
+    # Get Store timezone
+
+    timezone = get_store_timezone_name(store_user)
+
 
     # Calculate net amount for store, it might include the delivery fee so subtract that if needed
 
@@ -236,13 +247,13 @@ module OrderHelper
 
       total_fee = convert_amount(total_fee, 'USD', store_user.currency)
 
-
       Payment.create!(
                  amount: net_amount + total_fee,
                  fee: total_fee,
                  net: net_amount,
                  currency: store_user.currency,
-                 store_user_id: store_user.id
+                 store_user_id: store_user.id,
+                 timezone: timezone
       )
 
     else
@@ -281,7 +292,8 @@ module OrderHelper
           fee: total_fee,
           net: net_amount,
           currency: store_user.currency,
-          store_user_id: store_user.id
+          store_user_id: store_user.id,
+          timezone: timezone
       )
 
 

@@ -242,9 +242,10 @@ Rails.application.routes.draw do
 
   delete '/destroy-card' => 'payments#destroy_card'
 
-  # Store Balances Routes
+  # Balances Routes
 
   get '/store-balances' => 'balances#store_balances'
 
+  get '/driver-balances' => 'balances#driver_balances'
 
 end

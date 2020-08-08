@@ -18,9 +18,7 @@ class BalancesController < ApplicationController
 
       store_user.payments.order(created_at: :desc).each do |payment|
 
-        timezone = get_store_timezone_name(store_user)
-
-        date = payment.created_at.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d')
+        date = payment.created_at.to_datetime.in_time_zone(payment.timezone).strftime('%Y-%m-%d')
 
         @payments.push({
                            amount: payment.amount.to_f.round(2),
@@ -28,6 +26,42 @@ class BalancesController < ApplicationController
                            net: payment.net.to_f.round(2),
                            date: date
                        })
+
+      end
+
+    end
+
+  end
+
+  def driver_balances
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      driver = Driver.find_by(customer_user_id: customer_user.id)
+
+      if driver != nil
+
+        @balance = driver.balance.to_f.round(2)
+
+        @currency = driver.currency
+
+        @payments = []
+
+        driver.payments.order(created_at: :desc).each do |payment|
+
+          date = payment.created_at.to_datetime.in_time_zone(payment.timezone).strftime('%Y-%m-%d')
+
+          @payments.push({
+                             amount: payment.amount.to_f.round(2),
+                             fee: payment.fee.to_f.round(2),
+                             net: payment.net.to_f.round(2),
+                             date: date
+                         })
+
+        end
+
 
       end
 
