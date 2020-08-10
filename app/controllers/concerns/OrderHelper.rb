@@ -123,49 +123,58 @@ module OrderHelper
 
   def increment_driver_balance(order, driver)
 
-    net_amount = order.delivery_fee.to_f.round(2)
+    payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+    balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
+
+
+    total_amount = balance_transaction.amount.to_f / 100.to_f
+
+    net_amount = balance_transaction.net.to_f / 100.to_f
+
+    delivery_fee = order.delivery_fee.to_f.round(2)
+
+    net_driver =  (delivery_fee / total_amount) * net_amount
 
     our_commission_fee = get_drivers_commission_fee.to_f / 100.0
 
-    # Subtract our commission fee from net amount
+    earning_driver = net_driver * our_commission_fee
 
-    fee = our_commission_fee * net_amount
+    earning_driver = earning_driver.round(2)
 
-    fee = fee.to_f.round(2)
 
-    net_amount = net_amount - fee
+    net_driver = net_driver.round(2)
 
-    # Create Earning and increment earning wallet in USD
+    net_driver = net_driver - earning_driver
 
-    Earning.create!(amount: fee)
+    total_fee = delivery_fee - net_driver
 
-    increment_earning_account_usd(fee)
+    total_fee = total_fee.round(2)
 
-    # Convert net amount and fee to driver balance currency
 
-    net_amount = convert_amount(net_amount, 'USD', driver.currency)
+    Earning.create!(amount: earning_driver)
 
-    fee = convert_amount(fee, 'USD', driver.currency)
 
-    net_amount = net_amount.round(2)
+    net_driver = convert_amount(net_driver, 'USD', driver.currency).round(2)
 
-    driver.increment!(:balance, net_amount)
+    total_fee = convert_amount(total_fee, 'USD', driver.currency).round(2)
 
-    # Since driver wont be far from store they will share same timezone
+
+    driver.increment!(:balance, net_driver)
 
     store_user = StoreUser.find_by(id: order.store_user_id)
 
     timezone = get_store_timezone_name(store_user)
 
+
     Payment.create!(
-        amount: net_amount + fee,
-        fee: fee,
-        net: net_amount,
+        amount: total_fee + net_driver,
+        fee: total_fee,
+        net: net_driver,
         currency: driver.currency,
         driver_id: driver.id,
         timezone: timezone
     )
-
 
 
   end
@@ -196,110 +205,109 @@ module OrderHelper
 
     store_handles_delivery = order.store_handles_delivery
 
+
     payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
     balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
 
-    # Get total amount charged and the net amount remaining after stripe fees applied
 
     total_amount = balance_transaction.amount.to_f / 100.to_f
 
     net_amount = balance_transaction.net.to_f / 100.to_f
 
-    # Calculate the commission fee charged by stripe
 
     stripe_commission_fee = ((total_amount - (net_amount + 0.3)) / (total_amount)) * 100
 
     stripe_commission_fee = stripe_commission_fee.round(1)
 
-    # Calculate remaining commission fee for us
 
     our_commission_fee = get_products_commission_fee - stripe_commission_fee
 
-    # Get Store timezone
 
     timezone = get_store_timezone_name(store_user)
 
 
-    # Calculate net amount for store, it might include the delivery fee so subtract that if needed
-
     if store_handles_delivery
 
-      application_fee = (our_commission_fee / 100) * net_amount
+      earning_store = (our_commission_fee / 100) * net_amount
 
-      application_fee = application_fee.to_f.round(2)
 
-      total_fee =  (balance_transaction.fee.to_f / 100.to_f) + application_fee
+      total_fee =  (balance_transaction.fee.to_f / 100.to_f) + earning_store
 
-      total_fee = total_fee.to_f.round(2)
+      net_store = net_amount - earning_store
 
-      net_amount = (net_amount - application_fee).round(2)
 
-      # Create Earning and increment earning wallet in USD
+      earning_store = earning_store.to_f.round(2)
 
-      Earning.create!(amount: application_fee)
+      Earning.create!(amount: earning_store)
 
-      increment_earning_account_usd(application_fee)
 
-      # Create Store Payment
+      net_store = convert_amount(net_store, 'USD', store_user.currency).round(2)
 
-      net_amount = convert_amount(net_amount, 'USD', store_user.currency)
+      total_fee = convert_amount(total_fee, 'USD', store_user.currency).round(2)
 
-      total_fee = convert_amount(total_fee, 'USD', store_user.currency)
+
 
       Payment.create!(
-                 amount: net_amount + total_fee,
+                 amount: net_store + total_fee,
                  fee: total_fee,
-                 net: net_amount,
+                 net: net_store,
                  currency: store_user.currency,
                  store_user_id: store_user.id,
                  timezone: timezone
       )
 
+
     else
 
 
-      # Subtract delivery fee from net amount
+      delivery_fee = order.delivery_fee.to_f.round(2)
 
-      net_amount = (net_amount - order.delivery_fee.to_f).round(2)
+      products_price = total_amount - delivery_fee
 
-      application_fee = (our_commission_fee / 100) * net_amount
-
-      application_fee = application_fee.to_f.round(2)
-
-      total_fee =  (balance_transaction.fee.to_f / 100.to_f) + application_fee
-
-      total_fee = total_fee.to_f.round(2)
+      net_store =  (products_price / total_amount) * net_amount
 
 
-      # Create Earning and increment earning wallet in USD
-
-      Earning.create!(amount: application_fee)
-
-      increment_earning_account_usd(application_fee)
+      earning_store = net_store * (our_commission_fee / 100)
 
 
-      # Create Store Payment
+      earning_store = earning_store.round(2)
 
-      net_amount = (net_amount - application_fee).round(2)
+      net_store = net_store.round(2)
 
-      net_amount = convert_amount(net_amount, 'USD', store_user.currency)
 
-      total_fee = convert_amount(total_fee, 'USD', store_user.currency)
+      net_store = net_store - earning_store
+
+      total_fee = products_price - net_store
+
+      total_fee = total_fee.round(2)
+
+
+
+
+      Earning.create!(amount: earning_store)
+
+
+      net_store = convert_amount(net_store, 'USD', store_user.currency).round(2)
+
+      total_fee = convert_amount(total_fee, 'USD', store_user.currency).round(2)
+
 
       Payment.create!(
-          amount: net_amount + total_fee,
+          amount: net_store + total_fee,
           fee: total_fee,
-          net: net_amount,
+          net: net_store,
           currency: store_user.currency,
           store_user_id: store_user.id,
           timezone: timezone
       )
 
 
+
+
     end
 
-    store_user.increment!(:balance, net_amount)
+    store_user.increment!(:balance, net_store)
 
 
   end
@@ -1086,7 +1094,7 @@ module OrderHelper
 
     driver_order[:ordered_at] = order.created_at.to_datetime.in_time_zone(timezone).strftime('%Y-%m-%d %-I:%M %p')
 
-    delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
+    delivery_fee = convert_amount(order.delivery_fee.to_f.round(2), order.delivery_fee_currency, driver.currency)
 
     driver_order[:delivery_fee] = delivery_fee
 
