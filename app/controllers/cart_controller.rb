@@ -114,24 +114,48 @@ class CartController < ApplicationController
 
                             store_profile = store_user.store.profile
 
+                            handles_delivery = store_user.handles_delivery
+
+                            has_sensitive_products = store_user.has_sensitive_products
+
                             distance = calculate_distance_km(delivery_location, store_user.store_address )
 
-                            if distance <= 100
+
+                            if handles_delivery
+
+                              maximum_delivery_distance = store_user.maximum_delivery_distance
+
+                              if maximum_delivery_distance != nil
+
+                                if distance <= maximum_delivery_distance
+
+                                  if @delivery_options[store_user.id].nil?
+
+                                    @delivery_options[store_user.id] = {
+                                        store_name: store_user.store_name,
+                                        store_logo: store_profile.profile_picture.url,
+                                        options: nil,
+                                        handles_delivery: handles_delivery
+                                    }
+
+                                  end
 
 
-                              if distance > 25
 
-                                if @delivery_options[store_user.id].nil?
+                                else
 
+                                  has_outside_zone_items = true
 
-                                  @delivery_options[store_user.id] = {
-                                      store_name: store_user.store_name,
-                                      store_logo: store_profile.profile_picture.url,
-                                      options: { 1 => 'Exclusive Delivery' }
-                                  }
+                                  @outside_zone_items.push(cart_item_id)
+
+                                  if !outside_zone_stores.include?(store_user.store_name)
+
+                                    outside_zone_stores.push(store_user.store_name)
+
+                                  end
+
 
                                 end
-
 
                               else
 
@@ -141,25 +165,113 @@ class CartController < ApplicationController
                                   @delivery_options[store_user.id] = {
                                       store_name: store_user.store_name,
                                       store_logo: store_profile.profile_picture.url,
-                                      options: { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' }
+                                      options: nil,
+                                      handles_delivery: handles_delivery
                                   }
 
                                 end
 
+
+
                               end
+
 
 
                             else
 
-                              has_outside_zone_items = true
 
-                              @outside_zone_items.push(cart_item_id)
+                              if has_sensitive_products
 
-                              if !outside_zone_stores.include?(store_user.store_name)
+                                if distance <= 7
 
-                                outside_zone_stores.push(store_user.store_name)
+                                  # Only exclusive delivery available
+
+                                  if @delivery_options[store_user.id].nil?
+
+
+                                    @delivery_options[store_user.id] = {
+                                        store_name: store_user.store_name,
+                                        store_logo: store_profile.profile_picture.url,
+                                        options: { 1 => 'Exclusive Delivery' },
+                                        handles_delivery: handles_delivery
+                                    }
+
+                                  end
+
+
+                                else
+
+                                  has_outside_zone_items = true
+
+                                  @outside_zone_items.push(cart_item_id)
+
+                                  if !outside_zone_stores.include?(store_user.store_name)
+
+                                    outside_zone_stores.push(store_user.store_name)
+
+                                  end
+
+
+                                end
+
+
+
+                              else
+
+
+                                if distance <= 100
+
+
+                                  if distance > 25
+
+                                    if @delivery_options[store_user.id].nil?
+
+
+                                      @delivery_options[store_user.id] = {
+                                          store_name: store_user.store_name,
+                                          store_logo: store_profile.profile_picture.url,
+                                          options: { 1 => 'Exclusive Delivery' },
+                                          handles_delivery: handles_delivery
+                                      }
+
+                                    end
+
+
+                                  else
+
+
+                                    if @delivery_options[store_user.id].nil?
+
+                                      @delivery_options[store_user.id] = {
+                                          store_name: store_user.store_name,
+                                          store_logo: store_profile.profile_picture.url,
+                                          options: { 0 => 'Standard Delivery', 1 => 'Exclusive Delivery' },
+                                          handles_delivery: handles_delivery
+                                      }
+
+                                    end
+
+                                  end
+
+
+                                else
+
+                                  has_outside_zone_items = true
+
+                                  @outside_zone_items.push(cart_item_id)
+
+                                  if !outside_zone_stores.include?(store_user.store_name)
+
+                                    outside_zone_stores.push(store_user.store_name)
+
+                                  end
+
+                                end
+
 
                               end
+
+
 
                             end
 
