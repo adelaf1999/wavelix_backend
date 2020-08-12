@@ -5,6 +5,37 @@ class PaymentsController < ApplicationController
   include PaymentsHelper
 
 
+  def check_card_setup
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      customer_token = customer_user.stripe_customer_token
+
+      stripe_customer = Stripe::Customer.retrieve(customer_token)
+
+      customer_card = stripe_customer.default_source
+
+      if customer_card != nil
+
+        @has_saved_card = true
+
+      else
+
+        @has_saved_card = false
+
+
+      end
+
+
+    end
+
+  end
+
+
+
+
   def destroy_card
 
     if current_user.customer_user?

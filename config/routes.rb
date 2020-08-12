@@ -242,6 +242,8 @@ Rails.application.routes.draw do
 
   delete '/destroy-card' => 'payments#destroy_card'
 
+  get '/check-card-setup' => 'payments#check_card_setup'
+
   # Balances Routes
 
   get '/store-balances' => 'balances#store_balances'
