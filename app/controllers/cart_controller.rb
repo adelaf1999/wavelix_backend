@@ -121,7 +121,70 @@ class CartController < ApplicationController
 
             if is_valid
 
-              @success = true
+
+              delivery_location = params[:delivery_location]
+
+              if delivery_location != nil
+
+                delivery_location = eval(delivery_location)
+
+                if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+                  latitude = delivery_location[:latitude]
+
+                  longitude = delivery_location[:longitude]
+
+                  if latitude != nil && longitude != nil
+
+                    if is_decimal_number?(latitude) && is_decimal_number?(longitude)
+
+                      latitude = latitude.to_d
+
+                      longitude = longitude.to_d
+
+                      geo_location = Geocoder.search([latitude, longitude])
+
+                      if geo_location.size > 0
+
+                        @success = true
+
+
+                      else
+
+                        @success = false
+
+                      end
+
+
+
+                    else
+
+                      @success = false
+
+                    end
+
+                  else
+
+                    @success = false
+
+                  end
+
+
+                else
+
+                  @success = false
+
+                end
+
+
+              else
+
+
+                @success = false
+
+              end
+
+
 
             else
 
@@ -129,7 +192,7 @@ class CartController < ApplicationController
 
             end
 
-
+            
 
 
           else
