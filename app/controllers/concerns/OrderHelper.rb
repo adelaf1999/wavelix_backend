@@ -1346,6 +1346,8 @@ module OrderHelper
   def is_order_type_valid?(order_type)
 
 
+    order_type = order_type.to_s
+
     res = /^(?<num>\d+)$/.match(order_type)
 
     if res == nil
