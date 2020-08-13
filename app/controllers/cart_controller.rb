@@ -148,6 +148,114 @@ class CartController < ApplicationController
 
                         @success = true
 
+                        @total = 0
+
+                        customer_currency = customer_user.default_currency
+
+                        @currency = customer_currency
+
+                        @fees = []
+
+                        stores_cart_items.each do |store_cart_item|
+
+                          fee = {}
+
+                          store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+                          store_profile = store_user.store.profile
+
+                          store_name = store_user.store_name
+
+                          store_logo = store_profile.profile_picture.url
+
+                          items_currency = store_user.currency
+
+                          store_location = store_user.store_address
+
+                          fee[:store_name] = store_name
+
+                          fee[:store_logo] = store_logo
+
+
+                          items_price = 0
+
+                          cart_item_ids = store_cart_item[:cart_item_ids]
+
+                          cart_item_ids.each do |cart_item_id|
+
+                            cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                            product = Product.find_by(id: cart_item.product_id)
+
+                            price = product.price
+
+                            quantity = cart_item.quantity
+
+                            items_price += (price * quantity)
+
+
+                          end
+
+
+
+                          order_type = store_cart_item[:order_type]
+
+                          if order_type != nil
+
+                            order_type = order_type.to_i
+
+                            distance = calculate_distance_km(delivery_location, store_location )
+
+                            if order_type == 0
+
+                              delivery_fee = calculate_standard_delivery_fee_usd(distance)
+
+
+                            else
+
+                              delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+
+                            end
+
+
+                            items_price = convert_amount(items_price, items_currency, customer_currency )
+
+                            delivery_fee = convert_amount(delivery_fee, 'USD', customer_currency)
+
+                            total = items_price + delivery_fee
+
+                            @total += total
+
+
+                            fee[:items_price] = items_price
+
+                            fee[:delivery_fee] = delivery_fee
+
+                            fee[:total] = total
+
+                            @fees.push(fee)
+
+
+                          else
+
+                            items_price = convert_amount(items_price, items_currency, customer_currency )
+
+                            total = items_price
+
+                            @total += total
+
+                            fee[:items_price] = items_price
+
+                            fee[:total] = total
+
+                            @fees.push(fee)
+
+                          end
+
+
+                        end
+
 
                       else
 
