@@ -4,6 +4,159 @@ class CartController < ApplicationController
 
   include OrderHelper
 
+
+  def get_stores_fees
+
+    if current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if customer_user.phone_number_verified?
+
+        cart = customer_user.cart
+
+        stores_cart_items = params[:stores_cart_items]
+
+        if stores_cart_items != nil
+
+          stores_cart_items = eval(stores_cart_items)
+
+          if stores_cart_items.instance_of?(Array) && stores_cart_items.size > 0
+
+            is_valid = true
+
+            stores_cart_items.each do |store_cart_item|
+
+              if is_valid
+
+                store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+                if store_user != nil
+
+
+                  # Validate Order Type if present
+
+                  order_type = store_cart_item[:order_type]
+
+                  if order_type != nil && !is_order_type_valid?(order_type)
+
+                    is_valid = false
+
+                    break
+
+                  end
+
+
+                  cart_item_ids = store_cart_item[:cart_item_ids]
+
+                  if cart_item_ids != nil
+
+
+                    if cart_item_ids.instance_of?(Array) && cart_item_ids.size > 0
+
+
+                      cart_item_ids.each do |cart_item_id|
+
+                        cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                        if cart_item != nil
+
+                          if cart_item.store_user_id != store_user.id
+
+                            is_valid = false
+
+                            break
+
+                          end
+
+
+                        else
+
+                          is_valid = false
+
+                          break
+
+                        end
+
+
+                      end
+
+
+                    else
+
+                      is_valid = false
+
+                      break
+
+                    end
+
+
+                  else
+
+                    is_valid = false
+
+                    break
+
+                  end
+
+
+                else
+
+                  is_valid = false
+
+                  break
+
+                end
+
+
+              else
+
+                break
+
+              end
+
+
+            end
+
+
+            if is_valid
+
+              @success = true
+
+            else
+
+              @success = false
+
+            end
+
+
+
+
+          else
+
+            @success = false
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+
+  end
+
   def check_cart_delivery_location
 
     # error_codes
