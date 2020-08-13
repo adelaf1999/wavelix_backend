@@ -631,7 +631,8 @@ class CartController < ApplicationController
         product_picture: product.main_picture.url,
         store_logo: store_profile.profile_picture.url,
         stock_quantity: product.stock_quantity,
-        product_name: product.name
+        product_name: product.name,
+        store_user_id: store_user.id
     }
 
   end
