@@ -181,6 +181,8 @@ Rails.application.routes.draw do
 
   post '/get-stores-fees' => 'cart#get_stores_fees'
 
+  post '/place-orders' => 'cart#place_orders'
+
   # Customer Settings Routes
 
   get '/customer-settings' => 'customer_settings#index'

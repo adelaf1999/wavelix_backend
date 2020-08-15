@@ -5,6 +5,75 @@ class CartController < ApplicationController
   include OrderHelper
 
 
+
+  def place_orders
+
+    if current_user.customer_user?
+
+      required_params = [:stores_cart_items, :delivery_location]
+
+      if required_params_valid?(required_params)
+
+        customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+        stores_cart_items = eval(params[:stores_cart_items])
+
+        delivery_location = eval(params[:delivery_location])
+
+        if customer_user.phone_number_verified? && customer_user.payment_source_setup?
+
+          cart = customer_user.cart
+
+          if stores_cart_items_valid?(stores_cart_items, cart)
+
+            if are_stores_verified?(stores_cart_items)
+
+              if is_delivery_location_valid?(delivery_location)
+
+                # Validate that the customer and delivery location is in the store country
+
+              else
+
+                @success = false
+
+              end
+
+
+            else
+
+              @success = false
+
+            end
+
+
+          else
+
+            @success = false
+
+          end
+
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+  end
+
+
   def get_stores_fees
 
     if current_user.customer_user?
@@ -21,274 +90,132 @@ class CartController < ApplicationController
 
           stores_cart_items = eval(stores_cart_items)
 
-          if stores_cart_items.instance_of?(Array) && stores_cart_items.size > 0
+          if stores_cart_items_valid?(stores_cart_items, cart)
 
-            is_valid = true
+            delivery_location = params[:delivery_location]
 
-            stores_cart_items.each do |store_cart_item|
+            if delivery_location != nil
 
-              if is_valid
-
-                store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
-
-                if store_user != nil
+              delivery_location = eval(delivery_location)
 
 
-                  # Validate Order Type if present
+              if is_delivery_location_valid?(delivery_location)
 
-                  order_type = store_cart_item[:order_type]
+                @success = true
 
-                  if order_type != nil && !is_order_type_valid?(order_type)
+                @total = 0
 
-                    is_valid = false
+                customer_currency = customer_user.default_currency
 
-                    break
+                @currency = customer_currency
 
-                  end
+                @fees = []
 
+                stores_cart_items.each do |store_cart_item|
+
+                  fee = {}
+
+                  store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+                  store_profile = store_user.store.profile
+
+                  store_name = store_user.store_name
+
+                  store_logo = store_profile.profile_picture.url
+
+                  items_currency = store_user.currency
+
+                  store_location = store_user.store_address
+
+                  fee[:store_name] = store_name
+
+                  fee[:store_logo] = store_logo
+
+
+                  items_price = 0
 
                   cart_item_ids = store_cart_item[:cart_item_ids]
 
-                  if cart_item_ids != nil
+                  cart_item_ids.each do |cart_item_id|
 
+                    cart_item = cart.cart_items.find_by(id: cart_item_id)
 
-                    if cart_item_ids.instance_of?(Array) && cart_item_ids.size > 0
+                    product = Product.find_by(id: cart_item.product_id)
 
+                    price = product.price
 
-                      cart_item_ids.each do |cart_item_id|
+                    quantity = cart_item.quantity
 
-                        cart_item = cart.cart_items.find_by(id: cart_item_id)
+                    items_price += (price * quantity)
 
-                        if cart_item != nil
-
-                          if cart_item.store_user_id != store_user.id
-
-                            is_valid = false
-
-                            break
-
-                          end
-
-
-                        else
-
-                          is_valid = false
-
-                          break
-
-                        end
-
-
-                      end
-
-
-                    else
-
-                      is_valid = false
-
-                      break
-
-                    end
-
-
-                  else
-
-                    is_valid = false
-
-                    break
 
                   end
 
 
-                else
 
-                  is_valid = false
+                  order_type = store_cart_item[:order_type]
 
-                  break
+                  if order_type != nil
+
+                    order_type = order_type.to_i
+
+                    distance = calculate_distance_km(delivery_location, store_location )
+
+                    if order_type == 0
+
+                      delivery_fee = calculate_standard_delivery_fee_usd(distance)
+
+
+                    else
+
+                      delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+
+                    end
+
+
+                    items_price = convert_amount(items_price, items_currency, customer_currency )
+
+                    delivery_fee = convert_amount(delivery_fee, 'USD', customer_currency)
+
+                    total = items_price + delivery_fee
+
+                    @total += total
+
+
+                    fee[:items_price] = items_price
+
+                    fee[:delivery_fee] = delivery_fee
+
+                    fee[:total] = total
+
+                    @fees.push(fee)
+
+
+                  else
+
+                    items_price = convert_amount(items_price, items_currency, customer_currency )
+
+                    total = items_price
+
+                    @total += total
+
+                    fee[:items_price] = items_price
+
+                    fee[:total] = total
+
+                    @fees.push(fee)
+
+                  end
+
 
                 end
 
 
               else
-
-                break
-
-              end
-
-
-            end
-
-
-            if is_valid
-
-
-              delivery_location = params[:delivery_location]
-
-              if delivery_location != nil
-
-                delivery_location = eval(delivery_location)
-
-                if delivery_location.instance_of?(Hash) && !delivery_location.empty?
-
-                  latitude = delivery_location[:latitude]
-
-                  longitude = delivery_location[:longitude]
-
-                  if latitude != nil && longitude != nil
-
-                    if is_decimal_number?(latitude) && is_decimal_number?(longitude)
-
-                      latitude = latitude.to_d
-
-                      longitude = longitude.to_d
-
-                      geo_location = Geocoder.search([latitude, longitude])
-
-                      if geo_location.size > 0
-
-                        @success = true
-
-                        @total = 0
-
-                        customer_currency = customer_user.default_currency
-
-                        @currency = customer_currency
-
-                        @fees = []
-
-                        stores_cart_items.each do |store_cart_item|
-
-                          fee = {}
-
-                          store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
-
-                          store_profile = store_user.store.profile
-
-                          store_name = store_user.store_name
-
-                          store_logo = store_profile.profile_picture.url
-
-                          items_currency = store_user.currency
-
-                          store_location = store_user.store_address
-
-                          fee[:store_name] = store_name
-
-                          fee[:store_logo] = store_logo
-
-
-                          items_price = 0
-
-                          cart_item_ids = store_cart_item[:cart_item_ids]
-
-                          cart_item_ids.each do |cart_item_id|
-
-                            cart_item = cart.cart_items.find_by(id: cart_item_id)
-
-                            product = Product.find_by(id: cart_item.product_id)
-
-                            price = product.price
-
-                            quantity = cart_item.quantity
-
-                            items_price += (price * quantity)
-
-
-                          end
-
-
-
-                          order_type = store_cart_item[:order_type]
-
-                          if order_type != nil
-
-                            order_type = order_type.to_i
-
-                            distance = calculate_distance_km(delivery_location, store_location )
-
-                            if order_type == 0
-
-                              delivery_fee = calculate_standard_delivery_fee_usd(distance)
-
-
-                            else
-
-                              delivery_fee = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
-
-
-                            end
-
-
-                            items_price = convert_amount(items_price, items_currency, customer_currency )
-
-                            delivery_fee = convert_amount(delivery_fee, 'USD', customer_currency)
-
-                            total = items_price + delivery_fee
-
-                            @total += total
-
-
-                            fee[:items_price] = items_price
-
-                            fee[:delivery_fee] = delivery_fee
-
-                            fee[:total] = total
-
-                            @fees.push(fee)
-
-
-                          else
-
-                            items_price = convert_amount(items_price, items_currency, customer_currency )
-
-                            total = items_price
-
-                            @total += total
-
-                            fee[:items_price] = items_price
-
-                            fee[:total] = total
-
-                            @fees.push(fee)
-
-                          end
-
-
-                        end
-
-
-                      else
-
-                        @success = false
-
-                      end
-
-
-
-                    else
-
-                      @success = false
-
-                    end
-
-                  else
-
-                    @success = false
-
-                  end
-
-
-                else
-
-                  @success = false
-
-                end
-
-
-              else
-
 
                 @success = false
+
 
               end
 
@@ -296,11 +223,10 @@ class CartController < ApplicationController
 
             else
 
+
               @success = false
 
             end
-
-            
 
 
           else
@@ -308,6 +234,7 @@ class CartController < ApplicationController
             @success = false
 
           end
+
 
 
         else
@@ -937,6 +864,218 @@ class CartController < ApplicationController
 
 
   private
+
+
+  def is_delivery_location_valid?(delivery_location)
+
+    is_valid = true
+
+    if delivery_location.instance_of?(Hash) && !delivery_location.empty?
+
+      latitude = delivery_location[:latitude]
+
+      longitude = delivery_location[:longitude]
+
+      if latitude != nil && longitude != nil
+
+        if is_decimal_number?(latitude) && is_decimal_number?(longitude)
+
+          latitude = latitude.to_d
+
+          longitude = longitude.to_d
+
+          geo_location = Geocoder.search([latitude, longitude])
+
+          if geo_location.size == 0
+
+            is_valid = false
+
+          end
+
+
+        else
+
+          is_valid = false
+
+        end
+
+
+      else
+
+        is_valid = false
+
+      end
+
+
+    else
+
+      is_valid = false
+
+    end
+
+    is_valid
+
+  end
+
+
+  def are_stores_verified?(stores_cart_items)
+
+    is_valid = true
+
+    stores_cart_items.each do |store_cart_item|
+
+      store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+      if !store_user.verified?
+
+        is_valid = false
+
+        break
+
+      end
+
+    end
+
+    is_valid
+
+
+  end
+
+
+  def stores_cart_items_valid?(stores_cart_items, cart)
+
+    is_valid = true
+
+    if stores_cart_items.instance_of?(Array) && stores_cart_items.size > 0
+
+
+      stores_cart_items.each do |store_cart_item|
+
+        if is_valid
+
+          store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+          if store_user != nil
+
+
+            # Validate Order Type if present
+
+            order_type = store_cart_item[:order_type]
+
+            if order_type != nil && !is_order_type_valid?(order_type)
+
+              is_valid = false
+
+              break
+
+            end
+
+
+            cart_item_ids = store_cart_item[:cart_item_ids]
+
+            if cart_item_ids != nil
+
+
+              if cart_item_ids.instance_of?(Array) && cart_item_ids.size > 0
+
+
+                cart_item_ids.each do |cart_item_id|
+
+                  cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                  if cart_item != nil
+
+                    if cart_item.store_user_id != store_user.id
+
+                      is_valid = false
+
+                      break
+
+                    end
+
+
+                  else
+
+                    is_valid = false
+
+                    break
+
+                  end
+
+
+                end
+
+
+              else
+
+                is_valid = false
+
+                break
+
+              end
+
+
+            else
+
+              is_valid = false
+
+              break
+
+            end
+
+
+          else
+
+            is_valid = false
+
+            break
+
+          end
+
+
+        else
+
+          break
+
+        end
+
+
+      end
+
+
+
+    else
+
+      is_valid = false
+
+    end
+
+
+    is_valid
+
+
+  end
+
+  def required_params_valid?(required_params)
+
+    valid = true
+
+    required_params.each do |p|
+
+      if params[p] == nil || params[p].empty?
+
+        valid = false
+
+        break
+
+      end
+
+    end
+
+    valid
+
+
+  end
 
   def get_cart_item(cart_item)
 
