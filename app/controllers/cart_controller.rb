@@ -8,6 +8,10 @@ class CartController < ApplicationController
 
   def place_orders
 
+    # error_codes
+
+    # { 0: INVALID_CART_ITEMS }
+
     if current_user.customer_user?
 
       required_params = [:stores_cart_items, :delivery_location]
@@ -38,7 +42,82 @@ class CartController < ApplicationController
 
                 if cart_items_country_valid?(stores_cart_items, cart, customer_country, delivery_loc_country)
 
-                  @success = true
+                  # Validate the product availability , stock quantity and the quantity of each item ordered by the customer
+
+                  valid_cart_items = []
+
+                  @invalid_items = {}
+
+
+                  stores_cart_items.each do |store_cart_item|
+
+                    store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+                    cart_item_ids = store_cart_item[:cart_item_ids]
+
+                    cart_item_ids.each do |cart_item_id|
+
+                      cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                      product = Product.find_by(id: cart_item.product_id)
+
+                      if !product.product_available
+
+
+                        add_invalid_item(store_user, product, 'Product is no longer available')
+
+
+                      elsif product.stock_quantity != nil
+
+                        # Since product stock quantity is optional
+
+
+                        if product.stock_quantity == 0
+
+                          add_invalid_item(store_user, product, 'Product is out of stock')
+
+
+                        elsif cart_item.quantity > product.stock_quantity
+
+
+                          add_invalid_item(store_user, product, 'Quantity ordered is greater than stock quantity')
+
+
+                        end
+
+
+                        
+                      else
+
+                        valid_cart_items.push(cart_item)
+
+
+                      end
+
+
+                    end
+
+
+                  end
+
+
+                  if valid_cart_items.size > 0
+
+                    @success = true
+
+                  else
+
+                    @success = false
+
+                    @error_code = 0
+
+
+                  end
+
+
+
+
+
 
                 else
 
@@ -880,6 +959,43 @@ class CartController < ApplicationController
 
   private
 
+
+  def add_invalid_item(store_user, product, reason)
+
+    store_profile = store_user.store.profile
+
+    if @invalid_items[store_user.id].nil?
+
+      @invalid_items[store_user.id] = {
+          store_name: store_user.store_name,
+          store_logo: store_profile.profile_picture.url,
+          items: [
+              {
+                  product_name: product.name ,
+                  product_picture: product.main_picture.url,
+                  reason: reason
+              }
+          ]
+      }
+
+    else
+
+      items = @invalid_items[store_user.id][:items]
+
+      items.push({
+                     product_name: product.name ,
+                     product_picture: product.main_picture.url,
+                     reason: reason
+                 })
+
+
+      @invalid_items[store_user.id][:items] = items
+
+
+    end
+
+
+  end
 
 
   def cart_items_country_valid?(stores_cart_items, cart, customer_country, delivery_loc_country)
