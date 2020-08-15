@@ -32,6 +32,21 @@ class CartController < ApplicationController
 
                 # Validate that the customer and delivery location is in the store country
 
+                delivery_loc_country = Geocoder.search([delivery_location[:latitude], delivery_location[:longitude]]).first.country_code
+
+                customer_country = customer_user.country
+
+                if cart_items_country_valid?(stores_cart_items, cart, customer_country, delivery_loc_country)
+
+                  @success = true
+
+                else
+
+                  @success = false
+
+                end
+
+
               else
 
                 @success = false
@@ -864,6 +879,50 @@ class CartController < ApplicationController
 
 
   private
+
+
+
+  def cart_items_country_valid?(stores_cart_items, cart, customer_country, delivery_loc_country)
+
+    is_valid = true
+
+    stores_cart_items.each do |store_cart_item|
+
+      if is_valid
+
+        cart_item_ids = store_cart_item[:cart_item_ids]
+
+        cart_item_ids.each do |cart_item_id|
+
+          cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+          product = Product.find_by(id: cart_item.product_id)
+
+          if !(customer_country == product.store_country) || !(delivery_loc_country == product.store_country)
+
+            is_valid = false
+
+            break
+
+          end
+
+
+        end
+
+
+      else
+
+        break
+
+      end
+
+
+    end
+
+
+    is_valid
+
+  end
 
 
   def is_delivery_location_valid?(delivery_location)
