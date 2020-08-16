@@ -6,6 +6,6 @@ if @error_code != nil
     node(:error_code) { @error_code }
 end
 
-if @invalid_items != nil
-    node(:invalid_items) { @invalid_items  }
+if @invalid_stores != nil
+    node(:invalid_stores) { @invalid_stores  }
 end
