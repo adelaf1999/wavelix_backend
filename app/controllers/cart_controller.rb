@@ -51,331 +51,12 @@ class CartController < ApplicationController
                   @invalid_stores = {}
 
                   @invalid_store_user_ids = []
-
-                  stores_cart_items.each do |store_cart_item|
-
-                    store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
-
-                    store_profile = store_user.store.profile
-
-                    order_type = store_cart_item[:order_type]
-
-                    if order_type == nil && !store_user.handles_delivery
-
-                      # Store toggled from handling delivery to not
-
-                      add_invalid_store(
-                          store_cart_item,
-                          cart,
-                          store_user,
-                          store_profile,
-                          'Store no longer provides delivery, you can re-order the products by paying a delivery fee.'
-                      )
-
-
-                    elsif order_type != nil && store_user.handles_delivery
-
-                      # Store toggled from  not handling delivery to handling delivery
-
-                      # Remove order type from store_cart_item
-
-                      store_cart_item.delete(:order_type)
-
-                      maximum_delivery_distance = store_user.maximum_delivery_distance
-
-
-                      if maximum_delivery_distance != nil
-
-                        store_location = store_user.store_address
-
-                        distance = calculate_distance_km(delivery_location, store_location )
-
-                        if distance > maximum_delivery_distance
-
-
-                          add_invalid_store(
-                              store_cart_item,
-                              cart,
-                              store_user,
-                              store_profile,
-                              'Store now handles delivery, but does not deliver to your location.'
-                          )
-
-                        end
-
-
-
-                      end
-
-
-                    else
-
-
-                      has_sensitive_products = store_user.has_sensitive_products
-
-                      handles_delivery = store_user.handles_delivery
-
-                      maximum_delivery_distance = store_user.maximum_delivery_distance
-
-                      store_location = store_user.store_address
-
-                      store_schedule = store_user.schedule
-
-                      distance = calculate_distance_km(delivery_location, store_location )
-
-
-                      if handles_delivery
-
-
-                        if maximum_delivery_distance != nil
-
-
-                          if distance <= maximum_delivery_distance
-
-                            can_place_order = handles_delivery_order(
-                                has_sensitive_products,
-                                store_schedule,
-                                store_user
-                            )
-
-
-
-                            if !can_place_order
-
-                              add_invalid_store(
-                                  store_cart_item,
-                                  cart,
-                                  store_user,
-                                  store_profile,
-                                  'Store is closed'
-                              )
-
-                            end
-
-                          else
-
-
-                            add_invalid_store(
-                                store_cart_item,
-                                cart,
-                                store_user,
-                                store_profile,
-                                'Store does not deliver to your location'
-                            )
-
-                          end
-
-
-                        else
-
-
-                          can_place_order = handles_delivery_order(
-                              has_sensitive_products,
-                              store_schedule,
-                              store_user
-                          )
-
-
-                          if !can_place_order
-
-                            add_invalid_store(
-                                store_cart_item,
-                                cart,
-                                store_user,
-                                store_profile,
-                                'Store is closed'
-                            )
-
-                          end
-
-
-                        end
-
-
-                      else
-
-
-                        if has_sensitive_products
-
-
-                          if distance <= 7
-
-                            # Only exclusive delivery available
-
-                            can_place_order = does_not_handle_delivery_order(1, store_schedule, store_user)
-
-                            if !can_place_order
-
-                              add_invalid_store(
-                                  store_cart_item,
-                                  cart,
-                                  store_user,
-                                  store_profile,
-                                  'Store is closed'
-                              )
-
-                            end
-
-
-
-
-                          else
-
-                            add_invalid_store(
-                                store_cart_item,
-                                cart,
-                                store_user,
-                                store_profile,
-                                'Delivery is not available to your location'
-                            )
-
-                          end
-
-
-                        else
-
-
-                          if distance <= 100
-
-
-                            order_type = order_type.to_i
-
-                            if order_type == 0
-
-
-                              if distance > 25
-
-                                add_invalid_store(
-                                    store_cart_item,
-                                    cart,
-                                    store_user,
-                                    store_profile,
-                                    'Standard delivery is not available to your location'
-                                )
-
-                              end
-
-
-                            elsif order_type == 1
-
-                              can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_user)
-
-                              if !can_place_order
-
-                                add_invalid_store(
-                                    store_cart_item,
-                                    cart,
-                                    store_user,
-                                    store_profile,
-                                    'Store is closed'
-                                )
-
-                              end
-
-
-                            end
-
-
-                          else
-
-                            add_invalid_store(
-                                store_cart_item,
-                                cart,
-                                store_user,
-                                store_profile,
-                                'Delivery is not available to your location'
-                            )
-
-                          end
-
-
-
-                        end
-
-
-                      end
-
-
-
-
-
-                    end
-
-
-
-
-                  end
-
-
-
-                  stores_cart_items.delete_if {|store_cart_item| @invalid_store_user_ids.include?(store_cart_item[:store_user_id]) }
-
                   
+                  stores_cart_items = validate_stores(stores_cart_items, cart, delivery_location)
 
                   if stores_cart_items.size > 0
 
-
-                    # Validate the product availability , stock quantity and the quantity of each item ordered by the customer
-
-                    stores_cart_items.each do |store_cart_item|
-
-                      store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
-
-                      store_profile = store_user.store.profile
-
-                      cart_item_ids = store_cart_item[:cart_item_ids]
-
-                      invalid_cart_item_ids = []
-
-                      cart_item_ids.each do |cart_item_id|
-
-                        cart_item = cart.cart_items.find_by(id: cart_item_id)
-
-                        product = Product.find_by(id: cart_item.product_id)
-
-                        if !product.product_available
-
-                          add_invalid_item(store_user, store_profile, product, 'Product is no longer available')
-
-                          invalid_cart_item_ids.push(cart_item_id)
-
-
-                        elsif product.stock_quantity != nil
-
-                          # Since product stock quantity is optional
-
-
-                          if product.stock_quantity == 0
-
-                            add_invalid_item(store_user, store_profile, product, 'Product is out of stock')
-
-                            invalid_cart_item_ids.push(cart_item_id)
-
-                          elsif cart_item.quantity > product.stock_quantity
-
-                            add_invalid_item(store_user, store_profile, product, 'Quantity ordered is greater than stock quantity')
-
-                            invalid_cart_item_ids.push(cart_item_id)
-
-
-                          end
-
-
-                        end
-
-
-                      end
-
-
-                      cart_item_ids.delete_if {|cart_item_id| invalid_cart_item_ids.include?(cart_item_id) }
-
-
-
-                    end
-
-
-                    stores_cart_items.delete_if {|store_cart_item| store_cart_item[:cart_item_ids].size == 0 }
-
+                    stores_cart_items = validate_cart_items(stores_cart_items, cart)
 
                     if stores_cart_items.size > 0
 
@@ -387,9 +68,6 @@ class CartController < ApplicationController
                       @error_code = 1
 
                     end
-
-
-
 
 
 
@@ -1244,6 +922,345 @@ class CartController < ApplicationController
 
 
   private
+
+
+  def validate_cart_items(stores_cart_items, cart)
+
+    # Validate the product availability , stock quantity and the quantity of each item ordered by the customer
+
+    stores_cart_items.each do |store_cart_item|
+
+      store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+      store_profile = store_user.store.profile
+
+      cart_item_ids = store_cart_item[:cart_item_ids]
+
+      invalid_cart_item_ids = []
+
+      cart_item_ids.each do |cart_item_id|
+
+        cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+        product = Product.find_by(id: cart_item.product_id)
+
+        if !product.product_available
+
+          add_invalid_item(store_user, store_profile, product, 'Product is no longer available')
+
+          invalid_cart_item_ids.push(cart_item_id)
+
+
+        elsif product.stock_quantity != nil
+
+          # Since product stock quantity is optional
+
+
+          if product.stock_quantity == 0
+
+            add_invalid_item(store_user, store_profile, product, 'Product is out of stock')
+
+            invalid_cart_item_ids.push(cart_item_id)
+
+          elsif cart_item.quantity > product.stock_quantity
+
+            add_invalid_item(store_user, store_profile, product, 'Quantity ordered is greater than stock quantity')
+
+            invalid_cart_item_ids.push(cart_item_id)
+
+
+          end
+
+
+        end
+
+
+      end
+
+
+      cart_item_ids.delete_if {|cart_item_id| invalid_cart_item_ids.include?(cart_item_id) }
+
+
+
+    end
+
+
+    stores_cart_items.delete_if {|store_cart_item| store_cart_item[:cart_item_ids].size == 0 }
+
+    stores_cart_items
+
+
+
+  end
+
+
+
+  def validate_stores(stores_cart_items, cart, delivery_location)
+
+
+    stores_cart_items.each do |store_cart_item|
+
+      store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+      store_profile = store_user.store.profile
+
+      order_type = store_cart_item[:order_type]
+
+      if order_type == nil && !store_user.handles_delivery
+
+        # Store toggled from handling delivery to not
+
+        add_invalid_store(
+            store_cart_item,
+            cart,
+            store_user,
+            store_profile,
+            'Store no longer provides delivery, you can re-order the products by paying a delivery fee.'
+        )
+
+
+      elsif order_type != nil && store_user.handles_delivery
+
+        # Store toggled from  not handling delivery to handling delivery
+
+        # Remove order type from store_cart_item
+
+        store_cart_item.delete(:order_type)
+
+        maximum_delivery_distance = store_user.maximum_delivery_distance
+
+
+        if maximum_delivery_distance != nil
+
+          store_location = store_user.store_address
+
+          distance = calculate_distance_km(delivery_location, store_location )
+
+          if distance > maximum_delivery_distance
+
+
+            add_invalid_store(
+                store_cart_item,
+                cart,
+                store_user,
+                store_profile,
+                'Store now handles delivery, but does not deliver to your location.'
+            )
+
+          end
+
+
+
+        end
+
+
+      else
+
+
+        has_sensitive_products = store_user.has_sensitive_products
+
+        handles_delivery = store_user.handles_delivery
+
+        maximum_delivery_distance = store_user.maximum_delivery_distance
+
+        store_location = store_user.store_address
+
+        store_schedule = store_user.schedule
+
+        distance = calculate_distance_km(delivery_location, store_location )
+
+
+        if handles_delivery
+
+
+          if maximum_delivery_distance != nil
+
+
+            if distance <= maximum_delivery_distance
+
+              can_place_order = handles_delivery_order(
+                  has_sensitive_products,
+                  store_schedule,
+                  store_user
+              )
+
+
+
+              if !can_place_order
+
+                add_invalid_store(
+                    store_cart_item,
+                    cart,
+                    store_user,
+                    store_profile,
+                    'Store is closed'
+                )
+
+              end
+
+            else
+
+
+              add_invalid_store(
+                  store_cart_item,
+                  cart,
+                  store_user,
+                  store_profile,
+                  'Store does not deliver to your location'
+              )
+
+            end
+
+
+          else
+
+
+            can_place_order = handles_delivery_order(
+                has_sensitive_products,
+                store_schedule,
+                store_user
+            )
+
+
+            if !can_place_order
+
+              add_invalid_store(
+                  store_cart_item,
+                  cart,
+                  store_user,
+                  store_profile,
+                  'Store is closed'
+              )
+
+            end
+
+
+          end
+
+
+        else
+
+
+          if has_sensitive_products
+
+
+            if distance <= 7
+
+              # Only exclusive delivery available
+
+              can_place_order = does_not_handle_delivery_order(1, store_schedule, store_user)
+
+              if !can_place_order
+
+                add_invalid_store(
+                    store_cart_item,
+                    cart,
+                    store_user,
+                    store_profile,
+                    'Store is closed'
+                )
+
+              end
+
+
+
+
+            else
+
+              add_invalid_store(
+                  store_cart_item,
+                  cart,
+                  store_user,
+                  store_profile,
+                  'Delivery is not available to your location'
+              )
+
+            end
+
+
+          else
+
+
+            if distance <= 100
+
+
+              order_type = order_type.to_i
+
+              if order_type == 0
+
+
+                if distance > 25
+
+                  add_invalid_store(
+                      store_cart_item,
+                      cart,
+                      store_user,
+                      store_profile,
+                      'Standard delivery is not available to your location'
+                  )
+
+                end
+
+
+              elsif order_type == 1
+
+                can_place_order = does_not_handle_delivery_order(order_type, store_schedule, store_user)
+
+                if !can_place_order
+
+                  add_invalid_store(
+                      store_cart_item,
+                      cart,
+                      store_user,
+                      store_profile,
+                      'Store is closed'
+                  )
+
+                end
+
+
+              end
+
+
+            else
+
+              add_invalid_store(
+                  store_cart_item,
+                  cart,
+                  store_user,
+                  store_profile,
+                  'Delivery is not available to your location'
+              )
+
+            end
+
+
+
+          end
+
+
+        end
+
+
+
+
+
+      end
+
+
+
+
+    end
+
+
+
+    stores_cart_items.delete_if {|store_cart_item| @invalid_store_user_ids.include?(store_cart_item[:store_user_id]) }
+
+    stores_cart_items
+
+
+  end
+
 
 
   def add_invalid_store(store_cart_item, cart, store_user, store_profile, reason)
