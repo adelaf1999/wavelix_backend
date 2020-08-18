@@ -17,13 +17,29 @@ module PaymentsHelper
 
     balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
 
-    # Get the net amount remaining after stripe fees applied
 
-    net_amount = balance_transaction.net
+    # Net and total amount in USD
 
+    total_amount = balance_transaction.amount.to_f / 100.to_f
+
+    net_amount = balance_transaction.net / 100.to_f
+
+
+    order_total = order.total_price.to_f.round(2)
+
+    refund_amount = (order_total / total_amount)  * net_amount
+
+
+    # Convert refund amount to cents
+
+    refund_amount = refund_amount * 100
+
+    refund_amount = refund_amount.round.to_i
+
+    
     Stripe::Refund.create({
                               payment_intent: order.stripe_payment_intent,
-                              amount: net_amount
+                              amount: refund_amount
                           })
 
 
