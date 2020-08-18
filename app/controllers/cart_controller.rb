@@ -4,13 +4,17 @@ class CartController < ApplicationController
 
   include OrderHelper
 
+  include MoneyHelper
+
+  include PaymentsHelper
+
 
 
   def place_orders
 
     # error_codes
 
-    # { 0: INVALID_STORES, 1: INVALID_CART_ITEMS }
+    # { 0: INVALID_STORES, 1: INVALID_CART_ITEMS, 2: CARD_AUTH_REQUIRED, 3: CARD_ERROR }
 
     if current_user.customer_user?
 
@@ -51,7 +55,7 @@ class CartController < ApplicationController
                   @invalid_stores = {}
 
                   @invalid_store_user_ids = []
-                  
+
                   stores_cart_items = validate_stores(stores_cart_items, cart, delivery_location)
 
                   if stores_cart_items.size > 0
@@ -60,7 +64,147 @@ class CartController < ApplicationController
 
                     if stores_cart_items.size > 0
 
-                      @success = true
+
+                      order_request_ids = []
+
+                      ordered_products_total_usd = 0
+
+                      stores_cart_items.each do |store_cart_item|
+
+                        store_user = StoreUser.find_by(id: store_cart_item[:store_user_id])
+
+                        handles_delivery = store_user.handles_delivery
+
+                        cart_item_ids = store_cart_item[:cart_item_ids]
+
+                        total_price_usd = 0
+
+                        ordered_products = []
+
+                        cart_item_ids.each do |cart_item_id|
+
+                          cart_item = cart.cart_items.find_by(id: cart_item_id)
+
+                          product = Product.find_by(id: cart_item.product_id)
+
+                          price = product.price
+
+                          quantity = cart_item.quantity
+
+                          total_price_usd += convert_amount(
+                              price * quantity,
+                              product.currency,
+                              'USD'
+                          )
+
+                          ordered_product = {
+                              id: product.id,
+                              quantity: quantity,
+                              price: price,
+                              currency: product.currency,
+                              product_options: cart_item.product_options,
+                              name: product.name
+                          }
+
+                          ordered_products.push(ordered_product)
+
+
+                        end
+
+
+                        if handles_delivery
+
+                          order_request = OrderRequest.create!(
+                              products: ordered_products,
+                              delivery_location: delivery_location,
+                              store_user_id: store_user.id,
+                              customer_user_id: customer_user.id,
+                              country: store_user.store_country,
+                              store_handles_delivery: true,
+                              total_price: total_price_usd
+                          )
+
+                          order_request_ids.push(order_request.id)
+
+                          ordered_products_total_usd += order_request.total_price
+
+
+                        else
+
+                          order_type = store_cart_item[:order_type].to_i
+
+                          store_location = store_user.store_address
+
+                          if order_type == 0
+
+                            distance = calculate_distance_km(delivery_location, store_location )
+
+                            delivery_fee_usd = calculate_standard_delivery_fee_usd(distance)
+
+                            total_price_usd += delivery_fee_usd
+
+                            order_request = OrderRequest.create!(
+                                products: ordered_products,
+                                delivery_location: delivery_location,
+                                store_user_id: store_user.id,
+                                customer_user_id: customer_user.id,
+                                country: store_user.store_country,
+                                store_handles_delivery: false,
+                                order_type: order_type,
+                                delivery_fee: delivery_fee_usd,
+                                total_price: total_price_usd
+                            )
+
+
+                            order_request_ids.push(order_request.id)
+
+                            ordered_products_total_usd += order_request.total_price
+
+
+
+                          elsif order_type == 1
+
+                            delivery_fee_usd = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
+
+                            total_price_usd += delivery_fee_usd
+
+                            order_request = OrderRequest.create!(
+                                products: ordered_products,
+                                delivery_location: delivery_location,
+                                store_user_id: store_user.id,
+                                customer_user_id: customer_user.id,
+                                country: store_user.store_country,
+                                store_handles_delivery: false,
+                                order_type: order_type,
+                                delivery_fee: delivery_fee_usd,
+                                total_price: total_price_usd
+                            )
+
+
+                            order_request_ids.push(order_request.id)
+
+                            ordered_products_total_usd += order_request.total_price
+
+
+
+                          end
+
+
+                        end
+
+
+                      end
+
+
+                      charge_customer_card(
+                          ordered_products_total_usd,
+                          customer_user,
+                          order_request_ids
+                      )
+
+
+
+
 
                     else
 
@@ -922,6 +1066,104 @@ class CartController < ApplicationController
 
 
   private
+
+  def charge_customer_card(total_price_usd, customer_user, order_request_ids )
+
+    begin
+
+
+      total_price_cents = total_price_usd * 100
+
+      total_price_cents = total_price_cents.round.to_i
+
+      stripe_customer_id = customer_user.stripe_customer_token
+
+      customer_card_id = get_customer_card(stripe_customer_id)
+
+      payment_intent = Stripe::PaymentIntent.create(
+          {
+              amount: total_price_cents,
+              currency: 'usd',
+              customer: stripe_customer_id,
+              payment_method: customer_card_id,
+              setup_future_usage: 'on_session',
+              metadata: {
+                  order_request_ids: order_request_ids.to_s
+              }
+          }
+      )
+
+      result = Stripe::PaymentIntent.confirm(
+          payment_intent.id,
+          {
+              return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL'),
+              off_session: false
+          }
+      )
+
+
+      status = result.status
+
+      if status == 'succeeded'
+
+        @success = true
+
+        order_request_ids.each do |order_request_id|
+
+          order_request = OrderRequest.find_by(id: order_request_id)
+
+          OrderRequest.create_order(order_request, payment_intent.id)
+
+
+        end
+
+
+
+
+      elsif status == 'requires_source_action' || result.next_action != nil
+
+        @success = false
+
+        @error_code = 2
+
+        next_action = result.next_action
+
+        @redirect_url = next_action.redirect_to_url.url
+
+
+
+      elsif status == 'requires_payment_method'
+
+        @success = false
+
+      end
+
+
+
+    rescue Stripe::CardError => e
+
+      @success = false
+
+      @error_code = 3
+
+      if e.error.message
+
+        @error_message =  e.error.message
+
+      end
+
+    rescue => e
+
+      @success = false
+
+    end
+
+
+
+
+
+
+  end
 
 
   def validate_cart_items(stores_cart_items, cart)
