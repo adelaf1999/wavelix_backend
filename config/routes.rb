@@ -268,5 +268,7 @@ Rails.application.routes.draw do
 
   post '/create-employee' => 'employee#create'
 
+  post '/toggle-employee-status' => 'employee#toggle_status'
+
 
 end

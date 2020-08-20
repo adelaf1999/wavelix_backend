@@ -4,6 +4,51 @@ class EmployeeController < ApplicationController
 
   include EmployeeHelper
 
+
+  def toggle_status
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      required_params = [:employee_id]
+
+      if required_params_valid?(required_params)
+
+        employee = store_user.employees.find_by(id: params[:employee_id])
+
+        if employee != nil
+
+          if employee.inactive?
+
+            employee.active!
+
+          else
+
+            employee.inactive!
+
+          end
+
+          # Send employee status to employee portal
+
+          @success = true
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
   def create
 
     # error_codes
