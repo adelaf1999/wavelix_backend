@@ -39,6 +39,16 @@ Rails.application.routes.draw do
       :sessions
   ]
 
+  mount_devise_token_auth_for 'Employee', controllers: {
+      sessions: 'auth/employees/sessions'
+  } , at: 'employee_auth', :skip => [
+      :passwords,
+      :confirmations,
+      :unlocks,
+      :registrations,
+      :omniauth_callbacks
+  ]
+
   devise_scope :user do
     get '/auth/confirmation' => "auth/users/confirmations#show", as: :user_confirmation
     post '/auth/confirmation' => "auth/users/confirmations#create"

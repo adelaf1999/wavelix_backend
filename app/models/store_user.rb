@@ -20,6 +20,8 @@ class StoreUser < ApplicationRecord
 
     has_many :withdrawals
 
+    has_many :employees
+
     after_create :save_street_name
 
 

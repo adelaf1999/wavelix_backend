@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_08_08_121332) do
+ActiveRecord::Schema.define(version: 2020_08_20_072630) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -123,6 +123,25 @@ ActiveRecord::Schema.define(version: 2020_08_08_121332) do
     t.string "currency", default: "USD"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "employees", force: :cascade do |t|
+    t.string "username", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.datetime "remember_created_at"
+    t.integer "sign_in_count", default: 0, null: false
+    t.datetime "current_sign_in_at"
+    t.datetime "last_sign_in_at"
+    t.inet "current_sign_in_ip"
+    t.inet "last_sign_in_ip"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.integer "store_user_id", null: false
+    t.json "tokens"
+    t.string "uid", default: "", null: false
+    t.string "provider", default: "username", null: false
+    t.integer "status", default: 1
+    t.index ["username"], name: "index_employees_on_username", unique: true
   end
 
   create_table "follows", force: :cascade do |t|
