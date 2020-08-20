@@ -264,4 +264,9 @@ Rails.application.routes.draw do
 
   get '/driver-balances' => 'balances#driver_balances'
 
+  # Employee Routes
+
+  post '/create-employee' => 'employee#create'
+
+
 end

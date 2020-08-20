@@ -25,6 +25,7 @@ class Employee < ApplicationRecord
   end
 
 
+
   private
 
   def set_uid
