@@ -1,5 +1,7 @@
 class Employee < ApplicationRecord
 
+  petergate(roles: [:product_manager, :order_manager], multiple: true )
+
   before_validation :set_uid, on: :create
 
   # Include default devise modules. Others available are:
@@ -13,6 +15,14 @@ class Employee < ApplicationRecord
   belongs_to :store_user
 
   enum status: { inactive: 0, active: 1 }
+
+  def roles=(v)
+
+    self[:roles] = v.map(&:to_sym).to_a.select{|r| r.size > 0 && ROLES.include?(r)}
+
+    self.save!
+
+  end
 
 
   private
