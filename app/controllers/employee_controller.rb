@@ -5,6 +5,59 @@ class EmployeeController < ApplicationController
   include EmployeeHelper
 
 
+  def change_password
+
+    # error_codes
+
+    # {0: INVALID_PASSWORD_LENGTH }
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      required_params = [:password, :employee_id]
+
+      if required_params_valid?(required_params)
+
+        employee = store_user.employees.find_by(id: params[:employee_id])
+
+        if employee != nil
+
+          password = params[:password]
+
+          if password.length < 6
+
+            @success = false
+            @error_code = 0
+
+          else
+
+            @success = true
+            employee.update!(password: password)
+
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+
+    end
+
+  end
+
+
   def toggle_status
 
     if current_user.store_user?

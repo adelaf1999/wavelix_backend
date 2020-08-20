@@ -270,5 +270,7 @@ Rails.application.routes.draw do
 
   post '/toggle-employee-status' => 'employee#toggle_status'
 
+  post '/change-employee-password' => 'employee#change_password'
+
 
 end
