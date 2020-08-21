@@ -11,51 +11,82 @@ class OrderController < ApplicationController
   def add_tracking_information
 
 
-    if current_user.store_user?
+    if user_signed_in?
 
-      store_user = StoreUser.find_by(store_id: current_user.id)
+      if current_user.store_user?
 
-      order = store_user.orders.find_by(id: params[:order_id])
-
-      if order != nil
-
-        if order.store_handles_delivery && order.ongoing?
-
-          tracking_website_url = params[:tracking_website_url]
-
-          if tracking_website_url != nil
-
-            order.update!(tracking_website_url: tracking_website_url)
-
-          end
-
-          tracking_number = params[:tracking_number]
-
-          if tracking_number != nil
-
-            order.update!(tracking_number: tracking_number)
-
-          end
-
-          @success = true
-
-          send_store_orders(order)
-
-        else
-
-          @success = false
-
-        end
+        store_user = StoreUser.find_by(store_id: current_user.id)
 
       else
 
+        head :unauthorized
 
-        @success = false
+        return
+
+      end
+
+    else
+
+
+      employee = Employee.find_by(id: current_employee.id)
+
+      if employee.has_roles?(:order_manager) && employee.active?
+
+        store_user = employee.store_user
+
+      else
+
+        head :unauthorized
+
+        return
 
       end
 
 
     end
+
+
+    order = store_user.orders.find_by(id: params[:order_id])
+
+    if order != nil
+
+      if order.store_handles_delivery && order.ongoing?
+
+        tracking_website_url = params[:tracking_website_url]
+
+        if tracking_website_url != nil
+
+          order.update!(tracking_website_url: tracking_website_url)
+
+        end
+
+        tracking_number = params[:tracking_number]
+
+        if tracking_number != nil
+
+          order.update!(tracking_number: tracking_number)
+
+        end
+
+        @success = true
+
+        send_store_orders(order)
+
+      else
+
+        @success = false
+
+      end
+
+    else
+
+
+      @success = false
+
+    end
+
+
+
 
 
 
