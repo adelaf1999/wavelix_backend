@@ -6,8 +6,7 @@ class OrderController < ApplicationController
 
   include PaymentsHelper
 
-  before_action :authenticate_user!
-
+  before_action :deny_to_visitors
 
   def add_tracking_information
 
@@ -828,21 +827,46 @@ class OrderController < ApplicationController
   def get_orders
 
 
-    if current_user.store_user?
+    if user_signed_in?
+
+      if current_user.store_user?
 
 
-      store_user = StoreUser.find_by(store_id: current_user.id)
+        store_user = StoreUser.find_by(store_id: current_user.id)
 
-      @orders = get_store_orders(store_user)
+        @orders = get_store_orders(store_user)
 
+
+      else
+
+        customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+        @orders = get_customer_orders(customer_user)
+
+      end
 
     else
 
-      customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      @orders = get_customer_orders(customer_user)
+      employee = Employee.find_by(id: current_employee.id)
+
+      if employee.has_roles?(:order_manager) && employee.active?
+
+        store_user = employee.store_user
+
+        @orders = get_store_orders(store_user)
+        
+      else
+
+        head :unauthorized
+
+      end
+
 
     end
+
+
+
 
   end
 
@@ -2002,6 +2026,12 @@ class OrderController < ApplicationController
 
 
     end
+
+  end
+
+  def deny_to_visitors
+
+    head :unauthorized unless user_signed_in? or employee_signed_in?
 
   end
 
