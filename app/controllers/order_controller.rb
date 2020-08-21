@@ -95,63 +95,90 @@ class OrderController < ApplicationController
 
   def search_store_orders
 
-    if current_user.store_user?
-
-      store_user = StoreUser.find_by(store_id: current_user.id)
-
-      search = params[:search]
-
-      @orders = []
-
-      if search != nil
-
-        search = search.strip
 
 
-        store_orders = store_user.orders
+    if user_signed_in?
 
-        orders_by_customer_name =  store_orders.joins(:customer_user).where("full_name ILIKE ?", "%#{search}%")
+      if current_user.store_user?
 
-        order_ids = []
+        store_user = StoreUser.find_by(store_id: current_user.id)
 
-        orders_by_customer_name.each do |store_order|
+      else
 
-          order_ids.push(store_order.id)
+        head :unauthorized
 
-        end
+        return
 
-        orders_by_driver_name = store_orders.joins(:driver).where("name ILIKE ?", "%#{search}%")
+      end
 
-
-        orders_by_driver_name.each do |store_order|
-
-          order_ids.push(store_order.id)
-
-        end
+    else
 
 
-        order_ids.uniq!
+      employee = Employee.find_by(id: current_employee.id)
+
+      if employee.has_roles?(:order_manager) && employee.active?
+
+        store_user = employee.store_user
+
+      else
+
+        head :unauthorized
+
+        return
+
+      end
 
 
-        filter_status = params[:filter_status]
+    end
 
 
-        if filter_status != nil
+    search = params[:search]
 
-          if is_whole_number?(filter_status)
+    @orders = []
 
-            filter_status = filter_status.to_i
+    if search != nil
 
-            if [0, 1, 2, 3].include?(filter_status)
-
-              combined_orders_search = Order.where(id: order_ids, status: filter_status)
+      search = search.strip
 
 
-            else
+      store_orders = store_user.orders
 
-              combined_orders_search = Order.where(id: order_ids)
+      orders_by_customer_name =  store_orders.joins(:customer_user).where("full_name ILIKE ?", "%#{search}%")
 
-            end
+      order_ids = []
+
+      orders_by_customer_name.each do |store_order|
+
+        order_ids.push(store_order.id)
+
+      end
+
+      orders_by_driver_name = store_orders.joins(:driver).where("name ILIKE ?", "%#{search}%")
+
+
+      orders_by_driver_name.each do |store_order|
+
+        order_ids.push(store_order.id)
+
+      end
+
+
+      order_ids.uniq!
+
+
+      filter_status = params[:filter_status]
+
+
+      if filter_status != nil
+
+        if is_whole_number?(filter_status)
+
+          filter_status = filter_status.to_i
+
+          if [0, 1, 2, 3].include?(filter_status)
+
+            combined_orders_search = Order.where(id: order_ids, status: filter_status)
+
 
           else
 
@@ -165,29 +192,29 @@ class OrderController < ApplicationController
 
         end
 
+      else
 
-        sort = params[:sort]
+        combined_orders_search = Order.where(id: order_ids)
+
+      end
 
 
-        if sort != nil
+      sort = params[:sort]
 
-          sort_options = [0, 1]
 
-          if is_whole_number?(sort)
+      if sort != nil
 
-            sort = sort.to_i
+        sort_options = [0, 1]
 
-            if sort_options.include?(sort)
+        if is_whole_number?(sort)
 
-              if sort == 0
+          sort = sort.to_i
 
-                combined_orders_search = combined_orders_search.order(created_at: :asc)
+          if sort_options.include?(sort)
 
-              else
+            if sort == 0
 
-                combined_orders_search = combined_orders_search.order(created_at: :desc)
-
-              end
+              combined_orders_search = combined_orders_search.order(created_at: :asc)
 
             else
 
@@ -195,61 +222,65 @@ class OrderController < ApplicationController
 
             end
 
-
           else
 
             combined_orders_search = combined_orders_search.order(created_at: :desc)
 
-
           end
-
 
 
         else
 
           combined_orders_search = combined_orders_search.order(created_at: :desc)
 
-        end
-
-        date = params[:date]
-
-        if date != nil
-
-          begin
-
-            date = Date.parse(date)
-
-            timezone = get_store_timezone_name(store_user)
-
-            begin_day = date.to_datetime.in_time_zone(timezone).beginning_of_day
-
-            end_day = date.to_datetime.in_time_zone(timezone).end_of_day
-
-            combined_orders_search = combined_orders_search.where('created_at BETWEEN ? AND ?', begin_day, end_day)
-
-          rescue
-
-            puts 'Continue'
-
-          end
-
 
         end
 
 
 
-        combined_orders_search.each do |store_order|
+      else
 
-          @orders.push(get_store_order(store_order, store_user))
+        combined_orders_search = combined_orders_search.order(created_at: :desc)
+
+      end
+
+      date = params[:date]
+
+      if date != nil
+
+        begin
+
+          date = Date.parse(date)
+
+          timezone = get_store_timezone_name(store_user)
+
+          begin_day = date.to_datetime.in_time_zone(timezone).beginning_of_day
+
+          end_day = date.to_datetime.in_time_zone(timezone).end_of_day
+
+          combined_orders_search = combined_orders_search.where('created_at BETWEEN ? AND ?', begin_day, end_day)
+
+        rescue
+
+          puts 'Continue'
 
         end
-
-
 
 
       end
 
+
+      combined_orders_search.each do |store_order|
+
+        @orders.push(get_store_order(store_order, store_user))
+
+      end
+
+
+
+
     end
+
 
   end
 
