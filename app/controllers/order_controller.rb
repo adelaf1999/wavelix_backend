@@ -637,127 +637,158 @@ class OrderController < ApplicationController
 
   def accept_order
 
-    if current_user.store_user?
 
-      store_user = StoreUser.find_by(store_id: current_user.id)
+    if user_signed_in?
 
-      order_id = params[:order_id]
+      if current_user.store_user?
 
-      order = store_user.orders.find_by(id: order_id)
+        store_user = StoreUser.find_by(store_id: current_user.id)
 
-      if order != nil
+      else
 
-        if order.pending? && order.store_unconfirmed?
+        head :unauthorized
 
-          if order.store_handles_delivery
+        return
 
-            time_unit = params[:time_unit] # { 0: minutes, 1: hours: 2: days }
+      end
 
-            time = params[:time]
-
-            if time != nil && time_unit != nil
-
-              if is_delivery_time_limit_valid?(time, time_unit)
-
-                time = time.to_d
-
-                time_unit = time_unit.to_i
-
-                if time_unit == 0
-
-                  delivery_time_limit = (DateTime.now.utc).to_datetime + (time).minutes
-
-                elsif time_unit == 1
-
-                  delivery_time_limit = (DateTime.now.utc).to_datetime + (time).hours
-
-                else
-
-                  delivery_time_limit = (DateTime.now.utc).to_datetime + (time).days
-
-                end
-
-                order.ongoing!
-
-                order.store_accepted!
-
-                order.update!(delivery_time_limit: delivery_time_limit)
-
-                send_store_orders(order)
-
-                send_customer_orders(order)
-
-                # Notify customer that their order was accepted by store
+    else
 
 
-                # After the x amount of time the store promised to do the delivery
+      employee = Employee.find_by(id: current_employee.id)
 
-                # The customer can choose to confirm or open a dispute
+      if employee.has_roles?(:order_manager) && employee.active?
 
-                # After 24 hours if the customer took no action the order will be completed
+        store_user = employee.store_user
 
-                # And the store balance will be incremented
+      else
 
-                Delayed::Job.enqueue(
-                    StoreDeliveryTimeJob.new(order_id),
-                    queue: 'store_delivery_time_job_queue',
-                    priority: 0,
-                    run_at: delivery_time_limit + 24.hours
-                )
+        head :unauthorized
+
+        return
+
+      end
 
 
+    end
+
+    order_id = params[:order_id]
+
+    order = store_user.orders.find_by(id: order_id)
+
+    if order != nil
+
+      if order.pending? && order.store_unconfirmed?
+
+        if order.store_handles_delivery
+
+          time_unit = params[:time_unit] # { 0: minutes, 1: hours: 2: days }
+
+          time = params[:time]
+
+          if time != nil && time_unit != nil
+
+            if is_delivery_time_limit_valid?(time, time_unit)
+
+              time = time.to_d
+
+              time_unit = time_unit.to_i
+
+              if time_unit == 0
+
+                delivery_time_limit = (DateTime.now.utc).to_datetime + (time).minutes
+
+              elsif time_unit == 1
+
+                delivery_time_limit = (DateTime.now.utc).to_datetime + (time).hours
+
+              else
+
+                delivery_time_limit = (DateTime.now.utc).to_datetime + (time).days
 
               end
 
+              order.ongoing!
+
+              order.store_accepted!
+
+              order.update!(delivery_time_limit: delivery_time_limit)
+
+              send_store_orders(order)
+
+              send_customer_orders(order)
+
+              # Notify customer that their order was accepted by store
+
+
+              # After the x amount of time the store promised to do the delivery
+
+              # The customer can choose to confirm or open a dispute
+
+              # After 24 hours if the customer took no action the order will be completed
+
+              # And the store balance will be incremented
+
+              Delayed::Job.enqueue(
+                  StoreDeliveryTimeJob.new(order_id),
+                  queue: 'store_delivery_time_job_queue',
+                  priority: 0,
+                  run_at: delivery_time_limit + 24.hours
+              )
+
+
+
             end
+
+          end
+
+        else
+
+
+          order.store_accepted!
+
+          send_store_orders(order)
+
+          send_customer_orders(order)
+
+          # Notify customer that their order was accepted by store
+
+          has_sensitive_products = store_user.has_sensitive_products
+
+          store_location = store_user.store_address
+
+          store_latitude = store_location[:latitude]
+
+          store_longitude = store_location[:longitude]
+
+          if has_sensitive_products
+
+            drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
 
           else
 
 
-            order.store_accepted!
+            if order.exclusive?
 
-            send_store_orders(order)
-
-            send_customer_orders(order)
-
-            # Notify customer that their order was accepted by store
-
-            has_sensitive_products = store_user.has_sensitive_products
-
-            store_location = store_user.store_address
-
-            store_latitude = store_location[:latitude]
-
-            store_longitude = store_location[:longitude]
-
-            if has_sensitive_products
-
-              drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
+              drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
 
             else
 
-
-              if order.exclusive?
-
-                drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
-
-              else
-
-                drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
-
-              end
-
+              drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
 
             end
 
 
           end
 
+
         end
 
       end
 
     end
+
+
 
   end
 
@@ -886,7 +917,7 @@ class OrderController < ApplicationController
         store_user = employee.store_user
 
         @orders = get_store_orders(store_user)
-        
+
       else
 
         head :unauthorized
