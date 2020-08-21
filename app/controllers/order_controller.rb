@@ -764,55 +764,80 @@ class OrderController < ApplicationController
 
   def reject_order
 
-    if current_user.store_user?
 
-      store_user = StoreUser.find_by(store_id: current_user.id)
+    if user_signed_in?
 
-      order_id = params[:order_id]
+      if current_user.store_user?
 
-      order = store_user.orders.find_by(id: order_id)
+        store_user = StoreUser.find_by(store_id: current_user.id)
 
-      if order != nil
+      else
 
-        if order.pending? && order.store_unconfirmed?
+        head :unauthorized
 
-          @success = true
+        return
 
-          order.canceled!
+      end
 
-          order.store_rejected!
+    else
 
-          order.products.each do |ordered_product|
 
-            ordered_product = eval(ordered_product)
+      employee = Employee.find_by(id: current_employee.id)
 
-            product = Product.find_by(id: ordered_product[:id])
+      if employee.has_roles?(:order_manager) && employee.active?
 
-            if (product != nil) && (product.stock_quantity != nil)
+        store_user = employee.store_user
 
-              stock_quantity = product.stock_quantity + ordered_product[:quantity]
+      else
 
-              product.update!(stock_quantity: stock_quantity)
+        head :unauthorized
 
-            end
+        return
+
+      end
+
+
+    end
+
+    order_id = params[:order_id]
+
+    order = store_user.orders.find_by(id: order_id)
+
+    if order != nil
+
+      if order.pending? && order.store_unconfirmed?
+
+        @success = true
+
+        order.canceled!
+
+        order.store_rejected!
+
+        order.products.each do |ordered_product|
+
+          ordered_product = eval(ordered_product)
+
+          product = Product.find_by(id: ordered_product[:id])
+
+          if (product != nil) && (product.stock_quantity != nil)
+
+            stock_quantity = product.stock_quantity + ordered_product[:quantity]
+
+            product.update!(stock_quantity: stock_quantity)
 
           end
 
-          order.update!(order_canceled_reason: 'Store canceled order')
-
-          send_store_orders(order)
-
-          send_customer_orders(order)
-
-          # Notify customer that the store rejected the order and that they will be refunded with the full amount paid
-
-          refund_order(order)
-
-        else
-
-          @success = false
-
         end
+
+        order.update!(order_canceled_reason: 'Store canceled order')
+
+        send_store_orders(order)
+
+        send_customer_orders(order)
+
+        # Notify customer that the store rejected the order and that they will be refunded with the full amount paid
+
+        refund_order(order)
 
       else
 
@@ -820,7 +845,13 @@ class OrderController < ApplicationController
 
       end
 
+    else
+
+      @success = false
+
     end
+
+
 
   end
 
