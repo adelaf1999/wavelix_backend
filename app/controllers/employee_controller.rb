@@ -123,7 +123,7 @@ class EmployeeController < ApplicationController
         password = params[:password]
 
         roles = params[:roles]
-        
+
         if username_available?(username)
 
           if password.length < 6
@@ -207,10 +207,14 @@ class EmployeeController < ApplicationController
 
     if current_user.store_user?
 
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
       @roles = {
           :product_manager => 'Employee will be able to manage categories and products',
           :order_manager => 'Employee will be able to manage orders'
       }
+
+      @employees = get_store_employees(store_user)
 
 
     end
@@ -219,6 +223,26 @@ class EmployeeController < ApplicationController
 
 
   private
+
+
+  def get_store_employees(store_user)
+
+    employees = []
+
+    store_user.employees.each do |employee|
+
+      employees.push({
+                         name: employee.name,
+                         username: employee.username,
+                         status: employee.status,
+                         roles: employee.roles
+                     })
+
+    end
+
+    employees
+
+  end
 
   def is_roles_valid?(roles)
 
