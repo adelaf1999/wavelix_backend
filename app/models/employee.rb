@@ -10,7 +10,10 @@ class Employee < ApplicationRecord
 
   include DeviseTokenAuth::Concerns::User
 
-  validates_uniqueness_of :username
+  validates :username, presence: :true, uniqueness: { case_sensitive: false }
+
+  validates_format_of :username, with: /^[a-zA-Z0-9_\.]*$/, :multiline => true
+
 
   belongs_to :store_user
 
