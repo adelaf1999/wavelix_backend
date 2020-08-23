@@ -203,6 +203,21 @@ class EmployeeController < ApplicationController
   end
 
 
+  def index
+
+    if current_user.store_user?
+
+      @roles = {
+          :product_manager => 'Employee will be able to manage categories and products',
+          :order_manager => 'Employee will be able to manage orders'
+      }
+
+
+    end
+
+  end
+
+
   private
 
   def is_roles_valid?(roles)

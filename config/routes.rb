@@ -272,5 +272,7 @@ Rails.application.routes.draw do
 
   post '/change-employee-password' => 'employee#change_password'
 
+  get '/employee-index' => 'employee#index'
+
 
 end
