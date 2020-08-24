@@ -5,6 +5,75 @@ class EmployeeController < ApplicationController
   include EmployeeHelper
 
 
+  def update_roles
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      required_params = [:roles, :employee_id]
+
+      if required_params_valid?(required_params)
+
+        employee = store_user.employees.find_by(id: params[:employee_id])
+
+        if employee != nil
+
+          roles = params[:roles]
+
+          begin
+
+            roles = eval(roles)
+
+            if roles.instance_of?(Array) && roles.size > 0
+
+              roles = roles.map &:to_sym
+
+              if is_roles_valid?(roles)
+
+                employee.update!(roles: roles)
+
+                @success = true
+
+                @employees = get_store_employees(store_user)
+
+              else
+
+                @success = false
+
+              end
+
+
+            else
+
+              @success = false
+
+            end
+
+          rescue => e
+
+            @success = false
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
+
   def change_password
 
     # error_codes

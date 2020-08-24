@@ -274,5 +274,7 @@ Rails.application.routes.draw do
 
   get '/employee-index' => 'employee#index'
 
+  post '/update-employee-roles' => 'employee#update_roles'
+
 
 end
