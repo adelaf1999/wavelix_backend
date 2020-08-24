@@ -216,8 +216,6 @@ class EmployeeController < ApplicationController
 
                 if is_roles_valid?(roles)
 
-                  @success = true
-
                   Employee.create!(
                       username: username,
                       password: password,
@@ -225,6 +223,12 @@ class EmployeeController < ApplicationController
                       store_user_id: store_user.id,
                       roles: roles
                   )
+
+
+                  @success = true
+
+                  @employees = get_store_employees(store_user)
+
 
                 else
 
