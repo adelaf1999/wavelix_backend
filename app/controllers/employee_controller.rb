@@ -5,6 +5,69 @@ class EmployeeController < ApplicationController
   include EmployeeHelper
 
 
+  def search
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      search = params[:search]
+
+      if search != nil
+
+        @success = true
+
+        @employees = []
+
+        employees = store_user.employees
+
+        employee_ids = []
+
+
+
+        employees_by_name = employees.where("name ILIKE ?", "%#{search}%")
+
+        employees_by_name.each do |employee|
+
+          employee_ids.push(employee.id)
+
+        end
+
+
+        employees_by_username = employees.where("username ILIKE ?", "%#{search}%" )
+
+        employees_by_username.each do |employee|
+
+          employee_ids.push(employee.id)
+
+        end
+
+
+        employee_ids.uniq!
+
+
+        employee_ids.each do |employee_id|
+
+          employee = employees.find_by(id: employee_id)
+
+          @employees.push(get_store_employee(employee))
+
+        end
+
+
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
   def update_roles
 
     if current_user.store_user?
@@ -306,17 +369,24 @@ class EmployeeController < ApplicationController
 
     store_user.employees.each do |employee|
 
-      employees.push({
-                         name: employee.name,
-                         username: employee.username,
-                         status: employee.status,
-                         roles: employee.roles,
-                         id: employee.id
-                     })
+      employees.push(get_store_employee(employee))
 
     end
 
     employees
+
+  end
+
+
+  def get_store_employee(employee)
+
+    {
+        name: employee.name,
+        username: employee.username,
+        status: employee.status,
+        roles: employee.roles,
+        id: employee.id
+    }
 
   end
 

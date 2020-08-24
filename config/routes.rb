@@ -276,5 +276,7 @@ Rails.application.routes.draw do
 
   post '/update-employee-roles' => 'employee#update_roles'
 
+  post '/search-store-employees' => 'employee#search'
+
 
 end
