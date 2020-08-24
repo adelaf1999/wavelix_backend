@@ -86,6 +86,8 @@ class EmployeeController < ApplicationController
 
           @success = true
 
+          @employees = get_store_employees(store_user)
+
         else
 
           @success = false
@@ -235,7 +237,8 @@ class EmployeeController < ApplicationController
                          name: employee.name,
                          username: employee.username,
                          status: employee.status,
-                         roles: employee.roles
+                         roles: employee.roles,
+                         id: employee.id
                      })
 
     end
