@@ -46,9 +46,9 @@ class EmployeeController < ApplicationController
         employee_ids.uniq!
 
 
-        employee_ids.each do |employee_id|
+        searched_employees = employees.where(id: employee_ids)
 
-          employee = employees.find_by(id: employee_id)
+        searched_employees.order(name: :asc).each do |employee|
 
           @employees.push(get_store_employee(employee))
 
@@ -367,7 +367,7 @@ class EmployeeController < ApplicationController
 
     employees = []
 
-    store_user.employees.each do |employee|
+    store_user.employees.order(name: :asc).each do |employee|
 
       employees.push(get_store_employee(employee))
 
