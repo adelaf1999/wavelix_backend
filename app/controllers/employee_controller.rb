@@ -157,7 +157,7 @@ class EmployeeController < ApplicationController
 
           password = params[:password]
 
-          if password.length < 6
+          if password.length < 8
 
             @success = false
             @error_code = 0
@@ -260,7 +260,7 @@ class EmployeeController < ApplicationController
 
         if username_available?(username)
 
-          if password.length < 6
+          if password.length < 8
 
             @success = false
             @error_code = 1
