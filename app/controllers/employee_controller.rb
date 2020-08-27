@@ -100,6 +100,10 @@ class EmployeeController < ApplicationController
 
                 @employees = get_store_employees(store_user)
 
+                ActionCable.server.broadcast "employee_channel_#{employee.id}", {
+                    roles: roles
+                }
+
               else
 
                 @success = false
@@ -219,6 +223,10 @@ class EmployeeController < ApplicationController
           @success = true
 
           @employees = get_store_employees(store_user)
+
+          ActionCable.server.broadcast "employee_channel_#{employee.id}", {
+              status: employee.status
+          }
 
         else
 
