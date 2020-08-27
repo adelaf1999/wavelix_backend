@@ -278,5 +278,9 @@ Rails.application.routes.draw do
 
   post '/search-store-employees' => 'employee#search'
 
+  # Employee Portal Routes
+
+  get '/employee-portal-index' => 'employee_portal#index'
+
 
 end
