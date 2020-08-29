@@ -18,6 +18,17 @@ module OrderHelper
 
     ActionCable.server.broadcast "store_orders_channel_#{store.id}", {orders: orders}
 
+    store_user.employees.each do |employee|
+
+      if employee.has_roles?(:order_manager)
+
+        ActionCable.server.broadcast "employee_orders_channel_#{employee.id}", {orders: orders}
+        
+
+      end
+
+    end
+
 
   end
 
