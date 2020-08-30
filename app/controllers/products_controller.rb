@@ -586,39 +586,70 @@ class ProductsController < ApplicationController
 
     def search_product
 
-        if current_user.store_user?
 
-            name = params[:name]
 
-            category_id = params[:category_id]
+        if user_signed_in?
 
-            if name != nil && category_id != nil
-
-                @products = []
+            if current_user.store_user?
 
                 store_user = StoreUser.find_by(store_id: current_user.id)
 
-                category = store_user.categories.find_by(id: category_id)
+            else
 
-                if category != nil
+                head :unauthorized
 
-                    category_products = category.products
+                return
 
-                    category_products = category_products.where("name ILIKE ?", "%#{name}%").order('name ASC')
+            end
 
-                    category_products.each do |category_product|
+        else
 
-                        @products.push(category_product.to_json)
 
-                    end
+            employee = Employee.find_by(id: current_employee.id)
 
-                end
+            if employee.has_roles?(:product_manager) && employee.active?
 
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
 
             end
 
 
         end
+
+
+        name = params[:name]
+
+        category_id = params[:category_id]
+
+        if name != nil && category_id != nil
+
+            @products = []
+
+            category = store_user.categories.find_by(id: category_id)
+
+            if category != nil
+
+                category_products = category.products
+
+                category_products = category_products.where("name ILIKE ?", "%#{name}%").order('name ASC')
+
+                category_products.each do |category_product|
+
+                    @products.push(category_product.to_json)
+
+                end
+
+            end
+
+
+        end
+
 
     end
 
