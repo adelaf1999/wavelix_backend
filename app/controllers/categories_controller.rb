@@ -205,67 +205,98 @@ class CategoriesController < ApplicationController
 
     def add_subcategory
 
-        # cant create subcategory if category has products
 
-        if current_user.store_user?
+        if user_signed_in?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+            if current_user.store_user?
 
-            category = store_user.categories.find_by(id: params[:category_id])
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-            if category != nil
+            else
 
+                head :unauthorized
 
-                if category.products.length > 0
+                return
 
-                    @success = false
-                    @message = "Cannot add subcategory since category already has products"
+            end
 
-                else
-
-                    category_name = params[:category_name]
+        else
 
 
+            employee = Employee.find_by(id: current_employee.id)
 
-                    if category_name != nil && category_name.length > 0
+            if employee.has_roles?(:product_manager) && employee.active?
 
-                        # Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
-                        new_subcategory = Category.new
-                        new_subcategory.name = category_name
-                        new_subcategory.store_user_id = store_user.id
-                        new_subcategory.parent_id = category.id
+                store_user = employee.store_user
 
-                        if new_subcategory.save
-                            @success = true
-                            @message = "Successfully added subcategory"
-                            @categories = store_user.get_categories
-                        else
+            else
 
-                            @success = false
-                            @message = "Error adding subcategory"
+                head :unauthorized
 
-                        end
+                return
+
+            end
 
 
+        end
 
+        # Cant create subcategory if category has products
+
+        category = store_user.categories.find_by(id: params[:category_id])
+
+        if category != nil
+
+
+            if category.products.length > 0
+
+                @success = false
+                @message = "Cannot add subcategory since category already has products"
+
+            else
+
+                category_name = params[:category_name]
+
+
+
+                if category_name != nil && category_name.length > 0
+
+                    # Category.create!(name: category_name, store_user_id: store_user.id, parent_id: category.id)
+                    new_subcategory = Category.new
+                    new_subcategory.name = category_name
+                    new_subcategory.store_user_id = store_user.id
+                    new_subcategory.parent_id = category.id
+
+                    if new_subcategory.save
+                        @success = true
+                        @message = "Successfully added subcategory"
+                        @categories = store_user.get_categories
                     else
 
                         @success = false
-                        @message = "Invalid category name"
+                        @message = "Error adding subcategory"
 
                     end
 
 
+
+                else
+
+                    @success = false
+                    @message = "Invalid category name"
+
                 end
 
-            else
-
-                @success = false
-                @message = "Category may have been moved or deleted"
 
             end
 
+        else
+
+            @success = false
+            @message = "Category may have been moved or deleted"
+
         end
+
+
 
     end
 
