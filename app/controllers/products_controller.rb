@@ -795,117 +795,139 @@ class ProductsController < ApplicationController
     def update_product
 
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+        if user_signed_in?
 
-            category_id = params[:category_id]
+            if current_user.store_user?
 
-            product_id = params[:product_id]
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-            if category_id != nil && product_id != nil
+            else
 
+                head :unauthorized
 
-                category = store_user.categories.find_by(id: category_id)
+                return
 
-                if category != nil
+            end
 
-                    product = category.products.find_by(id: product_id)
-
-                    if product != nil
+        else
 
 
-                        # user owns the product can start updating
+            employee = Employee.find_by(id: current_employee.id)
 
-                        # PRODUCT NAME VALIDATORS
+            if employee.has_roles?(:product_manager) && employee.active?
 
+                store_user = employee.store_user
 
+            else
 
-                        name = params[:name]
-                        description = params[:description]
-                        price = params[:price]
-                        stock_quantity = params[:stock_quantity]
-                        product_available = eval(params[:product_available])
-                        product_attributes = params[:product_attributes]
-                        main_picture = params[:main_picture]
-                        product_pictures = params[:product_pictures]
-                        isBase64 = params[:isBase64]
+                head :unauthorized
+
+                return
+
+            end
 
 
-                        if isBase64 != nil
+        end
 
-                            isBase64 = eval(isBase64.downcase)
+
+        category_id = params[:category_id]
+
+        product_id = params[:product_id]
+
+        if category_id != nil && product_id != nil
+
+
+            category = store_user.categories.find_by(id: category_id)
+
+            if category != nil
+
+                product = category.products.find_by(id: product_id)
+
+                if product != nil
+
+
+                    # user owns the product can start updating
+
+                    # PRODUCT NAME VALIDATORS
+
+
+
+                    name = params[:name]
+                    description = params[:description]
+                    price = params[:price]
+                    stock_quantity = params[:stock_quantity]
+                    product_available = eval(params[:product_available])
+                    product_attributes = params[:product_attributes]
+                    main_picture = params[:main_picture]
+                    product_pictures = params[:product_pictures]
+                    isBase64 = params[:isBase64]
+
+
+                    if isBase64 != nil
+
+                        isBase64 = eval(isBase64.downcase)
+
+                    end
+
+                    if name != nil
+
+                        if name.length == 0
+
+
+                            @success = false
+                            @message = "Product name cannot be empty"
+                            return
+
+                        else
+
+                            product.name = name
 
                         end
 
-                        if name != nil
-
-                            if name.length == 0
-
-
-                                @success = false
-                                @message = "Product name cannot be empty"
-                                return
-
-                            else
-
-                                product.name = name
-
-                            end
-
-                        end
+                    end
 
 
 
 
-                        if isBase64 != nil && isBase64
+                    if isBase64 != nil && isBase64
 
 
-                            if main_picture != nil
+                        if main_picture != nil
 
-                                main_picture = eval(main_picture)
+                            main_picture = eval(main_picture)
 
-                                if main_picture.instance_of?(Hash) && main_picture.size > 0
-
-
-                                    pic_name = main_picture[:name]
-                                    pic_type = main_picture[:type]
-                                    pic_uri = main_picture[:uri]
-
-                                    if pic_name != nil && pic_type != nil && pic_uri != nil
-
-                                        pic_base64_uri_array = pic_uri.split(",")
-
-                                        pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
-
-                                        temp_pic = Tempfile.new(pic_name)
-                                        temp_pic.binmode
-                                        temp_pic.write Base64.decode64(pic_base64_uri)
-                                        temp_pic.rewind
-
-                                        pic_name_array = pic_name.split(".")
-                                        extension = pic_name_array[pic_name_array.length - 1]
-                                        valid_extensions = ["png" , "jpeg", "jpg", "gif"]
-
-                                        if valid_extensions.include?(extension)
-
-                                            main_picture = ActionDispatch::Http::UploadedFile.new({
-                                                                                                      tempfile: temp_pic,
-                                                                                                      type: pic_type,
-                                                                                                      filename: pic_name
-                                                                                                  })
-
-                                            product.main_picture = main_picture
-
-                                        end
-
-                                    else
+                            if main_picture.instance_of?(Hash) && main_picture.size > 0
 
 
-                                        @success = false
-                                        @message = "Invalid main picture"
-                                        return
+                                pic_name = main_picture[:name]
+                                pic_type = main_picture[:type]
+                                pic_uri = main_picture[:uri]
 
+                                if pic_name != nil && pic_type != nil && pic_uri != nil
+
+                                    pic_base64_uri_array = pic_uri.split(",")
+
+                                    pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
+
+                                    temp_pic = Tempfile.new(pic_name)
+                                    temp_pic.binmode
+                                    temp_pic.write Base64.decode64(pic_base64_uri)
+                                    temp_pic.rewind
+
+                                    pic_name_array = pic_name.split(".")
+                                    extension = pic_name_array[pic_name_array.length - 1]
+                                    valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
+                                    if valid_extensions.include?(extension)
+
+                                        main_picture = ActionDispatch::Http::UploadedFile.new({
+                                                                                                  tempfile: temp_pic,
+                                                                                                  type: pic_type,
+                                                                                                  filename: pic_name
+                                                                                              })
+
+                                        product.main_picture = main_picture
 
                                     end
 
@@ -916,168 +938,199 @@ class ProductsController < ApplicationController
                                     @message = "Invalid main picture"
                                     return
 
-                                end
-
-
-                            end
-
-
-
-                        else
-
-
-                            if main_picture != nil
-
-                                if !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture)
-
-                                    @success = false
-                                    @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
-                                    return
-
-                                else
-
-                                    product.main_picture = main_picture
 
                                 end
 
+                            else
+
+
+                                @success = false
+                                @message = "Invalid main picture"
+                                return
 
                             end
-
-
-
 
 
                         end
 
 
 
+                    else
 
-                        if price != nil
 
-                            if !is_valid_price?(price.to_s, store_user)
+                        if main_picture != nil
 
+                            if !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture)
 
                                 @success = false
-                                @message = "Invalid price"
+                                @message = "Make sure you uploaded an appropriate picture with valid extension for the main picture."
                                 return
 
                             else
 
-                                product.price = price.to_d
+                                product.main_picture = main_picture
 
                             end
+
 
                         end
 
 
 
-                        if stock_quantity == nil || stock_quantity.empty?
 
-                            product.stock_quantity = nil
 
-                            if product_available != nil && is_boolean?(product_available)
+                    end
 
-                                product.product_available = product_available
 
-                            end
+
+
+                    if price != nil
+
+                        if !is_valid_price?(price.to_s, store_user)
+
+
+                            @success = false
+                            @message = "Invalid price"
+                            return
 
                         else
 
-                            if is_whole_number?(stock_quantity)
+                            product.price = price.to_d
 
-                                stock_quantity = stock_quantity.to_i
+                        end
 
-                                product.stock_quantity = stock_quantity
-
-                                if stock_quantity == 0
-
-
-                                    if product_available != nil && is_boolean?(product_available)
-
-                                        if product_available
-
-                                            @success = false
-                                            @message = "Cannot set the product availability on unless the stock quantity is greater zero"
-                                            return
-
-                                        else
-
-                                            product.product_available = product_available
-
-                                        end
+                    end
 
 
 
-                                    end
+                    if stock_quantity == nil || stock_quantity.empty?
 
-                                else
+                        product.stock_quantity = nil
+
+                        if product_available != nil && is_boolean?(product_available)
+
+                            product.product_available = product_available
+
+                        end
+
+                    else
+
+                        if is_whole_number?(stock_quantity)
+
+                            stock_quantity = stock_quantity.to_i
+
+                            product.stock_quantity = stock_quantity
+
+                            if stock_quantity == 0
 
 
-                                    if product_available != nil && is_boolean?(product_available)
+                                if product_available != nil && is_boolean?(product_available)
+
+                                    if product_available
+
+                                        @success = false
+                                        @message = "Cannot set the product availability on unless the stock quantity is greater zero"
+                                        return
+
+                                    else
 
                                         product.product_available = product_available
 
                                     end
 
 
+
                                 end
+
+                            else
+
+
+                                if product_available != nil && is_boolean?(product_available)
+
+                                    product.product_available = product_available
+
+                                end
+
 
                             end
 
-
                         end
 
-                        if description != nil
 
-                            product.description = description
+                    end
 
-                        end
+                    if description != nil
 
-                        if product_attributes != nil
+                        product.description = description
 
-                            begin
+                    end
 
-                                product_attributes = eval(product_attributes)
+                    if product_attributes != nil
 
+                        begin
 
-
-                                if product_attributes.instance_of?(Hash)
-
-                                    # can be empty hash
-
-                                    product.product_attributes = product_attributes
-
-
-                                else
-
-                                    @success = false
-                                    @message = "Invalid product attributes"
-                                    return
-
-                                end
+                            product_attributes = eval(product_attributes)
 
 
 
-                            rescue  SyntaxError, NameError
+                            if product_attributes.instance_of?(Hash)
+
+                                # can be empty hash
+
+                                product.product_attributes = product_attributes
+
+
+                            else
 
                                 @success = false
                                 @message = "Invalid product attributes"
                                 return
 
-
                             end
+
+
+
+                        rescue  SyntaxError, NameError
+
+                            @success = false
+                            @message = "Invalid product attributes"
+                            return
 
 
                         end
 
 
+                    end
 
 
-                        if product_pictures != nil
 
-                            if isBase64 != nil && isBase64
 
-                                product_pictures = decode_base64_pictures(product_pictures)
+                    if product_pictures != nil
+
+                        if isBase64 != nil && isBase64
+
+                            product_pictures = decode_base64_pictures(product_pictures)
+
+                            if product.product_pictures.size > 0
+                                # there exists pictures
+                                product.product_pictures += product_pictures
+                            else
+                                product.product_pictures = product_pictures
+                            end
+
+
+
+                        else
+
+
+                            if !are_product_pictures_valid?(product_pictures)
+
+
+                                @success = false
+                                @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                                return
+
+                            else
 
                                 if product.product_pictures.size > 0
                                     # there exists pictures
@@ -1087,67 +1140,46 @@ class ProductsController < ApplicationController
                                 end
 
 
-
-                            else
-
-
-                                if !are_product_pictures_valid?(product_pictures)
-
-
-                                    @success = false
-                                    @message = "Make sure you uploaded an appropriate pictures with valid extension."
-                                    return
-
-                                else
-
-                                    if product.product_pictures.size > 0
-                                        # there exists pictures
-                                        product.product_pictures += product_pictures
-                                    else
-                                        product.product_pictures = product_pictures
-                                    end
-
-
-                                end
-
-
                             end
 
 
                         end
 
 
-
-                        if product.save!
-
-                            @success = true
-                            @message = "Updated product"
-                            @product = product.to_json
-                            @product_pictures = product.get_images.to_json
-
-                            return
-
-                        else
-
-                            @success = false
-                            @message = "Error updating"
-                            return
-
-                        end
+                    end
 
 
+
+                    if product.save!
+
+                        @success = true
+                        @message = "Updated product"
+                        @product = product.to_json
+                        @product_pictures = product.get_images.to_json
+
+                        return
+
+                    else
+
+                        @success = false
+                        @message = "Error updating"
+                        return
 
                     end
+
 
 
                 end
 
 
-
             end
 
 
+
         end
+
+
+
 
     end
 
