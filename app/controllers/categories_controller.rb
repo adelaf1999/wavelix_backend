@@ -1,6 +1,8 @@
 class CategoriesController < ApplicationController
 
-    before_action :authenticate_user!
+    # before_action :authenticate_user!
+
+    before_action :deny_to_visitors
 
     def create
 
@@ -24,17 +26,17 @@ class CategoriesController < ApplicationController
                 category.store_user_id = store_user.id
 
                 if category.save
-                    
+
                     @success = true
                     @message = "Successfully created categories"
                     @categories = store_user.get_categories
-                
-                
+
+
                 else
 
                     @success = false
                     @message = "Error creating category"
-                   
+
 
                 end
 
@@ -42,7 +44,7 @@ class CategoriesController < ApplicationController
 
                 @success = false
                 @message = "Category Name cannot be empty"
-               
+
 
             end
 
@@ -52,11 +54,47 @@ class CategoriesController < ApplicationController
 
     def get_categories
 
-        if current_user.store_user?
 
-            @categories = StoreUser.find_by(store_id: current_user.id).get_categories
+        if user_signed_in?
+
+            if current_user.store_user?
+
+                store_user = StoreUser.find_by(store_id: current_user.id)
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+        else
+
+
+            employee = Employee.find_by(id: current_employee.id)
+
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
 
         end
+
+        
+
+        @categories = store_user.get_categories
+
+
+
 
     end
 
@@ -204,16 +242,16 @@ class CategoriesController < ApplicationController
     def traverse_child_subcategories(subcategories, parent_node, parent_category)
 
         store_user = StoreUser.find_by(store_id: current_user.id)
-    
+
         for i in 0..subcategories.length
-            
+
             subcategory = subcategories[i]
-            
-            if subcategory != nil  
-                
-                
+
+            if subcategory != nil
+
+
                 child_node = subcategory[:name]
-               
+
                 if child_node != nil && child_node.length > 0
 
                     # p "hey i am #{child_node} my parent is #{parent_node}"
@@ -221,14 +259,14 @@ class CategoriesController < ApplicationController
 
                     if child_subcategories != nil && child_subcategories.length > 0
                         new_parent_category = Category.create!(
-                            name: child_node, 
+                            name: child_node,
                             store_user_id: store_user.id,
                             parent_id: parent_category.id
                         )
                         traverse_child_subcategories(child_subcategories, child_node, new_parent_category)
                     else
                         Category.create!(
-                            name: child_node, 
+                            name: child_node,
                             store_user_id: store_user.id,
                             parent_id: parent_category.id
                         )
@@ -236,22 +274,22 @@ class CategoriesController < ApplicationController
                     end
 
                 end
-            
+
 
 
             end
 
         end
-    
+
     end
-    
+
     def traverse_data(data)
-        
+
         root_node = data[:name]
 
         store_user = StoreUser.find_by(store_id: current_user.id)
 
-        
+
         if root_node != nil && root_node.length > 0
 
             subcategories = data[:subcategories]
@@ -261,14 +299,14 @@ class CategoriesController < ApplicationController
                 if subcategories.length > 0
 
                     root_category =  Category.create!(
-                        name: root_node, 
+                        name: root_node,
                         store_user_id: store_user.id
                     )
 
                     for i in 0..subcategories.length
-                        
+
                         subcategory = subcategories[i]
-                        
+
                         if subcategory != nil
 
                             child_node = subcategory[:name]
@@ -282,21 +320,19 @@ class CategoriesController < ApplicationController
                                 if child_subcategories != nil && child_subcategories.length > 0
 
                                     new_parent_category = Category.create!(
-                                        name: child_node, 
+                                        name: child_node,
                                         store_user_id: store_user.id,
                                         parent_id: root_category.id
                                     )
 
                                     traverse_child_subcategories(child_subcategories, child_node, new_parent_category)
 
-                                    else
-                                        Category.create!(
-                                            name: child_node, 
-                                            store_user_id: store_user.id,
-                                            parent_id: root_category.id
-                                        )
-                                    end
-
+                                else
+                                    Category.create!(
+                                        name: child_node,
+                                        store_user_id: store_user.id,
+                                        parent_id: root_category.id
+                                    )
                                 end
 
                             end
@@ -305,16 +341,26 @@ class CategoriesController < ApplicationController
 
                     end
 
-                else
-
-                    Category.create!(name: root_node, store_user_id: store_user.id)
-
                 end
 
-            end
+            else
 
+                Category.create!(name: root_node, store_user_id: store_user.id)
+
+            end
 
         end
 
 
     end
+
+
+    def deny_to_visitors
+
+        head :unauthorized unless user_signed_in? or employee_signed_in?
+
+    end
+
+
+
+end
