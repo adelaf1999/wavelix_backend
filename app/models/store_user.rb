@@ -36,7 +36,7 @@ class StoreUser < ApplicationRecord
 
         categories = []
 
-        self.categories.each do |category|
+        self.categories.order(name: :asc).each do |category|
 
             if category.parent_id == nil
 

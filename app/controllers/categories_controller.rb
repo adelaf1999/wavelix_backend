@@ -126,43 +126,80 @@ class CategoriesController < ApplicationController
 
     def change_category_name
 
-        if current_user.store_user?
-
-            store_user = StoreUser.find_by(store_id: current_user.id)
-
-            category = store_user.categories.find_by(id: params[:category_id])
-
-            if category != nil
-
-                # store owns this category 
-
-                category_name = params[:category_name]
-
-                if category_name != nil && category_name.length > 0
-
-                    category.update!(name: category_name)
-
-                    @success = true
-                    @message = "Successfully changed category name"
-                    @categories = store_user.get_categories
 
 
-                else
+        if user_signed_in?
 
-                    @success = false
-                    @message = "Invalid category name"
+            if current_user.store_user?
 
-                end
+                store_user = StoreUser.find_by(store_id: current_user.id)
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+        else
+
+
+            employee = Employee.find_by(id: current_employee.id)
+
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+
+        end
+
+
+
+        category = store_user.categories.find_by(id: params[:category_id])
+
+        if category != nil
+
+            # store owns this category
+
+            category_name = params[:category_name]
+
+            if category_name != nil && category_name.length > 0
+
+                category.update!(name: category_name)
+
+                @success = true
+                @message = "Successfully changed category name"
+                @categories = store_user.get_categories
+
 
             else
 
                 @success = false
-                @message = "Category may have been moved or deleted"
-
+                @message = "Invalid category name"
 
             end
 
+        else
+
+            @success = false
+            @message = "Category may have been moved or deleted"
+
+
         end
+
+
+
+
+
 
     end
 
