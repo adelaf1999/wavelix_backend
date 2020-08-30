@@ -6,49 +6,75 @@ class CategoriesController < ApplicationController
 
     def create
 
-        if current_user.store_user?
 
-            # categories = eval(params[:categories])
+        if user_signed_in?
 
-            # if categories != nil
-            #     traverse_data(categories)
-            # end
+            if current_user.store_user?
 
-            category_name = params[:category_name]
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+            else
 
-            if category_name != nil && category_name.length > 0
+                head :unauthorized
 
-                category = Category.new
+                return
 
-                category.name = category_name
-                category.store_user_id = store_user.id
+            end
 
-                if category.save
-
-                    @success = true
-                    @message = "Successfully created categories"
-                    @categories = store_user.get_categories
+        else
 
 
-                else
+            employee = Employee.find_by(id: current_employee.id)
 
-                    @success = false
-                    @message = "Error creating category"
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
 
 
-                end
+        end
+
+
+        category_name = params[:category_name]
+
+        if category_name != nil && category_name.length > 0
+
+            category = Category.new
+
+            category.name = category_name
+            category.store_user_id = store_user.id
+
+            if category.save
+
+                @success = true
+                @message = 'Successfully created category'
+                @categories = store_user.get_categories
+
 
             else
 
                 @success = false
-                @message = "Category Name cannot be empty"
+                @message = 'Error creating category'
 
 
             end
 
+        else
+
+            @success = false
+            @message = 'Category Name cannot be empty'
+
+
         end
+
+
 
     end
 
@@ -89,7 +115,7 @@ class CategoriesController < ApplicationController
 
         end
 
-        
+
 
         @categories = store_user.get_categories
 
