@@ -724,30 +724,57 @@ class ProductsController < ApplicationController
 
     def store_owns_product_check
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
 
-            category_id = params[:category_id]
+        if user_signed_in?
 
-            category = store_user.categories.find_by(id: category_id)
+            if current_user.store_user?
 
-            if category != nil
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-                product = category.products.find_by(id: params[:product_id])
+            else
 
-                if product != nil
+                head :unauthorized
 
-                    @success = true
-                    @product = product.to_json
-                    @product_pictures = product.get_images.to_json
-                    @minimum_product_price = store_user.get_minimum_product_price
+                return
 
-                else
+            end
 
-                    @success = false
+        else
 
-                end
+
+            employee = Employee.find_by(id: current_employee.id)
+
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+
+        end
+
+
+        category_id = params[:category_id]
+
+        category = store_user.categories.find_by(id: category_id)
+
+        if category != nil
+
+            product = category.products.find_by(id: params[:product_id])
+
+            if product != nil
+
+                @success = true
+                @product = product.to_json
+                @product_pictures = product.get_images.to_json
+                @minimum_product_price = store_user.get_minimum_product_price
 
             else
 
@@ -755,7 +782,13 @@ class ProductsController < ApplicationController
 
             end
 
+        else
+
+            @success = false
+
         end
+
+
 
     end
 
