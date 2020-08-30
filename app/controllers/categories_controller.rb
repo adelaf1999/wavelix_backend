@@ -302,31 +302,67 @@ class CategoriesController < ApplicationController
 
     def store_has_category
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+        if user_signed_in?
 
-            category = store_user.categories.find_by(id: params[:category_id])
+            if current_user.store_user?
 
-            if category != nil
-
-                if category.subcategories.length > 0
-                    @has_subcategories = true
-                else
-                    @has_subcategories = false
-                end
-
-                @success = true
-
-                @minimum_product_price = store_user.get_minimum_product_price
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
             else
 
-                @success = false
+                head :unauthorized
+
+                return
 
             end
 
+        else
+
+
+            employee = Employee.find_by(id: current_employee.id)
+
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+
         end
+
+
+
+        category = store_user.categories.find_by(id: params[:category_id])
+
+        if category != nil
+
+            if category.subcategories.length > 0
+
+                @has_subcategories = true
+
+            else
+
+                @has_subcategories = false
+
+            end
+
+            @success = true
+
+            @minimum_product_price = store_user.get_minimum_product_price
+
+        else
+
+            @success = false
+
+        end
+
 
     end
 
