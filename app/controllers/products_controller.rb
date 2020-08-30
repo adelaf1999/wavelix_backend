@@ -1218,394 +1218,424 @@ class ProductsController < ApplicationController
 
     def import_products
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
-            category = store_user.categories.find_by(id: params[:category_id])
+        if user_signed_in?
 
-            if category != nil
+            if current_user.store_user?
 
-                pictures = params[:product_pictures]
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-                file = params[:file]
+            else
 
-                isBase64 = params[:isBase64]
+                head :unauthorized
 
-                if category.subcategories.length > 0
+                return
 
-                    @success = false
-                    @message = "Cannot import products since category already has subcategories."
-                    return
+            end
 
-                end
+        else
 
 
-                if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
+            employee = Employee.find_by(id: current_employee.id)
 
-                    @success = false
-                    @message = "The file to import products must be of type csv."
-                    return
+            if employee.has_roles?(:product_manager) && employee.active?
 
-                end
+                store_user = employee.store_user
 
-                if  pictures == nil || !pictures.instance_of?(Array)
+            else
 
-                    @success = false
-                    @message = "Upload pictures to continue"
-                    return
+                head :unauthorized
 
-                end
-
-
-                if isBase64 != nil
-
-                    isBase64 = eval(isBase64)
-
-                    if isBase64
-                        pictures = decode_base64_pictures(pictures)
-                    end
-
-                end
-
-
-                csv_file = file.tempfile.open
-
-                filepath = csv_file.path
-
-                csv = CSV.read(filepath, headers: true, converters: :numeric)
-
-                csv_header_map = get_csv_file_header_map(csv)
-
-                # Make sure all headers are present
-
-                if csv_header_map[:name].empty? || csv_header_map[:price].empty? || csv_header_map[:main_picture].empty?
-
-                    @success = false
-
-                    @message = "Make sure your csv file has all of the following headers: name, price, and main picture"
-
-                    csv_file.close
-
-                    return
-
-                end
-
-                # Even if the user might have uploaded extra pictures, or if there are some missing pictures,
-                #  or if there are some pictures of invalid type
-                #  proceed and try to make as much as valid products as possible
-                #  then you can report to the user how many products were imported
-                #  and the names of those that failed to import so he can re import them
-
-                csv.each do |row|
-
-                    can_save = true
-
-                    name = row[ csv_header_map[:name] ]
-                    description = row[ csv_header_map[:description] ]
-                    price = row[ csv_header_map[:price] ]
-                    main_picture = get_uploaded_picture(pictures, row[ csv_header_map[:main_picture] ] )
-                    stock_quantity = row[ csv_header_map[:stock_quantity] ]
-
-                    if name == nil || name.length == 0
-                        can_save = false
-                    end
-
-                    if can_save &&  description == nil
-                        description = ''
-                    end
-
-                    if can_save &&   ( price == nil || !is_valid_price?(price.to_s, store_user) )
-                        can_save = false
-                    else
-                        price = price.to_d
-                    end
-
-
-                    if isBase64 != nil &&  isBase64
-
-                        if can_save && main_picture == nil
-                            can_save = false
-                        end
-
-                    else
-
-                        if can_save &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
-                            can_save = false
-                        end
-
-                    end
-
-
-                    if can_save &&  stock_quantity != nil
-
-                        if stock_quantity == ''
-
-                            stock_quantity = nil
-
-                        else
-
-                            if !is_positive_integer?(stock_quantity.to_s)
-
-                                can_save = false
-
-                            else
-
-                                stock_quantity = stock_quantity.to_i
-
-                            end
-
-                        end
-
-                    end
-
-
-                    if can_save
-
-                        # All other columns add them to the product attributes
-
-                        # Make sure that the other headers are not the special headers
-
-                        # Or that they resemble the special headers in some way
-
-                        product_attributes = {}
-                        product_pictures = []
-                        special_headers = csv_header_map.values
-
-
-                        csv.headers.each do |header|
-
-                            if header != nil
-
-                                if is_csv_pictures_header?(header)
-
-                                    row_value = row[header]
-
-                                    if row_value != nil && !row_value.to_s.empty?
-
-                                        if row_value.is_a?(String) && row_value.include?(",")
-
-                                            row_value = row_value.strip
-
-                                            picture_names = row_value.split(",")
-
-                                            picture_names.each do |picture_name|
-
-                                                picture_name = picture_name.strip
-
-                                                picture = get_uploaded_picture(pictures, picture_name)
-
-                                                if isBase64 != nil &&  isBase64
-
-                                                    if picture != nil
-
-                                                        product_pictures.push(picture)
-
-                                                    end
-
-                                                else
-
-                                                    if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
-
-                                                        product_pictures.push(picture)
-
-                                                    end
-
-                                                end
-
-
-                                            end
-
-                                        end
-
-                                    end
-
-                                else
-
-                                    if !special_headers.include?(header) &&
-                                        !header.include?("name") &&
-                                        !description_contains(header) &&
-                                        !price_contains(header) &&
-                                        !main_picture_contains(header) &&
-                                        !stock_quantity_contains(header)
-
-                                        row_value = row[ header ]
-
-                                        if row_value != nil
-
-
-                                            if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
-
-                                                # makes sure product keys are unique
-
-                                                if row_value.is_a?(String)
-
-                                                    row_value = row_value.strip
-
-                                                    if row_value.include?(",")
-
-                                                        is_row_list = true
-
-                                                        row_value_array = row_value.split(",")
-
-                                                        row_value_array.each do |value|
-
-                                                            value = value.strip
-
-                                                            if value.include?(" ")
-
-                                                                value_array = value.split(" ")
-
-                                                                if value_array.size > 2
-
-                                                                    is_row_list = false
-
-                                                                    break
-
-                                                                end
-
-                                                            end
-
-
-                                                        end
-
-                                                        if is_row_list
-
-                                                            header = header.downcase
-
-                                                            product_attributes[header] = row_value_array
-
-                                                        end
-
-
-
-                                                    elsif row_value.include?("-") && !product_attributes.has_key?(header)
-
-                                                        is_row_list = true
-
-                                                        row_value_array = row_value.split("-")
-
-                                                        row_value_array.each do |value|
-
-                                                            value = value.strip
-
-                                                            if value.include?(" ")
-
-                                                                value_array = value.split(" ")
-
-                                                                if value_array.size > 2
-
-                                                                    is_row_list = false
-
-                                                                    break
-
-                                                                end
-
-                                                            end
-
-
-                                                        end
-
-                                                        if is_row_list
-
-                                                            header = header.downcase
-
-                                                            product_attributes[header] = row_value_array
-
-                                                        end
-
-                                                    end
-
-
-                                                    if !product_attributes.has_key?(header)
-
-                                                        header = header.downcase
-
-                                                        product_attributes[header] = row_value
-
-
-                                                    end
-
-
-                                                else
-
-                                                    header = header.downcase
-
-                                                    product_attributes[header] = row_value
-
-                                                end
-
-                                            end
-
-
-
-                                        end
-
-
-
-                                    end
-
-                                end
-
-
-
-                            end
-
-
-
-                        end
-
-                        product = Product.new
-                        product.name = name
-                        product.description = description
-                        product.price = price
-                        product.main_picture = main_picture
-                        product.category_id = category.id
-                        product.stock_quantity = stock_quantity
-
-                        if product_attributes.size > 0
-                            product.product_attributes = product_attributes
-                        end
-
-                        if product_pictures.size > 0
-
-                            product.product_pictures = product_pictures
-
-                        end
-
-
-                        if product.save!
-
-                            new_products = []
-
-                            category.products.order('name ASC').each do |p|
-                                new_products.push(p)
-                            end
-
-                            new_products = new_products.to_json
-
-                            ActionCable.server.broadcast "category_#{category.id}_products_user_#{current_user.id}", {products: new_products}
-
-                        end
-
-
-                    end
-
-
-
-
-
-                end
-
-                @success = true
-
-
-                csv_file.close
-
+                return
 
             end
 
 
         end
+
+        category = store_user.categories.find_by(id: params[:category_id])
+
+        if category != nil
+
+            pictures = params[:product_pictures]
+
+            file = params[:file]
+
+            isBase64 = params[:isBase64]
+
+            if category.subcategories.length > 0
+
+                @success = false
+                @message = "Cannot import products since category already has subcategories."
+                return
+
+            end
+
+
+            if file == nil || !file.is_a?(ActionDispatch::Http::UploadedFile) || !is_csv_file_valid?(file)
+
+                @success = false
+                @message = "The file to import products must be of type csv."
+                return
+
+            end
+
+            if  pictures == nil || !pictures.instance_of?(Array)
+
+                @success = false
+                @message = "Upload pictures to continue"
+                return
+
+            end
+
+
+            if isBase64 != nil
+
+                isBase64 = eval(isBase64)
+
+                if isBase64
+                    pictures = decode_base64_pictures(pictures)
+                end
+
+            end
+
+
+            csv_file = file.tempfile.open
+
+            filepath = csv_file.path
+
+            csv = CSV.read(filepath, headers: true, converters: :numeric)
+
+            csv_header_map = get_csv_file_header_map(csv)
+
+            # Make sure all headers are present
+
+            if csv_header_map[:name].empty? || csv_header_map[:price].empty? || csv_header_map[:main_picture].empty?
+
+                @success = false
+
+                @message = "Make sure your csv file has all of the following headers: name, price, and main picture"
+
+                csv_file.close
+
+                return
+
+            end
+
+            # Even if the user might have uploaded extra pictures, or if there are some missing pictures,
+            #  or if there are some pictures of invalid type
+            #  proceed and try to make as much as valid products as possible
+            #  then you can report to the user how many products were imported
+            #  and the names of those that failed to import so he can re import them
+
+            csv.each do |row|
+
+                can_save = true
+
+                name = row[ csv_header_map[:name] ]
+                description = row[ csv_header_map[:description] ]
+                price = row[ csv_header_map[:price] ]
+                main_picture = get_uploaded_picture(pictures, row[ csv_header_map[:main_picture] ] )
+                stock_quantity = row[ csv_header_map[:stock_quantity] ]
+
+                if name == nil || name.length == 0
+                    can_save = false
+                end
+
+                if can_save &&  description == nil
+                    description = ''
+                end
+
+                if can_save &&   ( price == nil || !is_valid_price?(price.to_s, store_user) )
+                    can_save = false
+                else
+                    price = price.to_d
+                end
+
+
+                if isBase64 != nil &&  isBase64
+
+                    if can_save && main_picture == nil
+                        can_save = false
+                    end
+
+                else
+
+                    if can_save &&  (  main_picture == nil || !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture))
+                        can_save = false
+                    end
+
+                end
+
+
+                if can_save &&  stock_quantity != nil
+
+                    if stock_quantity == ''
+
+                        stock_quantity = nil
+
+                    else
+
+                        if !is_positive_integer?(stock_quantity.to_s)
+
+                            can_save = false
+
+                        else
+
+                            stock_quantity = stock_quantity.to_i
+
+                        end
+
+                    end
+
+                end
+
+
+                if can_save
+
+                    # All other columns add them to the product attributes
+
+                    # Make sure that the other headers are not the special headers
+
+                    # Or that they resemble the special headers in some way
+
+                    product_attributes = {}
+                    product_pictures = []
+                    special_headers = csv_header_map.values
+
+
+                    csv.headers.each do |header|
+
+                        if header != nil
+
+                            if is_csv_pictures_header?(header)
+
+                                row_value = row[header]
+
+                                if row_value != nil && !row_value.to_s.empty?
+
+                                    if row_value.is_a?(String) && row_value.include?(",")
+
+                                        row_value = row_value.strip
+
+                                        picture_names = row_value.split(",")
+
+                                        picture_names.each do |picture_name|
+
+                                            picture_name = picture_name.strip
+
+                                            picture = get_uploaded_picture(pictures, picture_name)
+
+                                            if isBase64 != nil &&  isBase64
+
+                                                if picture != nil
+
+                                                    product_pictures.push(picture)
+
+                                                end
+
+                                            else
+
+                                                if picture != nil  && picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(picture)
+
+                                                    product_pictures.push(picture)
+
+                                                end
+
+                                            end
+
+
+                                        end
+
+                                    end
+
+                                end
+
+                            else
+
+                                if !special_headers.include?(header) &&
+                                    !header.include?("name") &&
+                                    !description_contains(header) &&
+                                    !price_contains(header) &&
+                                    !main_picture_contains(header) &&
+                                    !stock_quantity_contains(header)
+
+                                    row_value = row[ header ]
+
+                                    if row_value != nil
+
+
+                                        if !product_attributes.has_key?(header) &&  !row_value.to_s.empty?
+
+                                            # makes sure product keys are unique
+
+                                            if row_value.is_a?(String)
+
+                                                row_value = row_value.strip
+
+                                                if row_value.include?(",")
+
+                                                    is_row_list = true
+
+                                                    row_value_array = row_value.split(",")
+
+                                                    row_value_array.each do |value|
+
+                                                        value = value.strip
+
+                                                        if value.include?(" ")
+
+                                                            value_array = value.split(" ")
+
+                                                            if value_array.size > 2
+
+                                                                is_row_list = false
+
+                                                                break
+
+                                                            end
+
+                                                        end
+
+
+                                                    end
+
+                                                    if is_row_list
+
+                                                        header = header.downcase
+
+                                                        product_attributes[header] = row_value_array
+
+                                                    end
+
+
+
+                                                elsif row_value.include?("-") && !product_attributes.has_key?(header)
+
+                                                    is_row_list = true
+
+                                                    row_value_array = row_value.split("-")
+
+                                                    row_value_array.each do |value|
+
+                                                        value = value.strip
+
+                                                        if value.include?(" ")
+
+                                                            value_array = value.split(" ")
+
+                                                            if value_array.size > 2
+
+                                                                is_row_list = false
+
+                                                                break
+
+                                                            end
+
+                                                        end
+
+
+                                                    end
+
+                                                    if is_row_list
+
+                                                        header = header.downcase
+
+                                                        product_attributes[header] = row_value_array
+
+                                                    end
+
+                                                end
+
+
+                                                if !product_attributes.has_key?(header)
+
+                                                    header = header.downcase
+
+                                                    product_attributes[header] = row_value
+
+
+                                                end
+
+
+                                            else
+
+                                                header = header.downcase
+
+                                                product_attributes[header] = row_value
+
+                                            end
+
+                                        end
+
+
+
+                                    end
+
+
+
+                                end
+
+                            end
+
+
+
+                        end
+
+
+
+                    end
+
+                    product = Product.new
+                    product.name = name
+                    product.description = description
+                    product.price = price
+                    product.main_picture = main_picture
+                    product.category_id = category.id
+                    product.stock_quantity = stock_quantity
+
+                    if product_attributes.size > 0
+                        product.product_attributes = product_attributes
+                    end
+
+                    if product_pictures.size > 0
+
+                        product.product_pictures = product_pictures
+
+                    end
+
+
+                    if product.save!
+
+                        new_products = []
+
+                        category.products.order('name ASC').each do |p|
+                            new_products.push(p)
+                        end
+
+                        new_products = new_products.to_json
+
+                        ActionCable.server.broadcast "category_#{category.id}_products_store_user_#{store_user.id}", {products: new_products}
+
+                    end
+
+
+                end
+
+
+
+
+
+            end
+
+            @success = true
+
+
+            csv_file.close
+
+
+        end
+
 
     end
 
