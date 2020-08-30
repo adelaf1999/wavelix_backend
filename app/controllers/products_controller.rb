@@ -687,38 +687,70 @@ class ProductsController < ApplicationController
 
     def remove_product_image
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+        if user_signed_in?
 
-            category = store_user.categories.find_by(id: params[:category_id])
+            if current_user.store_user?
 
-            if category != nil
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-                product = category.products.find_by(id: params[:product_id])
+            else
 
-                if product != nil
+                head :unauthorized
 
-                    image_name = params[:image_name]
+                return
 
-                    if image_name != nil && image_name.length > 0
+            end
 
-                        product.remove_image(image_name)
-
-                        @product_pictures = product.get_images.to_json
+        else
 
 
-                    end
+            employee = Employee.find_by(id: current_employee.id)
 
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+
+        end
+
+
+
+        category = store_user.categories.find_by(id: params[:category_id])
+
+        if category != nil
+
+            product = category.products.find_by(id: params[:product_id])
+
+            if product != nil
+
+                image_name = params[:image_name]
+
+                if image_name != nil && image_name.length > 0
+
+                    product.remove_image(image_name)
+
+                    @product_pictures = product.get_images.to_json
 
 
                 end
+
 
 
             end
 
 
         end
+
+
 
     end
 
