@@ -171,158 +171,181 @@ class ProductsController < ApplicationController
 
     def create
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+        if user_signed_in?
 
-            missing_params = false
+            if current_user.store_user?
 
-            req_params = [:name,  :price, :main_picture, :category_id]
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
-            # optional params: description, stock_quantity
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+        else
 
 
-            product_params = params.permit(
-                :name,
-                :description,
-                :price,
-                :main_picture,
-                :category_id,
-                :stock_quantity,
-                :product_attributes,
-                {product_pictures: []},
-                :isBase64
-            )
+            employee = Employee.find_by(id: current_employee.id)
 
-            req_params.each do |p|
+            if employee.has_roles?(:product_manager) && employee.active?
 
-                if product_params[p] == nil
-                    missing_params = true
-                    break
-                end
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
 
             end
 
 
+        end
 
 
-            if !missing_params
+        missing_params = false
 
-                name = product_params[:name]
+        req_params = [:name,  :price, :main_picture, :category_id]
 
-                description = product_params[:description]
+        # optional params: description, stock_quantity
 
-                price = product_params[:price]
 
-                main_picture = product_params[:main_picture]
+        product_params = params.permit(
+            :name,
+            :description,
+            :price,
+            :main_picture,
+            :category_id,
+            :stock_quantity,
+            :product_attributes,
+            {product_pictures: []},
+            :isBase64
+        )
 
-                category_id = product_params[:category_id]
+        req_params.each do |p|
 
-                stock_quantity = product_params[:stock_quantity]
+            if product_params[p] == nil
+                missing_params = true
+                break
+            end
 
-                product_attributes = product_params[:product_attributes]
+        end
 
-                product_pictures = product_params[:product_pictures]
 
-                isBase64 = product_params[:isBase64]
 
-                category = store_user.categories.find_by(id: category_id)
 
-                if isBase64 != nil
+        if !missing_params
 
-                    isBase64 = eval(isBase64)
+            name = product_params[:name]
+
+            description = product_params[:description]
+
+            price = product_params[:price]
+
+            main_picture = product_params[:main_picture]
+
+            category_id = product_params[:category_id]
+
+            stock_quantity = product_params[:stock_quantity]
+
+            product_attributes = product_params[:product_attributes]
+
+            product_pictures = product_params[:product_pictures]
+
+            isBase64 = product_params[:isBase64]
+
+            category = store_user.categories.find_by(id: category_id)
+
+            if isBase64 != nil
+
+                isBase64 = eval(isBase64)
+
+            end
+
+            if category != nil
+
+
+                product = Product.new
+
+                product.category_id = category_id
+
+                if name.length == 0
+
+                    @success = false
+                    @message = "Name cannot be empty"
+                    return
+
+                else
+
+                    product.name = name
 
                 end
 
-                if category != nil
+                if description != nil && description.length > 0
 
+                    product.description = description
 
-                    product = Product.new
-
-                    product.category_id = category_id
-
-                    if name.length == 0
-
-                        @success = false
-                        @message = "Name cannot be empty"
-                        return
-
-                    else
-
-                        product.name = name
-
-                    end
-
-                    if description != nil && description.length > 0
-
-                        product.description = description
-
-                    end
+                end
 
 
 
-                    if is_valid_price?(price.to_s, store_user)
+                if is_valid_price?(price.to_s, store_user)
 
-                        product.price = price.to_d
-
-
-                    else
-
-                        @success = false
-                        @message = "Invalid price"
-                        return
-
-                    end
+                    product.price = price.to_d
 
 
+                else
 
-                    if isBase64 != nil && isBase64
+                    @success = false
+                    @message = "Invalid price"
+                    return
 
-
-                        if  main_picture != nil
-
-                            main_picture = eval(main_picture)
-
-                            if main_picture.instance_of?(Hash) && main_picture.size > 0
+                end
 
 
-                                pic_name = main_picture[:name]
-                                pic_type = main_picture[:type]
-                                pic_uri = main_picture[:uri]
 
-                                if pic_name != nil && pic_type != nil && pic_uri != nil
+                if isBase64 != nil && isBase64
 
-                                    pic_base64_uri_array = pic_uri.split(",")
 
-                                    pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
+                    if  main_picture != nil
 
-                                    temp_pic = Tempfile.new(pic_name)
-                                    temp_pic.binmode
-                                    temp_pic.write Base64.decode64(pic_base64_uri)
-                                    temp_pic.rewind
+                        main_picture = eval(main_picture)
 
-                                    pic_name_array = pic_name.split(".")
-                                    extension = pic_name_array[pic_name_array.length - 1]
-                                    valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+                        if main_picture.instance_of?(Hash) && main_picture.size > 0
 
-                                    if valid_extensions.include?(extension)
 
-                                        main_picture = ActionDispatch::Http::UploadedFile.new({
-                                                                                                  tempfile: temp_pic,
-                                                                                                  type: pic_type,
-                                                                                                  filename: pic_name
-                                                                                              })
+                            pic_name = main_picture[:name]
+                            pic_type = main_picture[:type]
+                            pic_uri = main_picture[:uri]
 
-                                        product.main_picture = main_picture
+                            if pic_name != nil && pic_type != nil && pic_uri != nil
 
-                                    end
+                                pic_base64_uri_array = pic_uri.split(",")
 
-                                else
+                                pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
 
-                                    @success = false
-                                    @message = "Invalid main picture"
-                                    return
+                                temp_pic = Tempfile.new(pic_name)
+                                temp_pic.binmode
+                                temp_pic.write Base64.decode64(pic_base64_uri)
+                                temp_pic.rewind
 
+                                pic_name_array = pic_name.split(".")
+                                extension = pic_name_array[pic_name_array.length - 1]
+                                valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
+                                if valid_extensions.include?(extension)
+
+                                    main_picture = ActionDispatch::Http::UploadedFile.new({
+                                                                                              tempfile: temp_pic,
+                                                                                              type: pic_type,
+                                                                                              filename: pic_name
+                                                                                          })
+
+                                    product.main_picture = main_picture
 
                                 end
 
@@ -332,94 +355,95 @@ class ProductsController < ApplicationController
                                 @message = "Invalid main picture"
                                 return
 
-                            end
 
+                            end
 
                         else
 
                             @success = false
-                            @message = "Upload a main picture for your product."
+                            @message = "Invalid main picture"
                             return
 
                         end
-
 
 
                     else
 
-
-
-                        if  !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture)
-
-                            @success = false
-                            @message = "Make sure you uploaded an appropriate picture with valid extension."
-
-                            return
-
-                        else
-
-
-                            product.main_picture = main_picture
-
-                        end
-
-
-                    end
-
-
-
-                    if stock_quantity != nil && !stock_quantity.empty?
-
-                        if !is_positive_integer?(stock_quantity.to_s)
-
-                            @success = false
-                            @message = "Stock quantity must be a positive integer"
-                            return
-
-                        else
-
-
-                            product.stock_quantity = stock_quantity.to_i
-
-                        end
-
-
-
-                    end
-
-
-                    if category.subcategories.length > 0
-
-
                         @success = false
-                        @message = "Cannot add product since category already has subcategories."
+                        @message = "Upload a main picture for your product."
                         return
 
                     end
 
 
 
-                    # validate product_attributes as necessary
+                else
 
-                    if product_attributes != nil
 
-                        begin
 
-                            product_attributes = eval(product_attributes)
+                    if  !main_picture.is_a?(ActionDispatch::Http::UploadedFile) || !is_picture_valid?(main_picture)
 
-                            if product_attributes.instance_of?(Hash) && product_attributes.length > 0
+                        @success = false
+                        @message = "Make sure you uploaded an appropriate picture with valid extension."
 
-                                product.product_attributes = product_attributes
+                        return
 
-                            else
+                    else
 
-                                @success = false
-                                @message = "Invalid product attributes"
-                                return
 
-                            end
+                        product.main_picture = main_picture
 
-                        rescue  SyntaxError, NameError
+                    end
+
+
+                end
+
+
+
+                if stock_quantity != nil && !stock_quantity.empty?
+
+                    if !is_positive_integer?(stock_quantity.to_s)
+
+                        @success = false
+                        @message = "Stock quantity must be a positive integer"
+                        return
+
+                    else
+
+
+                        product.stock_quantity = stock_quantity.to_i
+
+                    end
+
+
+
+                end
+
+
+                if category.subcategories.length > 0
+
+
+                    @success = false
+                    @message = "Cannot add product since category already has subcategories."
+                    return
+
+                end
+
+
+
+                # validate product_attributes as necessary
+
+                if product_attributes != nil
+
+                    begin
+
+                        product_attributes = eval(product_attributes)
+
+                        if product_attributes.instance_of?(Hash) && product_attributes.length > 0
+
+                            product.product_attributes = product_attributes
+
+                        else
 
                             @success = false
                             @message = "Invalid product attributes"
@@ -427,35 +451,40 @@ class ProductsController < ApplicationController
 
                         end
 
+                    rescue  SyntaxError, NameError
+
+                        @success = false
+                        @message = "Invalid product attributes"
+                        return
 
                     end
 
-                    # validate product pictures as necessary
 
-                    if product_pictures != nil
+                end
 
-                        if isBase64 != nil && isBase64
+                # validate product pictures as necessary
+
+                if product_pictures != nil
+
+                    if isBase64 != nil && isBase64
 
 
-                            product_pictures = decode_base64_pictures(product_pictures)
+                        product_pictures = decode_base64_pictures(product_pictures)
 
-                            product.product_pictures = product_pictures
+                        product.product_pictures = product_pictures
+
+                    else
+
+
+                        if !are_product_pictures_valid?(product_pictures)
+
+                            @success = false
+                            @message = "Make sure you uploaded an appropriate pictures with valid extension."
+                            return
 
                         else
 
-
-                            if !are_product_pictures_valid?(product_pictures)
-
-                                @success = false
-                                @message = "Make sure you uploaded an appropriate pictures with valid extension."
-                                return
-
-                            else
-
-                                product.product_pictures = product_pictures
-
-                            end
-
+                            product.product_pictures = product_pictures
 
                         end
 
@@ -463,25 +492,20 @@ class ProductsController < ApplicationController
                     end
 
 
+                end
 
 
-                    if product.save
 
-                        @success = true
-                        @message = "Succesfully created product"
 
-                    else
+                if product.save
 
-                        @success = false
-                        @message = "Error creating product"
-
-                    end
-
+                    @success = true
+                    @message = "Succesfully created product"
 
                 else
 
                     @success = false
-                    @message = "Category may have been moved or deleted"
+                    @message = "Error creating product"
 
                 end
 
@@ -489,11 +513,19 @@ class ProductsController < ApplicationController
             else
 
                 @success = false
-                @message = "Missing required parameters"
+                @message = "Category may have been moved or deleted"
 
             end
 
+
+        else
+
+            @success = false
+            @message = "Missing required parameters"
+
         end
+
+
 
     end
 
