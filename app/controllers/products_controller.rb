@@ -1,7 +1,8 @@
 require 'csv'
 class ProductsController < ApplicationController
 
-    before_action :authenticate_user!
+    before_action :deny_to_visitors
+
 
     include MoneyHelper
 
@@ -498,52 +499,88 @@ class ProductsController < ApplicationController
 
     def get_products
 
-        if current_user.store_user?
 
-            store_user = StoreUser.find_by(store_id: current_user.id)
+        if user_signed_in?
 
-            category = store_user.categories.find_by(id: params[:category_id])
+            if current_user.store_user?
 
-            if category != nil
-
-                if category.subcategories.length > 0
-
-                    # category has subcategories
-
-                    @success = false
-
-                else
-
-
-
-                    products = []
-
-                    category.products.order('name ASC').each do |product|
-                        products.push(product.to_json)
-                    end
-
-                    @success = true
-                    @products = products
-                    @category_name = category.name
-
-
-                    cookies.encrypted[:category_id] = category.id
-
-
-                end
-
-
+                store_user = StoreUser.find_by(store_id: current_user.id)
 
             else
 
-                # user does not own the category 
-                # or category deleted
+                head :unauthorized
 
-                @success = false
+                return
 
             end
 
+        else
+
+
+            employee = Employee.find_by(id: current_employee.id)
+
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+
         end
+
+
+
+        category = store_user.categories.find_by(id: params[:category_id])
+
+        if category != nil
+
+            if category.subcategories.length > 0
+
+                # category has subcategories
+
+                @success = false
+
+            else
+
+
+
+                products = []
+
+                category.products.order('name ASC').each do |product|
+                    products.push(product.to_json)
+                end
+
+                @success = true
+
+                @products = products
+
+                @category_name = category.name
+
+
+                cookies.encrypted[:category_id] = category.id
+
+
+            end
+
+
+
+        else
+
+            # user does not own the category
+
+            # or category deleted
+
+            @success = false
+
+        end
+
+
 
     end
 
@@ -1680,6 +1717,13 @@ class ProductsController < ApplicationController
         valid
 
     end
+
+    def deny_to_visitors
+
+        head :unauthorized unless user_signed_in? or employee_signed_in?
+
+    end
+
 
 
 
