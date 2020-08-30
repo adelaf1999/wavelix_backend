@@ -50,8 +50,12 @@ module Auth
       def render_create_success
 
         cookies.encrypted[:employee_id] = current_employee.id
+
+
+
         render json: {
-            data: resource_data(resource_json: @resource.token_validation_response)
+            data: resource_data(resource_json: @resource.token_validation_response),
+            store_currency: current_employee.get_store_currency
         }
 
       end

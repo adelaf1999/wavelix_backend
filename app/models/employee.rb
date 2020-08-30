@@ -27,6 +27,12 @@ class Employee < ApplicationRecord
 
   end
 
+  def get_store_currency
+
+    self.store_user.currency
+
+  end
+
 
 
   private
