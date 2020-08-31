@@ -282,5 +282,7 @@ Rails.application.routes.draw do
 
   get '/employee-portal-index' => 'employee_portal#index'
 
+  get '/employee-portal-home' => 'employee_portal#home'
+
 
 end
