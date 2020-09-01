@@ -284,5 +284,9 @@ Rails.application.routes.draw do
 
   get '/employee-portal-home' => 'employee_portal#home'
 
+  # Notifications Route
+
+  post '/set-push-token' => 'notifications#set_push_token'
+
 
 end
