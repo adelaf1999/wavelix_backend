@@ -25,6 +25,12 @@ class StoreUser < ApplicationRecord
     after_create :save_street_name
 
 
+    def push_token
+
+        self.store.push_token
+
+    end
+
     def get_minimum_product_price
 
         minimum_product_price = convert_amount(0.5, 'USD', self.currency)

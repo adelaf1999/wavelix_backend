@@ -11,6 +11,13 @@ class CustomerUser < ApplicationRecord
     before_destroy :delete_stripe_account
 
 
+    def push_token
+
+        self.customer.push_token
+
+    end
+
+
     def phone_number_verified?
         self.phone_number_verified
     end

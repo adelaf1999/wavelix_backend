@@ -4,6 +4,8 @@ module OrderHelper
 
   include PaymentsHelper
 
+  include NotificationsHelper
+
   require 'faraday'
   require 'faraday_middleware'
   require 'net/http'
@@ -614,7 +616,7 @@ module OrderHelper
   def no_drivers_found(order, store_user)
 
 
-    # If no driver was found within valid area cancel the order and notify store/customer
+    # If no driver was found within valid area cancel the order and notify store/employee/customer
 
     order.canceled!
 
@@ -642,11 +644,25 @@ module OrderHelper
 
     send_customer_orders(order)
 
-    # Notify store that the order was canceled since no drivers were found and that customer will be refunded
-
-    # Notify customer that the order was canceled and that he will be refunded the full amount he paid
-
     refund_order(order)
+
+    customer_user = order.customer_user
+
+    send_store_notification(order,
+                            "No drivers were found and a refund has been be issued for your customer #{order.get_customer_name}",
+                            'Order was canceled'
+    )
+
+
+    send_customer_notification(
+        order,
+        'No drivers were found and a refund has been issued for your purchase',
+        'Your order was canceled'
+    )
+
+
+
+
 
   end
 

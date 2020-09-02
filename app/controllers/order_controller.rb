@@ -6,6 +6,8 @@ class OrderController < ApplicationController
 
   include PaymentsHelper
 
+  include NotificationsHelper
+
   before_action :deny_to_visitors
 
   def add_tracking_information
@@ -350,11 +352,23 @@ class OrderController < ApplicationController
 
           send_customer_orders(order)
 
-          # Notify store that order was canceled by the customer
-
-          # Notify customer that the order has been canceled and that he will be refunded the full amount paid
-
           refund_order(order)
+
+          send_store_notification(
+              order,
+              "Your customer #{order.get_customer_name} has canceled the order they made",
+              'Order was canceled'
+          )
+
+
+          send_customer_notification(
+              order,
+              "A refund has been issued for the order you made from #{order.get_store_name} ",
+              'Order canceled successfully'
+          )
+
+
+
 
         else
 
@@ -560,7 +574,10 @@ class OrderController < ApplicationController
 
                   order.update!(store_fulfilled_order: true)
 
-                  # Notify customer that driver has picked up their products from the store
+                  send_customer_notification(
+                      order,
+                      "Driver has successfully picked up your order from #{order.get_store_name}"
+                  )
 
                   driver = Driver.find_by(id: order.driver_id)
 
@@ -580,9 +597,19 @@ class OrderController < ApplicationController
 
                       if distance >= 20
 
-                        # Notify store that driver is about to arrive to customer delivery location
 
-                        # Notify customer that the driver is about to arrive to delivery location
+                        send_customer_notification(
+                            order,
+                            "Make sure your order arrived well, and to scan the order QR code on driver's phone before the driver leaves your location",
+                            'Driver is about to arrive'
+                        )
+
+
+                        send_store_notification(
+                            order,
+                            "Driver is about to arrive to the location of your customer #{order.get_customer_name}"
+                        )
+
 
                       end
 
@@ -810,7 +837,11 @@ class OrderController < ApplicationController
 
               send_customer_orders(order)
 
-              # Notify customer that their order was accepted by store
+              send_customer_notification(
+                  order,
+                  'Make sure that your order has arrived well when it does, and to confirm the order in the orders page afterwards',
+                  "Order Accepted by #{order.get_store_name}"
+              )
 
 
               # After the x amount of time the store promised to do the delivery
@@ -843,7 +874,11 @@ class OrderController < ApplicationController
 
           send_customer_orders(order)
 
-          # Notify customer that their order was accepted by store
+          send_customer_notification(
+              order,
+              "Make sure that your order has arrived well when it does, and to scan the order QR code on the driver's phone before the driver leaves",
+              "Order Accepted by #{order.get_store_name}"
+          )
 
           has_sensitive_products = store_user.has_sensitive_products
 
@@ -958,9 +993,14 @@ class OrderController < ApplicationController
 
         send_customer_orders(order)
 
-        # Notify customer that the store rejected the order and that they will be refunded with the full amount paid
-
         refund_order(order)
+
+        send_customer_notification(
+            order,
+            "A refund has been issued for the order you made from #{order.get_store_name}",
+            "Order rejected by #{order.get_store_name}"
+        )
+
 
       else
 

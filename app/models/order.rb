@@ -2,19 +2,46 @@ class Order < ApplicationRecord
 
   include OrderHelper
 
+  include NotificationsHelper
+
   enum status: {canceled: 0, pending: 1, ongoing: 2, complete: 3}
   enum store_confirmation_status: {store_unconfirmed: 0, store_rejected: 1, store_accepted: 2}
   enum order_type: { standard: 0, exclusive: 1 } # Can be nil if store handles delivery
   serialize :delivery_location, Hash
   before_create :setup_order
-  after_create :send_order
+  after_create :send_order, :notify_store
 
   belongs_to :store_user
   belongs_to :customer_user
   belongs_to :driver, optional: true # can be nil if store handles delivery / no driver selected yet
 
 
+
+  def get_store_name
+
+    self.store_user.store_name
+
+  end
+
+  def get_customer_name
+
+    self.customer_user.full_name
+
+  end
+
+
+
   private
+
+  def notify_store
+
+    send_store_notification(
+        self,
+        'A customer has just placed a new order'
+    )
+
+
+  end
 
   def send_order
 

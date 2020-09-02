@@ -4,6 +4,8 @@ class DriveController < ApplicationController
 
   include MoneyHelper
 
+  include NotificationsHelper
+
   before_action :authenticate_user!
 
 
@@ -234,7 +236,19 @@ class DriveController < ApplicationController
 
           if order.ongoing? && !order.store_fulfilled_order
 
-            # Notify customer/store that driver canceled order and that we will be getting a new driver soon
+            send_customer_notification(
+                order,
+                'A new driver will be contacted to pickup your order',
+                'Driver canceled order'
+            )
+
+            send_store_notification(
+                order,
+                "A new driver will be contacted to pickup the order for your customer #{order.get_customer_name}",
+                'Driver canceled order'
+            )
+
+
 
             @success = true
 
@@ -330,9 +344,19 @@ class DriveController < ApplicationController
 
                 if distance >= 20
 
-                  # Notify store that driver is about to arrive to store
+                  send_customer_notification(
+                      order,
+                      "Driver is about to arrive to #{order.get_store_name} to pickup your order"
+                  )
 
-                  # Notify customer that driver is about to arrive to store to pick up their products
+                  send_store_notification(
+                      order,
+                      "Make sure the order for your customer #{order.get_customer_name} is ready, and to scan the order QR code on the driver's phone before the driver leaves",
+                      'Driver is about to arrive'
+                  )
+
+
+
 
                 end
 
@@ -373,9 +397,19 @@ class DriveController < ApplicationController
 
                 if distance >= 20
 
-                  # Notify store that driver is about to arrive to customer delivery location
+                  send_customer_notification(
+                      order,
+                      "Make sure your order arrived well, and to scan the order QR code on driver's phone before the driver leaves your location",
+                      'Driver is about to arrive'
+                  )
 
-                  # Notify customer that the driver is about to arrive to delivery location
+
+                  send_store_notification(
+                      order,
+                      "Driver is about to arrive to the location of your customer #{order.get_customer_name}"
+                  )
+
+
 
                 end
 
@@ -457,14 +491,16 @@ class DriveController < ApplicationController
             order.ongoing!
 
 
-            # Notify driver not to forget to get the QR Code of the order scanned by the store so we know he arrived
+            send_driver_notification(
+                order,
+                'Make sure to get the QR code of the order scanned on your phone in the store before you leave'
+            )
 
-            # And picked up the products within the time limit
 
-
-            # Notify store that a driver was assigned for the order
-
-            # And to scan the Order QR Code on the driver's phone when he arrives so we know they fulfilled the order
+            send_store_notification(
+                order,
+                "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves"
+            )
 
 
 
@@ -482,9 +518,19 @@ class DriveController < ApplicationController
 
               if distance >= 20
 
-                # Notify store that driver is about to arrive
+                send_customer_notification(
+                    order,
+                    "Driver is about to arrive to #{order.get_store_name} to pickup your order"
+                )
 
-                # Notify customer that driver is about to arrive to pickup their products
+                send_store_notification(
+                    order,
+                    "Make sure the order for your customer #{order.get_customer_name} is ready",
+                    'Driver is about to arrive'
+                )
+
+
+
 
               end
 

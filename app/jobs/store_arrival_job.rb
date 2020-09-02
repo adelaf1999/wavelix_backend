@@ -2,6 +2,8 @@ class StoreArrivalJob < Struct.new(:order_id)
 
   include OrderHelper
 
+  include NotificationsHelper
+
   def perform
 
     order = Order.find_by(id: order_id)
@@ -22,11 +24,28 @@ class StoreArrivalJob < Struct.new(:order_id)
 
       get_new_driver(order)
 
-      # Notify store that a new driver will be assigned for the order because the previous driver failed to arrive to store on time
 
-      # Notify driver that a new driver will be assigned for the order because he failed to arrive to store on time
+      send_store_notification(
+          order,
+          "A new driver will pickup the order for your customer #{order.get_customer_name} because the previous driver did not arrive to the store on time",
+          'New driver assigned'
+      )
 
-      # Notify customer that a new driver will be assigned for the order because the previous failed to arrive to store on time
+
+
+      send_driver_notification(
+          order,
+          "A new driver will be assigned to pickup the order from #{order.get_store_name} for #{order.get_customer_name} because store arrival time limit passed",
+          'Store arrival time limit passed'
+      )
+
+
+      send_customer_notification(
+          order,
+          "A new driver will be assigned to pickup your order from #{order.get_store_name} because previous driver did not arrive to store on time",
+          'New driver assigned'
+      )
+
 
 
     end
