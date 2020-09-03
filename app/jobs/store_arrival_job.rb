@@ -28,7 +28,10 @@ class StoreArrivalJob < Struct.new(:order_id)
       send_store_notification(
           order,
           "A new driver will pickup the order for your customer #{order.get_customer_name} because the previous driver did not arrive to the store on time",
-          'New driver assigned'
+          'New driver assigned',
+          {
+              show_orders: true
+          }
       )
 
 
@@ -36,14 +39,20 @@ class StoreArrivalJob < Struct.new(:order_id)
       send_driver_notification(
           order,
           "A new driver will be assigned to pickup the order from #{order.get_store_name} for #{order.get_customer_name} because store arrival time limit passed",
-          'Store arrival time limit passed'
+          'Store arrival time limit passed',
+          {
+              show_driver_orders: true
+          }
       )
 
 
       send_customer_notification(
           order,
           "A new driver will be assigned to pickup your order from #{order.get_store_name} because previous driver did not arrive to store on time",
-          'New driver assigned'
+          'New driver assigned',
+          {
+              show_orders: true
+          }
       )
 
 

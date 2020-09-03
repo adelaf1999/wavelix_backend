@@ -357,14 +357,20 @@ class OrderController < ApplicationController
           send_store_notification(
               order,
               "Your customer #{order.get_customer_name} has canceled the order they made",
-              'Order was canceled'
+              'Order was canceled',
+              {
+                  show_orders: true
+              }
           )
 
 
           send_customer_notification(
               order,
               "A refund has been issued for the order you made from #{order.get_store_name} ",
-              'Order canceled successfully'
+              'Order canceled successfully',
+              {
+                  show_orders: true
+              }
           )
 
 
@@ -601,13 +607,20 @@ class OrderController < ApplicationController
                         send_customer_notification(
                             order,
                             "Make sure your order arrived well, and to scan the order QR code on driver's phone before the driver leaves your location",
-                            'Driver is about to arrive'
+                            'Driver is about to arrive',
+                            {
+                                show_orders: true
+                            }
                         )
 
 
                         send_store_notification(
                             order,
-                            "Driver is about to arrive to the location of your customer #{order.get_customer_name}"
+                            "Driver is about to arrive to the location of your customer #{order.get_customer_name}",
+                            nil,
+                            {
+                                show_orders: true
+                            }
                         )
 
 
@@ -840,7 +853,10 @@ class OrderController < ApplicationController
               send_customer_notification(
                   order,
                   'Make sure that your order has arrived well when it does, and to confirm the order in the orders page afterwards',
-                  "Order Accepted by #{order.get_store_name}"
+                  "Order Accepted by #{order.get_store_name}",
+                  {
+                      show_orders: true
+                  }
               )
 
 
@@ -877,7 +893,10 @@ class OrderController < ApplicationController
           send_customer_notification(
               order,
               "Make sure that your order has arrived well when it does, and to scan the order QR code on the driver's phone before the driver leaves",
-              "Order Accepted by #{order.get_store_name}"
+              "Order Accepted by #{order.get_store_name}",
+              {
+                  show_orders: true
+              }
           )
 
           has_sensitive_products = store_user.has_sensitive_products
@@ -998,7 +1017,10 @@ class OrderController < ApplicationController
         send_customer_notification(
             order,
             "A refund has been issued for the order you made from #{order.get_store_name}",
-            "Order rejected by #{order.get_store_name}"
+            "Order rejected by #{order.get_store_name}",
+            {
+                show_orders: true
+            }
         )
 
 

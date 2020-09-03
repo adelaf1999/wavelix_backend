@@ -239,13 +239,19 @@ class DriveController < ApplicationController
             send_customer_notification(
                 order,
                 'A new driver will be contacted to pickup your order',
-                'Driver canceled order'
+                'Driver canceled order',
+                {
+                    show_orders: true
+                }
             )
 
             send_store_notification(
                 order,
                 "A new driver will be contacted to pickup the order for your customer #{order.get_customer_name}",
-                'Driver canceled order'
+                'Driver canceled order',
+                {
+                    show_orders: true
+                }
             )
 
 
@@ -352,7 +358,10 @@ class DriveController < ApplicationController
                   send_store_notification(
                       order,
                       "Make sure the order for your customer #{order.get_customer_name} is ready, and to scan the order QR code on the driver's phone before the driver leaves",
-                      'Driver is about to arrive'
+                      'Driver is about to arrive',
+                      {
+                          show_orders: true
+                      }
                   )
 
 
@@ -400,13 +409,20 @@ class DriveController < ApplicationController
                   send_customer_notification(
                       order,
                       "Make sure your order arrived well, and to scan the order QR code on driver's phone before the driver leaves your location",
-                      'Driver is about to arrive'
+                      'Driver is about to arrive',
+                      {
+                          show_orders: true
+                      }
                   )
 
 
                   send_store_notification(
                       order,
-                      "Driver is about to arrive to the location of your customer #{order.get_customer_name}"
+                      "Driver is about to arrive to the location of your customer #{order.get_customer_name}",
+                      nil,
+                      {
+                          show_orders: true
+                      }
                   )
 
 
@@ -493,13 +509,21 @@ class DriveController < ApplicationController
 
             send_driver_notification(
                 order,
-                'Make sure to get the QR code of the order scanned on your phone in the store before you leave'
+                'Make sure to get the QR code of the order scanned on your phone in the store before you leave',
+                nil,
+                {
+                    show_driver_orders: true
+                }
             )
 
 
             send_store_notification(
                 order,
-                "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves"
+                "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves",
+                nil,
+                {
+                    show_orders: true
+                }
             )
 
 
@@ -526,7 +550,10 @@ class DriveController < ApplicationController
                 send_store_notification(
                     order,
                     "Make sure the order for your customer #{order.get_customer_name} is ready",
-                    'Driver is about to arrive'
+                    'Driver is about to arrive',
+                    {
+                        show_orders: true
+                    }
                 )
 
 

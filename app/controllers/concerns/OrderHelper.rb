@@ -25,7 +25,6 @@ module OrderHelper
       if employee.has_roles?(:order_manager)
 
         ActionCable.server.broadcast "employee_orders_channel_#{employee.id}", {orders: orders}
-        
 
       end
 
@@ -262,12 +261,12 @@ module OrderHelper
 
 
       Payment.create!(
-                 amount: net_store + total_fee,
-                 fee: total_fee,
-                 net: net_store,
-                 currency: store_user.currency,
-                 store_user_id: store_user.id,
-                 timezone: timezone
+          amount: net_store + total_fee,
+          fee: total_fee,
+          net: net_store,
+          currency: store_user.currency,
+          store_user_id: store_user.id,
+          timezone: timezone
       )
 
 
@@ -359,22 +358,22 @@ module OrderHelper
           order.update!(prospective_driver_id: driver.id)
 
           puts "Contacting new driver #{driver.name} with ID #{driver.id}"
-          
+
           delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
 
           order_type = order.order_type
 
           ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
-             contacting_driver: true,
-             order_id: order.id,
-             store_latitude: store_user.store_address[:latitude],
-             store_longitude: store_user.store_address[:longitude],
-             delivery_location_latitude: order.delivery_location[:latitude],
-             delivery_location_longitude: order.delivery_location[:longitude],
-             store_name: store_user.store_name,
-             delivery_fee: delivery_fee,
-             order_type: order_type,
-             currency: driver.currency
+              contacting_driver: true,
+              order_id: order.id,
+              store_latitude: store_user.store_address[:latitude],
+              store_longitude: store_user.store_address[:longitude],
+              delivery_location_latitude: order.delivery_location[:latitude],
+              delivery_location_longitude: order.delivery_location[:longitude],
+              store_name: store_user.store_name,
+              delivery_fee: delivery_fee,
+              order_type: order_type,
+              currency: driver.currency
           }
 
           Delayed::Job.enqueue(
@@ -648,16 +647,23 @@ module OrderHelper
 
     customer_user = order.customer_user
 
-    send_store_notification(order,
-                            "No drivers were found and a refund has been be issued for your customer #{order.get_customer_name}",
-                            'Order was canceled'
+    send_store_notification(
+        order,
+        "No drivers were found and a refund has been be issued for your customer #{order.get_customer_name}",
+        'Order was canceled',
+        {
+            show_orders: true
+        }
     )
 
 
     send_customer_notification(
         order,
         'No drivers were found and a refund has been issued for your purchase',
-        'Your order was canceled'
+        'Your order was canceled',
+        {
+            show_orders: true
+        }
     )
 
 
