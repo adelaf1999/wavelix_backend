@@ -2,12 +2,20 @@ class CustomerUser < ApplicationRecord
 
     include PaymentsHelper
 
+    include NotificationsHelper
+
     belongs_to :customer, touch: true
+
     serialize :home_address, Hash
+
     has_many :orders
+
     has_one :driver, dependent: :destroy
+
     has_one :cart, dependent: :destroy
+
     after_create :create_cart, :save_stripe_customer_token
+
     before_destroy :delete_stripe_account
 
 
@@ -17,6 +25,13 @@ class CustomerUser < ApplicationRecord
 
     end
 
+
+    def send_notification(message_body, message_title = nil, message_data = nil)
+
+
+        send_push_notification(self.push_token, message_body, message_title, message_data)
+
+    end
 
     def phone_number_verified?
         self.phone_number_verified

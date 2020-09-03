@@ -28,4 +28,13 @@ class Driver < ApplicationRecord
 
   serialize :vehicle_registration_document_pictures, Array
 
+
+  def send_notification(message_body, message_title = nil, message_data = nil)
+
+
+    self.customer_user.send_notification(message_body, message_title, message_data)
+
+  end
+
+
 end

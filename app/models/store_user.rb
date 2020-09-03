@@ -2,6 +2,8 @@ class StoreUser < ApplicationRecord
 
     include OrderHelper
 
+    include NotificationsHelper
+
     belongs_to :store, touch: true
 
     mount_uploader :store_business_license, BusinessLicenseUploader
@@ -28,6 +30,14 @@ class StoreUser < ApplicationRecord
     def push_token
 
         self.store.push_token
+
+    end
+
+
+    def send_notification(message_body, message_title = nil, message_data = nil)
+
+
+        send_push_notification(self.push_token, message_body, message_title, message_data)
 
     end
 

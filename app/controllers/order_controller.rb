@@ -310,8 +310,6 @@ class OrderController < ApplicationController
 
           send_customer_orders(order)
 
-          # Notify store that the order was confirmed by the customer and the amount was successfully deposited to their balance
-
         else
 
           @success = false
@@ -439,10 +437,6 @@ class OrderController < ApplicationController
                 driver = Driver.find_by(id: order.driver_id)
 
                 send_driver_orders(driver)
-
-                # Notify store that order successful and amount has been successfully deposited to their balance
-
-                # Notify driver that order successful and amount has been successfully deposited to their balance
 
                 increment_store_balance(order)
 

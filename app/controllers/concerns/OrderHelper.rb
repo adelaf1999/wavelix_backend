@@ -174,6 +174,15 @@ module OrderHelper
 
     driver.increment!(:balance, net_driver)
 
+    driver.send_notification(
+        "#{net_driver} #{driver.currency} have been deposited to your balance",
+        'Payment Received',
+        {
+            show_driver_orders: true
+        }
+    )
+
+
     store_user = StoreUser.find_by(id: order.store_user_id)
 
     timezone = get_store_timezone_name(store_user)
@@ -320,6 +329,14 @@ module OrderHelper
     end
 
     store_user.increment!(:balance, net_store)
+
+    store_user.send_notification(
+        "#{net_store} #{store_user.currency} have been deposited to your balance",
+        'Payment Received',
+        {
+            show_orders: true
+        }
+    )
 
 
   end
