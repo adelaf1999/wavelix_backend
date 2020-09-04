@@ -426,6 +426,16 @@ class DriveController < ApplicationController
                   )
 
 
+                  send_driver_notification(
+                      order,
+                      'If the customer was not there to scan the order QR code on your phone, make sure to contact them so they confirm the order from their phone before you leave',
+                      nil,
+                      {
+                          show_driver_orders: true
+                      }
+                  )
+
+
 
                 end
 

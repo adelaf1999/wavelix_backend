@@ -621,6 +621,16 @@ class OrderController < ApplicationController
                       "Driver has successfully picked up your order from #{order.get_store_name}"
                   )
 
+
+                  send_driver_notification(
+                      order,
+                      'Make sure to get the QR code of the order scanned on your phone by the customer when you arrive to their location as well before you leave',
+                      nil,
+                      {
+                          show_driver_orders: true
+                      }
+                  )
+
                   driver = Driver.find_by(id: order.driver_id)
 
                   if order.exclusive?
