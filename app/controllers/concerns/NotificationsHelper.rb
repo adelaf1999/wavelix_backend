@@ -50,8 +50,6 @@ module NotificationsHelper
 
     if !push_token.blank?
 
-      client = Exponent::Push::Client.new
-
       message = {
           to: push_token,
           sound: 'default',
@@ -72,10 +70,9 @@ module NotificationsHelper
 
       end
 
-
       messages = [message]
 
-      client.send_messages(messages)
+      PushNotificationJob.perform_later(messages)
 
       true
 
