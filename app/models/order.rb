@@ -35,14 +35,7 @@ class Order < ApplicationRecord
 
   def notify_store
 
-    send_store_notification(
-        self,
-        'A customer has just placed a new order',
-        nil,
-        {
-            show_orders: true
-        }
-    )
+    NewOrderNotificationJob.perform_later(self.id)
 
 
   end
