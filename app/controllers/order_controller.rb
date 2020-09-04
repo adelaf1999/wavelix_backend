@@ -298,23 +298,65 @@ class OrderController < ApplicationController
 
       if order != nil
 
-        if order.store_handles_delivery && order.ongoing?
 
-          @success = true
+        if order.ongoing?
 
-          order.complete!
 
-          increment_store_balance(order)
+          if order.store_handles_delivery
 
-          send_store_orders(order)
+            @success = true
 
-          send_customer_orders(order)
+            order.complete!
+
+            increment_store_balance(order)
+
+            send_store_orders(order)
+
+            send_customer_orders(order)
+
+          else
+
+
+            if order.store_fulfilled_order && !order.driver_fulfilled_order
+
+              @success = true
+
+              order.update!(driver_fulfilled_order: true)
+
+              order.complete!
+
+              send_store_orders(order)
+
+              send_customer_orders(order)
+
+              driver = Driver.find_by(id: order.driver_id)
+
+              send_driver_orders(driver)
+
+              increment_store_balance(order)
+
+              increment_driver_balance(order, driver)
+
+
+            else
+
+
+              @success = false
+
+
+            end
+
+
+
+          end
+
 
         else
 
           @success = false
 
         end
+
 
       else
 
