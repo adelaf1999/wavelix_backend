@@ -47,6 +47,39 @@ module Auth
         end
       end
 
+
+      def destroy
+
+        # remove auth instance variables so that after_action does not run
+
+        user = remove_instance_variable(:@resource) if @resource
+
+        client = @token.client if @token.client
+
+        @token.clear!
+
+        if user && client && user.tokens[client]
+
+          user.update!(push_token: '')
+
+          user.tokens.delete(client)
+
+          user.save!
+
+          yield user if block_given?
+
+          render_destroy_success
+
+        else
+
+          render_destroy_error
+
+        end
+
+      end
+
+      protected
+
       def render_create_success
 
         cookies.encrypted[:employee_id] = current_employee.id
