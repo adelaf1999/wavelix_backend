@@ -6,6 +6,57 @@ class PostController < ApplicationController
 
   before_action :authenticate_user!
 
+  def search_post_products
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      name = params[:name]
+
+      @products = []
+
+      if name != nil
+
+        products = store_user.products.where("name ILIKE ?", "%#{name}%").order('name ASC')
+
+        products.each do |product|
+
+          item = {}
+
+          item[:id] = product.id
+
+          item[:name] = product.name
+
+          item[:main_picture] = product.main_picture.url
+
+          item[:price] = product.price
+
+          item[:currency] = product.currency
+
+          if product.product_available == false || product.stock_quantity == 0
+
+            item[:can_post] = false
+
+          else
+
+            item[:can_post] = true
+
+          end
+
+          @products.push(item)
+
+
+        end
+
+
+      end
+
+    end
+
+
+  end
+
 
   def destroy
 
@@ -278,8 +329,6 @@ class PostController < ApplicationController
 
 
     end
-
-
 
 
   end
