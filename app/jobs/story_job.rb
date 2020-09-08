@@ -2,9 +2,10 @@ class StoryJob < Struct.new(:post_id, :user_id)
 
   def perform
 
-    story_post = Post.find_by(id: post_id)
+    story_post = Post.find_by(id: post_id, is_story: true)
 
-    if story_post.is_story
+    if story_post != nil
+
 
       story_post.destroy
 
@@ -15,7 +16,9 @@ class StoryJob < Struct.new(:post_id, :user_id)
       posts = []
 
       profile.posts.order(created_at: :desc).each do |post|
+
         posts.push(post.get_attributes)
+
       end
 
       @posts = posts.to_json
