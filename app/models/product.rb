@@ -8,6 +8,8 @@ class Product < ApplicationRecord
 
    belongs_to :category
 
+   belongs_to :store_user
+
    serialize :product_attributes, Hash
 
    serialize :product_pictures, Array
@@ -15,7 +17,7 @@ class Product < ApplicationRecord
 
    before_create :add_store_attributes
 
-   
+
    
 
    def remove_image(image_name)
@@ -56,11 +58,13 @@ class Product < ApplicationRecord
 
    def add_store_attributes
 
-     store_user = Category.find_by(id: self.category_id).store_user
+     store_user = self.category.store_user
 
      self.currency = store_user.currency
 
      self.store_country = store_user.store_country
+
+     self.store_user_id = store_user.id
 
    end
 

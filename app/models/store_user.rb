@@ -12,6 +12,8 @@ class StoreUser < ApplicationRecord
 
     has_many :categories
 
+    has_many :products
+
     enum status: {unverified: 0, verified: 1}
 
     has_many :orders
