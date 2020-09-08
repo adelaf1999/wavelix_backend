@@ -240,7 +240,12 @@ class PostController < ApplicationController
 
         if product != nil
 
-          post.product_id = product_id
+          if product.product_available && product.stock_quantity != 0
+
+            post.product_id = product_id
+
+          end
+
 
         end
 
