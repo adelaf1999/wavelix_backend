@@ -193,6 +193,8 @@ class PostController < ApplicationController
 
     is_story = params[:is_story]
 
+    product_id = params[:product_id]
+
     if media_file == nil || !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
 
       @success = false
@@ -202,8 +204,11 @@ class PostController < ApplicationController
     else
 
       post = Post.new
+
       post.profile_id = profile.id
+
       media_type = get_media_file_type(media_file)
+
       post.media_type = media_type
 
       caption = params[:caption]
@@ -226,6 +231,23 @@ class PostController < ApplicationController
 
       end
 
+
+      if current_user.store_user? && !product_id.nil?
+
+        store_user = StoreUser.find_by(store_id: current_user.id)
+
+        product = store_user.products.find_by(id: product_id)
+
+        if product != nil
+
+          post.product_id = product_id
+
+        end
+
+
+      end
+
+
       if media_type == 0
 
         # The user will wait till his image is uploaded and encoded
@@ -243,7 +265,9 @@ class PostController < ApplicationController
             @success = true
 
             if post.is_story
+            
               Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
+
             end
 
 
