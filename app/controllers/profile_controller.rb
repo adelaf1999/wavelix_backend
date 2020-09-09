@@ -58,6 +58,10 @@ class ProfileController < ApplicationController
 
           return
 
+        else
+
+          @customer_country = customer_user.country
+
         end
 
 

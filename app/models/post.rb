@@ -49,6 +49,27 @@ class Post < ApplicationRecord
 
     likes = []
 
+
+    if self.product_id != nil
+
+      product = Product.find_by(id: self.product_id)
+
+
+
+      attributes[:product] = {
+          name: product.name,
+          picture: product.main_picture.url,
+          product_available: product.product_available,
+          in_stock: product.stock_quantity != 0,
+          store_country: product.store_country,
+          id: product.id
+      }
+
+
+
+    end
+
+
     self.likes.each do |like|
 
       liker = User.find_by(id: like.liker_id)

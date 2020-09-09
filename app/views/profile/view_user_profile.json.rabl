@@ -9,3 +9,7 @@ end
 if @current_store_unverified != nil
     node(:current_store_unverified) {  @current_store_unverified  }
 end
+
+if @customer_country != nil
+    node(:customer_country) { @customer_country }
+end
