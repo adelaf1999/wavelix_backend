@@ -187,6 +187,7 @@ class ProfileController < ApplicationController
           @profile_data[:story_posts] = story_posts
           @profile_data[:follow_relationships] = follow_relationships
           @profile_data[:store_name] = store_name
+          @profile_data[:store_user_id] = store_user.id
 
 
 
