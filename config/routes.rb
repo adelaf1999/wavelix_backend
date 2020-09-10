@@ -290,5 +290,9 @@ Rails.application.routes.draw do
 
   post '/set-push-token' => 'notifications#set_push_token'
 
+  # Shop Routes
+
+  post '/shop-index' => 'shop#index'
+
 
 end

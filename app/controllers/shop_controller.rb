@@ -1,0 +1,69 @@
+class ShopController < ApplicationController
+
+
+  before_action :authenticate_user!
+
+
+  def index
+
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if customer_user.phone_number_verified?
+
+        store_user = StoreUser.find_by(id: params[:store_user_id])
+
+        if store_user != nil
+
+          if store_user.verified?
+
+            @success = true
+
+            @store_name = store_user.store_name
+
+            @categories = []
+
+            store_user.categories.order(name: :asc).each do |category|
+
+              products = category.products.where(product_available: true)
+
+              products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+
+              if products.length > 0
+
+                @categories.push({ id: category.id, name: category.name })
+
+              end
+
+            end
+
+
+          else
+
+            @success = false
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    else
+
+      @success = false
+
+    end
+
+  end
+
+end
