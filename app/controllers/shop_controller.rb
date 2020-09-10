@@ -31,59 +31,40 @@ class ShopController < ApplicationController
             customer_currency = customer_user.default_currency
 
             name = name.strip
-            
-            if !name.blank?
+
+            if category == nil
+
+              products = store_user.products.where(product_available: true)
+
+              products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+
+              products = products.where("name ILIKE ?", "%#{name}%").order('name ASC')
+
+              products.each do |product|
+
+                @products.push( get_product(product, customer_currency) )
 
 
-              if category == nil
-
-                products = store_user.products.where(product_available: true)
-
-                products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
-
-                products = products.where("name ILIKE ?", "%#{name}%").order('name ASC')
-
-                products.each do |product|
-
-                  @products.push({
-                                     id: product.id,
-                                     name: product.name,
-                                     picture: product.main_picture.url,
-                                     price: convert_amount(product.price, product.currency, customer_currency),
-                                     currency: customer_currency
-                                 })
+              end
 
 
-                end
+            else
 
+              products = category.products.where(product_available: true)
 
-              else
+              products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
 
-                products = category.products.where(product_available: true)
+              products = products.where("name ILIKE ?", "%#{name}%").order('name ASC')
 
-                products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+              products.each do |product|
 
-                products = products.where("name ILIKE ?", "%#{name}%").order('name ASC')
+                @products.push( get_product(product, customer_currency) )
 
-                products.each do |product|
-
-                  @products.push({
-                                     id: product.id,
-                                     name: product.name,
-                                     picture: product.main_picture.url,
-                                     price: convert_amount(product.price, product.currency, customer_currency),
-                                     currency: customer_currency
-                                 })
-
-
-                end
 
               end
 
             end
-
-
-
+            
 
           else
 
@@ -111,6 +92,72 @@ class ShopController < ApplicationController
       @success = false
 
     end
+
+  end
+
+
+
+  def browse_category_products
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if customer_user.phone_number_verified?
+
+        store_user = StoreUser.find_by(id: params[:store_user_id])
+
+        if store_user != nil
+
+          category = store_user.categories.find_by(id: params[:category_id])
+
+          if store_user.verified? && category != nil
+
+            @success = true
+
+            @products = []
+
+            customer_currency = customer_user.default_currency
+
+            products = category.products.where(product_available: true)
+
+            products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+
+            products = products.order(name: :asc)
+
+            products.each do |product|
+
+              @products.push( get_product(product, customer_currency) )
+
+
+            end
+
+
+
+          else
+
+            @success = false
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    else
+
+      @success = false
+
+    end
+
 
   end
 
@@ -174,6 +221,22 @@ class ShopController < ApplicationController
       @success = false
 
     end
+
+  end
+
+
+  private
+
+  def get_product(product, customer_currency)
+
+    {
+        id: product.id,
+        name: product.name,
+        picture: product.main_picture.url,
+        price: convert_amount(product.price, product.currency, customer_currency),
+        currency: customer_currency
+    }
+
 
   end
 

@@ -296,5 +296,7 @@ Rails.application.routes.draw do
 
   post '/search-shop-products' => 'shop#search_shop_products'
 
+  post '/browse-category-products' => 'shop#browse_category_products'
+
 
 end
