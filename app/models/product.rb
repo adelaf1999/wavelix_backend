@@ -15,7 +15,7 @@ class Product < ApplicationRecord
    serialize :product_pictures, Array
    
 
-   before_create :add_store_attributes
+   before_validation :add_store_attributes, on: :create
 
 
    
