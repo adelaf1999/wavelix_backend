@@ -294,5 +294,7 @@ Rails.application.routes.draw do
 
   post '/shop-index' => 'shop#index'
 
+  post '/search-shop-products' => 'shop#search_shop_products'
+
 
 end
