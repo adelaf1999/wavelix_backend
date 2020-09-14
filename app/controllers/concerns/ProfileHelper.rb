@@ -40,7 +40,11 @@ module ProfileHelper
         followed_user = User.find_by(id: following_relationship.followed_id)
         username = followed_user.username
         profile_picture_url = followed_user.profile.profile_picture.url
-        following.push({username: username, profile_picture_url: profile_picture_url})
+        following.push({
+                           username: username,
+                           profile_picture_url: profile_picture_url,
+                           profile_id: followed_user.profile.id
+                       })
 
       end
 
@@ -53,7 +57,11 @@ module ProfileHelper
         follower_user = User.find_by(id: follower_relationship.follower_id)
         username = follower_user.username
         profile_picture_url = follower_user.profile.profile_picture.url
-        followers.push({username: username, profile_picture_url: profile_picture_url})
+        followers.push({
+                           username: username,
+                           profile_picture_url: profile_picture_url,
+                           profile_id: follower_user.profile.id
+                       })
 
       end
 

@@ -473,7 +473,11 @@ class ProfileController < ApplicationController
 
         username = item.username
         profile_picture_url = item.profile.profile_picture.url
-        @search_results.push({username: username, profile_picture_url: profile_picture_url})
+        @search_results.push({
+                                 username: username,
+                                 profile_picture_url: profile_picture_url,
+                                 profile_id: item.profile.id
+                             })
 
       end
 
