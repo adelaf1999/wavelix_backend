@@ -3,14 +3,12 @@ module ApplicationCable
 
     identified_by :current_user
     identified_by :category
-    identified_by :profile
     identified_by :cart
     identified_by :current_employee
 
     def connect
       self.current_user = find_user
       self.category = find_category
-      self.profile = find_profile
       self.cart = find_cart
       self.current_employee = find_employee
     end
@@ -36,16 +34,6 @@ module ApplicationCable
 
       if cart != nil
         cart
-      end
-
-    end
-
-    def find_profile
-
-      profile = Profile.find_by(id: cookies.encrypted[:profile_id])
-
-      if profile != nil
-        profile
       end
 
     end

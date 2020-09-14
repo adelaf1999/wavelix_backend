@@ -2,21 +2,35 @@ class PrivacyChannel < ApplicationCable::Channel
 
   def subscribed
 
-    if current_user.blank? || profile.blank?
+    if current_user.blank?
+
       reject
+
     else
+      
+      profile = Profile.find_by(id: params[:profile_id])
 
-      user = profile.user
+      if profile != nil
 
-      if user.customer_user?
+        user = profile.user
 
-        stream_from "privacy_channel_#{profile.id}"
+        if user.customer_user?
+
+          stream_from "privacy_channel_#{profile.id}"
+
+        else
+
+          reject
+
+        end
 
       else
 
         reject
 
       end
+
+
 
     end
 

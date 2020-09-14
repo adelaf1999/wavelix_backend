@@ -89,7 +89,6 @@ class ProfileController < ApplicationController
 
           # Common data when user profile is public/private
           @success = true
-          cookies.encrypted[:profile_id] = profile.id
 
           @profile_data[:is_following] = is_following
           @profile_data[:user_type] = user_type
@@ -167,7 +166,6 @@ class ProfileController < ApplicationController
 
           @profile_data = {}
           @success = true
-          cookies.encrypted[:profile_id] = profile.id
 
           username = user.username
           follow_relationships = get_follow_relationships(user)

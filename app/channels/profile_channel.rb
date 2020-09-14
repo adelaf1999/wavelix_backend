@@ -2,44 +2,59 @@ class ProfileChannel < ApplicationCable::Channel
 
   def subscribed
 
-    if current_user.blank? || profile.blank?
+    if current_user.blank?
+
       reject
+
     else
 
-      user = profile.user
+      profile = Profile.find_by(id: params[:profile_id])
 
-      is_following = current_user.following?(user)
+      if profile != nil
 
-      is_private = profile.private_account?
+        user = profile.user
 
-      if user.customer_user?
+        is_following = current_user.following?(user)
 
-        if !is_private || (is_private && is_following)
+        is_private = profile.private_account?
 
-          stream_from "profile_channel_#{profile.id}"
+        if user.customer_user?
+
+          if !is_private || (is_private && is_following)
+
+            stream_from "profile_channel_#{profile.id}"
+
+          else
+
+            reject
+
+          end
 
         else
 
-          reject
+          store_user = StoreUser.find_by(store_id: user.id)
+
+          if store_user.verified?
+
+            stream_from "profile_channel_#{profile.id}"
+
+          else
+
+            reject
+
+          end
+
 
         end
 
       else
 
-        store_user = StoreUser.find_by(store_id: user.id)
 
-        if store_user.verified?
-
-          stream_from "profile_channel_#{profile.id}"
-
-        else
-
-          reject
-
-        end
-
+        reject
 
       end
+
+
 
     end
 
