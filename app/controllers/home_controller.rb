@@ -36,12 +36,12 @@ class HomeController < ApplicationController
 
     stores_posts = Post.where(status: 1, profile_id: stores_profile_ids).order(created_at: :desc)
 
-    stores_posts = stores_posts.uniq { |store_post| store_post.profile_id }
+    stores_posts = stores_posts.uniq { |store_post| store_post.profile_id }.first(10)
 
 
     friends_posts = Post.where(status: 1, profile_id: friends_profile_ids).order(created_at: :desc)
 
-    friends_posts = friends_posts.uniq { |friend_post| friend_post.profile_id }
+    friends_posts = friends_posts.uniq { |friend_post| friend_post.profile_id }.first(10)
 
 
     stores_posts.each do |store_post|
