@@ -298,5 +298,9 @@ Rails.application.routes.draw do
 
   post '/browse-category-products' => 'shop#browse_category_products'
 
+  # Home Routes
+
+  get '/home' => 'home#index'
+
 
 end
