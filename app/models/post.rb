@@ -66,7 +66,7 @@ class Post < ApplicationRecord
     attributes[:is_story] = self.is_story
 
 
-    attributes[:post_author] = {
+    attributes[:author] = {
         username: self.author_username,
         profile_picture: self.author_profile_picture,
         user_type: self.author_user_type
