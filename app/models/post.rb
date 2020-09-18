@@ -19,6 +19,24 @@ class Post < ApplicationRecord
   has_many :likes, :dependent => :delete_all
 
 
+  def author_username
+
+    self.profile.user.username
+
+  end
+
+  def author_profile_picture
+
+    self.profile.profile_picture.url
+
+  end
+
+  def author_user_type
+
+    self.profile.user.user_type
+
+  end
+
   def get_attributes
 
     attributes = {}
@@ -46,6 +64,14 @@ class Post < ApplicationRecord
     attributes[:video_thumbnail] = self.video_thumbnail
 
     attributes[:is_story] = self.is_story
+
+
+    attributes[:post_author] = {
+        username: self.author_username,
+        profile_picture: self.author_profile_picture,
+        user_type: self.author_user_type
+    }
+
 
     likes = []
 
