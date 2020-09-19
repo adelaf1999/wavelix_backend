@@ -71,8 +71,7 @@ class HomeController < ApplicationController
           @profile_posts.push(profile_post.get_attributes)
 
         end
-
-        puts "profile_posts count is #{@profile_posts.count}"
+        
 
 
       else
