@@ -10,13 +10,10 @@ class HomeController < ApplicationController
 
     post_category = params[:post_category]
 
-    limit = params[:limit]
-
-    if !post_category.blank? && is_whole_number?(post_category) && !limit.blank? && is_positive_integer?(limit)
+    if !post_category.blank? && is_whole_number?(post_category)
 
       post_category = post_category.to_i
 
-      limit = limit.to_i
 
       if is_post_category_valid?(post_category)
 
@@ -62,7 +59,7 @@ class HomeController < ApplicationController
         end
 
 
-        profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc).limit(limit)
+        profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc)
 
 
 
