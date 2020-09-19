@@ -1,70 +1,110 @@
 class HomeController < ApplicationController
 
+  include ValidationsHelper
+
   before_action :authenticate_user!
 
   def index
 
+    @profile_posts = []
 
-    stores_profile_ids = []
+    post_category = params[:post_category]
 
-    friends_profile_ids = []
+    limit = params[:limit]
+
+    if !post_category.blank? && is_whole_number?(post_category) && !limit.blank? && is_positive_integer?(limit)
+
+      post_category = post_category.to_i
+
+      limit = limit.to_i
+
+      if is_post_category_valid?(post_category)
+
+        @success = true
+
+        profile_ids = []
+
+        if post_category == 0
+
+          # All Profile Posts
+
+          current_user.following.each do |followed_user|
+
+            profile_ids.push(followed_user.profile.id)
+
+          end
+
+
+        elsif post_category == 1
+
+
+          # Stores Profile Posts
+
+          current_user.following.where(user_type: 1).each do |followed_store|
+
+            profile_ids.push(followed_store.profile.id)
+
+          end
 
 
 
-    current_user.following.each do |followed_user|
+        else post_category == 2
 
-      if followed_user.customer_user?
+          # Friends Profile Posts
 
-        friends_profile_ids.push(followed_user.profile.id)
+          current_user.following.where(user_type: 0).each do |followed_friend|
+
+            profile_ids.push(followed_friend.profile.id)
+
+          end
+
+
+        end
+
+
+        profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc).limit(limit)
+
+
+
+        profile_posts.each do |profile_post|
+
+          @profile_posts.push(profile_post.get_attributes)
+
+        end
+
+        puts "profile_posts count is #{@profile_posts.count}"
+
 
       else
 
-        stores_profile_ids.push(followed_user.profile.id)
+        @success = false
 
       end
 
 
 
-    end
 
 
+    else
 
-    @stores_posts = []
-
-    @friends_posts = []
-    
-
-    stores_posts = Post.where(status: 1, profile_id: stores_profile_ids).order(created_at: :desc)
-
-    stores_posts = stores_posts.uniq { |store_post| store_post.profile_id }.first(10)
-
-
-    friends_posts = Post.where(status: 1, profile_id: friends_profile_ids).order(created_at: :desc)
-
-    friends_posts = friends_posts.uniq { |friend_post| friend_post.profile_id }.first(10)
-
-
-    stores_posts.each do |store_post|
-
-      @stores_posts.push(store_post.get_attributes)
+      @success = false
 
     end
-
-
-    friends_posts.each do |friend_post|
-
-      @friends_posts.push(friend_post.get_attributes)
-
-    end
-
-
-
-
-
-
 
 
 
   end
+
+
+  private
+
+
+  def is_post_category_valid?(post_category)
+
+    [0, 1, 2].include?(post_category)
+
+
+  end
+
 
 end

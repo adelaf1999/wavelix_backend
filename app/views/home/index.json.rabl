@@ -1,11 +1,7 @@
-if @stores_posts != nil
-
-    node(:stores_posts) {@stores_posts }
-
+if @success != nil
+    node(:success) { @success }
 end
 
-if @friends_posts != nil
-
-   node(:friends_posts) { @friends_posts }
-
+if @profile_posts != nil
+    node(:profile_posts) { @profile_posts }
 end
