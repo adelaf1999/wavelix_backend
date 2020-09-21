@@ -73,6 +73,22 @@ class HomeController < ApplicationController
     end
 
 
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      @user_country = store_user.store_country
+
+    else
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      @user_country = customer_user.country
+
+
+    end
+
+
   end
 
 
