@@ -302,5 +302,7 @@ Rails.application.routes.draw do
 
   get '/home' => 'home#index'
 
+  post '/get-profile-posts' => 'home#get_profile_posts'
+
 
 end
