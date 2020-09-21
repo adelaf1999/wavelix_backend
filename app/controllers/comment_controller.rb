@@ -2,6 +2,8 @@ class CommentController < ApplicationController
 
   include PostHelper
 
+  include HomeHelper
+
   before_action :authenticate_user!
 
   def destroy
@@ -60,6 +62,8 @@ class CommentController < ApplicationController
         ActionCable.server.broadcast "post_channel_#{post_user.id}", {posts: @posts}
 
         ActionCable.server.broadcast "profile_channel_#{post_profile.id}", {posts: @posts}
+
+        send_profile_posts_home_page(params[:post_category], current_user)
 
 
 
@@ -175,6 +179,8 @@ class CommentController < ApplicationController
 
       send_posts(current_user_profile, post_profile)
 
+      send_profile_posts_home_page(params[:post_category], current_user)
+
     else
 
       if post_profile.private_account?
@@ -195,6 +201,8 @@ class CommentController < ApplicationController
 
             send_posts(current_user_profile, post_profile)
 
+            send_profile_posts_home_page(params[:post_category], current_user)
+
           else
 
             @success = false
@@ -212,6 +220,8 @@ class CommentController < ApplicationController
         Comment.create!(post_id: post.id, author_id: current_user.id, text: text)
 
         send_posts(current_user_profile, post_profile)
+
+        send_profile_posts_home_page(params[:post_category], current_user)
 
 
       end
