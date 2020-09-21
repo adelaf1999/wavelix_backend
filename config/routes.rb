@@ -300,7 +300,7 @@ Rails.application.routes.draw do
 
   # Home Routes
 
-  post '/home' => 'home#index'
+  get '/home' => 'home#index'
 
 
 end

@@ -8,85 +8,24 @@ class HomeController < ApplicationController
 
     @profile_posts = []
 
-    post_category = params[:post_category]
+    profile_ids = []
 
-    if !post_category.blank? && is_whole_number?(post_category)
+    # All Profile Posts
 
-      post_category = post_category.to_i
+    current_user.following.each do |followed_user|
 
-
-      if is_post_category_valid?(post_category)
-
-        @success = true
-
-        profile_ids = []
-
-        if post_category == 0
-
-          # All Profile Posts
-
-          current_user.following.each do |followed_user|
-
-            profile_ids.push(followed_user.profile.id)
-
-          end
-
-
-        elsif post_category == 1
-
-
-          # Stores Profile Posts
-
-          current_user.following.where(user_type: 1).each do |followed_store|
-
-            profile_ids.push(followed_store.profile.id)
-
-          end
-
-
-
-        else post_category == 2
-
-          # Friends Profile Posts
-
-          current_user.following.where(user_type: 0).each do |followed_friend|
-
-            profile_ids.push(followed_friend.profile.id)
-
-          end
-
-
-        end
-
-
-        profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc)
-
-
-
-        profile_posts.each do |profile_post|
-
-          @profile_posts.push(profile_post.get_attributes)
-
-        end
-        
-
-
-      else
-
-        @success = false
-
-      end
-
-
-
-
-
-    else
-
-      @success = false
+      profile_ids.push(followed_user.profile.id)
 
     end
 
+    profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc)
+
+
+    profile_posts.each do |profile_post|
+
+      @profile_posts.push(profile_post.get_attributes)
+
+    end
 
 
   end
