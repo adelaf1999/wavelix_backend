@@ -2,6 +2,8 @@ class LikesController < ApplicationController
 
   include PostHelper
 
+  include HomeHelper
+
   before_action :authenticate_user!
 
 
@@ -38,6 +40,8 @@ class LikesController < ApplicationController
         post_profile = post.profile
 
         send_posts(current_user_profile, post_profile)
+
+        send_profile_posts_home_page(params[:post_category], current_user)
 
 
       end
@@ -106,8 +110,10 @@ class LikesController < ApplicationController
 
                   Like.create!(post_id: post.id, liker_id: current_user.id)
 
-
                   send_posts(current_user_profile, post_profile)
+
+                  send_profile_posts_home_page(params[:post_category], current_user)
+
 
                 else
 
@@ -125,8 +131,9 @@ class LikesController < ApplicationController
 
               Like.create!(post_id: post.id, liker_id: current_user.id)
 
-
               send_posts(current_user_profile, post_profile)
+
+              send_profile_posts_home_page(params[:post_category], current_user)
 
 
             end
@@ -161,6 +168,9 @@ class LikesController < ApplicationController
           post_profile = post.profile
 
           send_posts(current_user_profile, post_profile)
+
+          send_profile_posts_home_page(params[:post_category], current_user)
+          
 
         else
 
