@@ -110,7 +110,8 @@ class Post < ApplicationRecord
                      created_at: like.created_at,
                      updated_at: like.updated_at,
                      liker_username: liker_username,
-                     liker_profile_picture: liker_profile_picture
+                     liker_profile_picture: liker_profile_picture,
+                     liker_profile_id: liker.profile.id
                  })
 
     end
@@ -134,7 +135,8 @@ class Post < ApplicationRecord
                         updated_at: comment.updated_at,
                         author_username: author_username,
                         author_profile_picture: author_profile_picture,
-                        id: comment.id
+                        id: comment.id,
+                        author_profile_id: author.profile.id
                     })
 
     end
