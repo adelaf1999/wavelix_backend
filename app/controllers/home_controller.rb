@@ -55,42 +55,14 @@ class HomeController < ApplicationController
 
     profile_ids = []
 
-    @stories = []
+    @stories = get_user_stories(current_user)
 
 
     current_user.following.each do |followed_user|
 
-      profile_id = followed_user.profile.id
-
-      profile_ids.push(profile_id)
-
-
-      stories = Post.where(status: 1, profile_id: profile_id, is_story: true).order(created_at: :asc)
-
-      if stories.length > 0
-
-        story_posts = []
-
-        stories.each do |story_post|
-
-          story_posts.push(story_post.get_attributes)
-
-        end
-
-
-        @stories.push({
-                          username: followed_user.username,
-                          profile_picture: followed_user.profile.profile_picture.url,
-                          posts: story_posts
-                      })
-
-
-      end
-
-
+      profile_ids.push(followed_user.profile.id)
 
     end
-
 
 
 
@@ -123,6 +95,62 @@ class HomeController < ApplicationController
 
 
     end
+
+
+  end
+
+
+
+  private
+
+  def get_user_stories(user)
+
+
+    stories = []
+
+    user.following.where(user_type: 1).each do |followed_store|
+
+
+      story_posts = []
+
+      followed_store.profile.posts.where(status: 1, is_story: true).each do |story_post|
+
+        story_posts.push(story_post.get_attributes)
+
+      end
+
+      stories.push({
+                        username: followed_store.username,
+                        profile_picture: followed_store.profile.profile_picture.url,
+                        posts: story_posts
+                    })
+
+
+    end
+
+
+    user.following.where(user_type: 0).each do |followed_friend|
+
+
+      story_posts = []
+
+      followed_friend.profile.posts.where(status: 1, is_story: true).each do |story_post|
+
+        story_posts.push(story_post.get_attributes)
+
+      end
+
+      stories.push({
+                       username: followed_friend.username,
+                       profile_picture: followed_friend.profile.profile_picture.url,
+                       posts: story_posts
+                   })
+
+
+    end
+
+
+    stories
 
 
   end
