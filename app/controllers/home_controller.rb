@@ -122,7 +122,8 @@ class HomeController < ApplicationController
       stories.push({
                         username: followed_store.username,
                         profile_picture: followed_store.profile.profile_picture.url,
-                        posts: story_posts
+                        posts: story_posts,
+                        profile_id: followed_store.profile.id
                     })
 
 
@@ -143,7 +144,8 @@ class HomeController < ApplicationController
       stories.push({
                        username: followed_friend.username,
                        profile_picture: followed_friend.profile.profile_picture.url,
-                       posts: story_posts
+                       posts: story_posts,
+                       profile_id: followed_friend.profile.id
                    })
 
 
