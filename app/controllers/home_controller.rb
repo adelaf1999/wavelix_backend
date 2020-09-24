@@ -119,12 +119,19 @@ class HomeController < ApplicationController
 
       end
 
-      stories.push({
-                        username: followed_store.username,
-                        profile_picture: followed_store.profile.profile_picture.url,
-                        posts: story_posts,
-                        profile_id: followed_store.profile.id
-                    })
+      if story_posts.length > 0
+
+
+        stories.push({
+                         username: followed_store.username,
+                         profile_picture: followed_store.profile.profile_picture.url,
+                         posts: story_posts,
+                         profile_id: followed_store.profile.id
+                     })
+
+
+      end
+
 
 
     end
@@ -141,12 +148,19 @@ class HomeController < ApplicationController
 
       end
 
-      stories.push({
-                       username: followed_friend.username,
-                       profile_picture: followed_friend.profile.profile_picture.url,
-                       posts: story_posts,
-                       profile_id: followed_friend.profile.id
-                   })
+
+      if story_posts.length > 0
+
+        stories.push({
+                         username: followed_friend.username,
+                         profile_picture: followed_friend.profile.profile_picture.url,
+                         posts: story_posts,
+                         profile_id: followed_friend.profile.id
+                     })
+
+      end
+
+
 
 
     end
