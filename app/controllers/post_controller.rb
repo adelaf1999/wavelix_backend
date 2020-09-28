@@ -6,6 +6,80 @@ class PostController < ApplicationController
 
   before_action :authenticate_user!
 
+  def add_story_post_viewer
+
+
+    if current_user.store_user?
+
+      store_user = StoreUser.find_by(store_id: current_user.id)
+
+      if store_user.unverified?
+
+        @success = false
+
+        return
+
+      end
+
+    elsif current_user.customer_user?
+
+      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+
+    end
+
+
+    post = Post.find_by(id: params[:post_id])
+
+    if post != nil
+
+      if post.is_story
+
+        viewers_ids = post.get_viewers_ids
+
+        if !viewers_ids.include?(current_user.id)
+
+          @success = true
+
+          viewers_ids.push(current_user.id)
+
+          post.update!(viewers_ids: viewers_ids)
+
+          # Send stories to home page
+
+          # Send posts to profile page
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    else
+
+      @success = false
+
+    end
+
+
+  end
+
   def search_post_products
 
     if current_user.store_user?

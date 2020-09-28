@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_08_085000) do
+ActiveRecord::Schema.define(version: 2020_09_28_105620) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -255,6 +255,7 @@ ActiveRecord::Schema.define(version: 2020_09_08_085000) do
     t.integer "status", default: 0
     t.text "video_thumbnail"
     t.boolean "is_story", default: false
+    t.text "viewers_ids", default: [], array: true
   end
 
   create_table "products", force: :cascade do |t|

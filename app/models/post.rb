@@ -19,6 +19,13 @@ class Post < ApplicationRecord
   has_many :likes, :dependent => :delete_all
 
 
+  def get_viewers_ids
+
+    self.viewers_ids.map(&:to_i)
+
+  end
+
+
   def author_username
 
     self.profile.user.username
@@ -65,6 +72,7 @@ class Post < ApplicationRecord
 
     attributes[:is_story] = self.is_story
 
+    attributes[:viewers_ids] = self.get_viewers_ids
 
     attributes[:author] = {
         username: self.author_username,

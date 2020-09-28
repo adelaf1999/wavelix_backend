@@ -120,6 +120,8 @@ Rails.application.routes.draw do
 
   post '/search-post-products' => 'post#search_post_products'
 
+  post '/add-story-post-viewer' => 'post#add_story_post_viewer'
+
   # SEARCH ROUTES
 
   post '/search-users' => 'search#search_users'
