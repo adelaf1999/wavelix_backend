@@ -72,6 +72,10 @@ class Post < ApplicationRecord
 
     attributes[:is_story] = self.is_story
 
+    # If want to allow users to view who viewed each of their story posts
+
+    # Remember to exclude unverified stores from the viewers list
+
     attributes[:viewers_ids] = self.get_viewers_ids
 
     attributes[:author] = {

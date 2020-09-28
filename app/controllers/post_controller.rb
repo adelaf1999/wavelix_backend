@@ -7,21 +7,8 @@ class PostController < ApplicationController
   before_action :authenticate_user!
 
   def add_story_post_viewer
-
-
-    if current_user.store_user?
-
-      store_user = StoreUser.find_by(store_id: current_user.id)
-
-      if store_user.unverified?
-
-        @success = false
-
-        return
-
-      end
-
-    elsif current_user.customer_user?
+    
+    if current_user.customer_user?
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
@@ -32,7 +19,6 @@ class PostController < ApplicationController
         return
 
       end
-
 
     end
 
