@@ -2,6 +2,7 @@ module HomeHelper
 
   include ValidationsHelper
 
+
   def get_posts_profile_ids(post_category, user)
 
     profile_ids = []
@@ -42,6 +43,84 @@ module HomeHelper
     profile_ids
 
   end
+
+
+  def get_user_stories(user)
+
+
+    stories = []
+
+    user.following.where(user_type: 1).each do |followed_store|
+
+
+      story_posts = []
+
+      followed_store.profile.posts.where(status: 1, is_story: true).each do |story_post|
+
+        story_posts.push(story_post.get_attributes)
+
+      end
+
+      if story_posts.length > 0
+
+
+        stories.push({
+                         username: followed_store.username,
+                         profile_picture: followed_store.profile.profile_picture.url,
+                         posts: story_posts,
+                         profile_id: followed_store.profile.id
+                     })
+
+
+      end
+
+
+
+    end
+
+
+    user.following.where(user_type: 0).each do |followed_friend|
+
+
+      story_posts = []
+
+      followed_friend.profile.posts.where(status: 1, is_story: true).each do |story_post|
+
+        story_posts.push(story_post.get_attributes)
+
+      end
+
+
+      if story_posts.length > 0
+
+        stories.push({
+                         username: followed_friend.username,
+                         profile_picture: followed_friend.profile.profile_picture.url,
+                         posts: story_posts,
+                         profile_id: followed_friend.profile.id
+                     })
+
+      end
+
+
+
+
+    end
+
+
+    stories
+
+
+  end
+
+  def send_stories_to_home_page(user)
+
+    stories = get_user_stories(user)
+
+    ActionCable.server.broadcast "home_channel_#{user.id}", {stories: stories}
+
+  end
+
 
  def send_profile_posts_home_page(post_category, user)
 

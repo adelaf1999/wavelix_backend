@@ -4,6 +4,8 @@ class PostController < ApplicationController
 
   include PostHelper
 
+  include HomeHelper
+
   before_action :authenticate_user!
 
   def add_story_post_viewer
@@ -39,7 +41,7 @@ class PostController < ApplicationController
 
           post.update!(viewers_ids: viewers_ids)
 
-          # Send stories to home page
+          send_stories_to_home_page(current_user)
 
           # Send posts to profile page
 
