@@ -43,7 +43,10 @@ class PostController < ApplicationController
 
           send_stories_to_home_page(current_user)
 
-          # Send posts to profile page
+          profile_owner_user_id = post.profile.user.id
+
+          PostBroadcastJob.perform_later(profile_owner_user_id)
+
 
         else
 
