@@ -55,7 +55,7 @@ module HomeHelper
 
       story_posts = []
 
-      followed_store.profile.posts.where(status: 1, is_story: true).each do |story_post|
+      followed_store.profile.posts.where(status: 1, is_story: true).order(created_at: :asc).each do |story_post|
 
         story_posts.push(story_post.get_attributes)
 
@@ -84,7 +84,7 @@ module HomeHelper
 
       story_posts = []
 
-      followed_friend.profile.posts.where(status: 1, is_story: true).each do |story_post|
+      followed_friend.profile.posts.where(status: 1, is_story: true).order(created_at: :asc).each do |story_post|
 
         story_posts.push(story_post.get_attributes)
 
