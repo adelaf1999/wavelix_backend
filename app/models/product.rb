@@ -29,7 +29,7 @@ class Product < ApplicationRecord
       self.where(stock_quantity: nil).or(where('stock_quantity > ?', 0))
           .where(product_available: true, store_country: customer_country)
           .where.not(id: product_id)
-          .where("similarity(name, ?) > 0.3", product_name)
+          .where("similarity(name, ?) > 0.3 AND similarity(name, ?) < 1", product_name, product_name)
           .order(Arel.sql("similarity(name, #{ActiveRecord::Base.connection.quote(product_name)}) DESC"))
           .limit(10)
 
