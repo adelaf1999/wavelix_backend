@@ -10,10 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_28_105620) do
+ActiveRecord::Schema.define(version: 2020_10_01_140501) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
+  enable_extension "pg_trgm"
   enable_extension "plpgsql"
 
   create_table "cart_items", force: :cascade do |t|
@@ -273,6 +274,7 @@ ActiveRecord::Schema.define(version: 2020_09_28_105620) do
     t.integer "stock_quantity"
     t.string "description", default: ""
     t.integer "store_user_id", null: false
+    t.index ["name"], name: "index_products_on_name", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "profiles", force: :cascade do |t|
