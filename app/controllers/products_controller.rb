@@ -116,6 +116,9 @@ class ProductsController < ApplicationController
                         @has_saved_card = customer_user.payment_source_setup?
 
 
+                        @similar_items = Product.similar_items(product, customer_user)
+
+
 
 
                     else

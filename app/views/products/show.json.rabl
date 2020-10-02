@@ -52,5 +52,9 @@ if  @has_saved_card != nil
     node(:has_saved_card) {  @has_saved_card }
 end
 
+if @similar_items != nil
+    node(:similar_items) { @similar_items }
+end
+
 
 node(:maximum_delivery_distance) { @maximum_delivery_distance }

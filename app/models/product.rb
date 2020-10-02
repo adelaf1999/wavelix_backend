@@ -1,4 +1,7 @@
+include OrderHelper # Needs to be included outside class so methods on the class and instance methods can use functions from helper
+
 class Product < ApplicationRecord
+
 
   validates_presence_of :name, :price, :main_picture, :category_id
 
@@ -18,26 +21,40 @@ class Product < ApplicationRecord
   before_validation :add_store_attributes, on: :create
 
 
-  def self.similar_items(product_id, customer_country)
 
-    product = self.find_by(id: product_id)
 
-    if product != nil
+  def self.similar_items(product, customer_user)
 
-      product_name = product.name
 
-      self.where(stock_quantity: nil).or(where('stock_quantity > ?', 0))
-          .where(product_available: true, store_country: customer_country)
-          .where.not(id: product_id)
-          .where("similarity(name, ?) > 0.3 AND similarity(name, ?) < 1", product_name, product_name)
-          .order(Arel.sql("similarity(name, #{ActiveRecord::Base.connection.quote(product_name)}) DESC"))
-          .limit(10)
 
-    else
+      items = self.where(stock_quantity: nil).or(where('stock_quantity > ?', 0))
+                  .where(product_available: true, store_country: customer_user.country)
+                  .where.not(id: product.id)
+                  .where("similarity(name, ?) > 0.3 AND similarity(name, ?) < 1", product.name, product.name)
+                  .order(Arel.sql("similarity(name, #{ActiveRecord::Base.connection.quote(product.name)}) DESC"))
 
-      []
 
-    end
+      items = items.uniq { |item|  item.name }.first(10)
+
+
+      similar_items = []
+
+      items.each do |item|
+
+
+        similar_items.push({
+                               name: item.name,
+                               price: convert_amount(item.price, item.currency, customer_user.default_currency),
+                               picture: item.main_picture.url,
+                               id: item.id,
+                               currency: customer_user.default_currency
+                           })
+
+      end
+
+      similar_items
+
+
 
 
 
