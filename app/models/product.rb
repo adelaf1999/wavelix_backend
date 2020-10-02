@@ -21,6 +21,12 @@ class Product < ApplicationRecord
   before_validation :add_store_attributes, on: :create
 
 
+  def is_store_user_verified?
+
+    self.store_user.verified?
+
+  end
+
 
 
   def self.similar_items(product, customer_user)
@@ -32,6 +38,9 @@ class Product < ApplicationRecord
                   .where.not(id: product.id)
                   .where("similarity(name, ?) > 0.3 AND similarity(name, ?) < 1", product.name, product.name)
                   .order(Arel.sql("similarity(name, #{ActiveRecord::Base.connection.quote(product.name)}) DESC"))
+
+
+      items = items.select { |item| item.is_store_user_verified? }
 
 
       items = items.uniq { |item|  item.name }.first(10)
