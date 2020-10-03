@@ -19,8 +19,7 @@ class ProfileController < ApplicationController
         follower_relationship.destroy!
 
         @follow_relationships = get_follow_relationships(current_user)
-
-        @followers = @follow_relationships[:followers]
+        
 
 
       else
