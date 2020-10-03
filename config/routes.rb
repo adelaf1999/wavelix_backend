@@ -110,6 +110,8 @@ Rails.application.routes.draw do
 
   post '/change-profile-settings' => 'profile#change_profile_settings'
 
+  post '/remove-follower' => 'profile#remove_follower'
+
   # POST ROUTES
 
   post '/create-post' => 'post#create'

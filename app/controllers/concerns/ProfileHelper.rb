@@ -43,7 +43,8 @@ module ProfileHelper
         following.push({
                            username: username,
                            profile_picture_url: profile_picture_url,
-                           profile_id: followed_user.profile.id
+                           profile_id: followed_user.profile.id,
+                           id: followed_user.id
                        })
 
       end
@@ -60,7 +61,8 @@ module ProfileHelper
         followers.push({
                            username: username,
                            profile_picture_url: profile_picture_url,
-                           profile_id: follower_user.profile.id
+                           profile_id: follower_user.profile.id,
+                           id: follower_user.id
                        })
 
       end

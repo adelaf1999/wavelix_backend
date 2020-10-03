@@ -3,6 +3,41 @@ class ProfileController < ApplicationController
 
   before_action :authenticate_user!
 
+
+  def remove_follower
+
+    follower = User.find_by(id: params[:follower_id])
+
+    if follower != nil
+
+      follower_relationship =  current_user.follower_relationships.find_by(status: 1, follower_id: follower.id)
+
+      if follower_relationship != nil
+
+        @success = true
+
+        follower_relationship.destroy!
+
+        @follow_relationships = get_follow_relationships(current_user)
+
+        @followers = @follow_relationships[:followers]
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    else
+
+      @success = false
+
+    end
+
+  end
+
   def view_user_profile
 
     # store user can only be viewed if verified
@@ -476,7 +511,8 @@ class ProfileController < ApplicationController
         @search_results.push({
                                  username: username,
                                  profile_picture_url: profile_picture_url,
-                                 profile_id: item.profile.id
+                                 profile_id: item.profile.id,
+                                 id: item.id
                              })
 
       end

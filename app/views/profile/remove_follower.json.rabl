@@ -1,0 +1,11 @@
+if @success != nil
+    node(:success) { @success }
+end
+
+if @followers != nil
+    node(:followers) { @followers }
+end
+
+if @follow_relationships != nil
+    node(:follow_relationships) { @follow_relationships }
+end
