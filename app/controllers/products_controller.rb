@@ -7,6 +7,119 @@ class ProductsController < ApplicationController
     include MoneyHelper
 
 
+    def search_all_products
+
+
+        if user_signed_in?
+
+            if current_user.store_user?
+
+                store_user = StoreUser.find_by(store_id: current_user.id)
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+        else
+
+
+            employee = Employee.find_by(id: current_employee.id)
+
+            if employee.has_roles?(:product_manager) && employee.active?
+
+                store_user = employee.store_user
+
+            else
+
+                head :unauthorized
+
+                return
+
+            end
+
+
+        end
+
+
+        @results = []
+
+
+
+        products = store_user.products
+
+        name = params[:name]
+
+        if name != nil
+
+            name = name.strip
+
+            products = products.where("name ILIKE ?", "%#{name}%")
+
+        end
+
+
+        product_available = params[:product_available]
+
+        if product_available != nil
+
+            product_available = eval(product_available)
+
+            if is_boolean?(product_available)
+
+                products = products.where(product_available: product_available)
+
+            end
+
+        end
+
+        stock_quantity = params[:stock_quantity]
+
+        comparison_operator = params[:comparison_operator]
+
+        if stock_quantity != nil && comparison_operator != nil
+
+
+            if is_whole_number?(stock_quantity) && ['>', '<', '='].include?(comparison_operator)
+
+                stock_quantity = stock_quantity.to_i
+
+                products = products.where("stock_quantity #{comparison_operator} ?", stock_quantity)
+
+            end
+
+        end
+
+        products = products.order(name: :asc)
+
+
+        products.each do |product|
+
+            @results.push({
+                              name: product.name,
+                              price: product.price,
+                              currency: product.currency,
+                              picture: product.main_picture.url,
+                              product_available: product.product_available,
+                              stock_quantity: product.stock_quantity,
+                              category_id: product.category_id,
+                              id: product.id
+                          })
+
+        end
+
+
+
+
+
+
+
+    end
+
+
     def show
 
         if current_user.customer_user?

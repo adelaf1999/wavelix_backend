@@ -97,6 +97,8 @@ Rails.application.routes.draw do
 
   post '/view-product' => 'products#show'
 
+  post '/search-all-products' => 'products#search_all_products'
+
 
   # PROFILE ROUTES
 
