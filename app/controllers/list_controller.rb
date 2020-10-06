@@ -7,6 +7,58 @@ class ListController < ApplicationController
   include OrderHelper
 
 
+  def remove_list
+
+    if current_user.store_user?
+
+      head :unauthorized
+
+      return
+
+    else
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
+
+    list = customer_user.lists.find_by(id: params[:list_id])
+
+    if list != nil
+
+      if !list.is_default
+
+        list.destroy!
+
+        @success = true
+
+        @lists = customer_user_lists(customer_user)
+
+      else
+
+        @success = false
+
+      end
+
+    else
+
+      @success = false
+
+    end
+
+
+
+
+  end
+
   def edit_list
 
     if current_user.store_user?

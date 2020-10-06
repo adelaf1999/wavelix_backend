@@ -318,5 +318,7 @@ Rails.application.routes.draw do
 
   post '/edit-list' => 'list#edit_list'
 
+  post '/remove-list' => 'list#remove_list'
+
 
 end
