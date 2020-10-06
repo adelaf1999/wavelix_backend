@@ -14,7 +14,9 @@ class CustomerUser < ApplicationRecord
 
     has_one :cart, dependent: :destroy
 
-    after_create :create_cart, :save_stripe_customer_token
+    has_many :lists, dependent: :destroy
+
+    after_create :create_cart, :save_stripe_customer_token, :create_default_list
 
     before_destroy :delete_stripe_account
 
@@ -51,6 +53,12 @@ class CustomerUser < ApplicationRecord
 
 
     private
+
+    def create_default_list
+
+        List.create!(name: 'My Wishlist', privacy: 1, customer_user_id: self.id, is_default: true)
+
+    end
 
     def create_cart
         Cart.create!(customer_user_id: self.id)

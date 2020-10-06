@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_01_140501) do
+ActiveRecord::Schema.define(version: 2020_10_06_120715) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -165,6 +165,24 @@ ActiveRecord::Schema.define(version: 2020_10_01_140501) do
     t.integer "liker_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "list_products", force: :cascade do |t|
+    t.integer "list_id", null: false
+    t.integer "product_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "lists", force: :cascade do |t|
+    t.string "name", null: false
+    t.integer "privacy", null: false
+    t.integer "customer_user_id", null: false
+    t.boolean "is_default", default: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.string "slug"
+    t.index ["slug"], name: "index_lists_on_slug", unique: true
   end
 
   create_table "local_videos", force: :cascade do |t|
