@@ -320,5 +320,7 @@ Rails.application.routes.draw do
 
   post '/remove-list' => 'list#remove_list'
 
+  post '/remove-list-item' => 'list#remove_list_item'
+
 
 end

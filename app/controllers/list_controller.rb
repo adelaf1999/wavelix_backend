@@ -7,6 +7,61 @@ class ListController < ApplicationController
   include OrderHelper
 
 
+  def remove_list_item
+
+
+    if current_user.store_user?
+
+      head :unauthorized
+
+      return
+
+    else
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
+    list = customer_user.lists.find_by(id: params[:list_id])
+
+    if list != nil
+
+      list_product = list.list_products.find_by(id: params[:list_product_id])
+
+      if list_product != nil
+
+        list_product.destroy!
+
+        @success = true
+
+        @lists = customer_user_lists(customer_user)
+
+
+      else
+
+        @success = false
+
+      end
+
+    else
+
+      @success = false
+
+    end
+
+
+
+  end
+
+
   def remove_list
 
     if current_user.store_user?
@@ -293,7 +348,8 @@ class ListController < ApplicationController
                               price: convert_amount(product.price, product.currency, customer_currency),
                               currency: customer_currency,
                               picture: product.main_picture.url,
-                              id: product.id
+                              product_id: product.id,
+                              list_product_id: list_product.id
                           })
 
           else
@@ -311,7 +367,7 @@ class ListController < ApplicationController
 
 
       lists.push({
-                     id: list.id,
+                     list_id: list.id,
                      name: list.name,
                      privacy: list.privacy,
                      is_default: list.is_default,
