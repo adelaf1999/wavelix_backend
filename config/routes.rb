@@ -310,5 +310,9 @@ Rails.application.routes.draw do
 
   post '/get-profile-posts' => 'home#get_profile_posts'
 
+  # List Routes
+
+  post '/create-list' => 'list#create'
+
 
 end

@@ -174,7 +174,7 @@ ActiveRecord::Schema.define(version: 2020_10_06_120715) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "lists", force: :cascade do |t|
+  create_table "list", force: :cascade do |t|
     t.string "name", null: false
     t.integer "privacy", null: false
     t.integer "customer_user_id", null: false
