@@ -22,8 +22,6 @@ class Product < ApplicationRecord
 
 
 
-
-
   def self.similar_items(product, customer_user)
 
 

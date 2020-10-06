@@ -6,6 +6,89 @@ class ListController < ApplicationController
 
   include OrderHelper
 
+
+  def toggle_list_item
+
+    if current_user.store_user?
+
+      head :unauthorized
+
+      return
+
+    else
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
+
+    list = customer_user.lists.find_by(id: params[:list_id])
+
+    product = Product.find_by(id: params[:product_id])
+
+    if list != nil && product != nil
+
+      has_added_list_product = customer_user.added_list_product?(product.id)
+
+     if product.product_available
+
+       # A product can only belong to one and only one list
+
+       @success = true
+
+       if has_added_list_product
+
+         list_product = customer_user.list_products.find_by(product_id: product.id)
+
+         list_product.destroy!
+
+         @has_added_list_product = false
+
+       else
+
+         ListProduct.create!(list_id: list.id, product_id: product.id, customer_user_id: customer_user.id)
+
+
+         @has_added_list_product = true
+
+       end
+
+
+
+     else
+
+       @success = false
+
+       if has_added_list_product
+
+         list_product = customer_user.list_products.find_by(product_id: product.id)
+
+         list_product.destroy!
+
+       end
+
+
+     end
+
+    else
+
+      @success = false
+
+
+    end
+
+
+
+  end
+
   def create
 
     if current_user.store_user?
@@ -95,8 +178,13 @@ class ListController < ApplicationController
                               name: product.name,
                               price: convert_amount(product.price, product.currency, customer_currency),
                               currency: customer_currency,
-                              picture: product.main_picture.url
+                              picture: product.main_picture.url,
+                              id: product.id
                           })
+
+          else
+
+            list_product.destroy!
 
           end
 
@@ -104,7 +192,7 @@ class ListController < ApplicationController
 
       end
 
-      products = products.sort_by { |item| item.name }
+      products = products.sort_by { |item| item[:name] }
 
 
 

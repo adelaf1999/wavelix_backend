@@ -314,5 +314,7 @@ Rails.application.routes.draw do
 
   post '/create-list' => 'list#create'
 
+  post '/toggle-list-item' => 'list#toggle_list_item'
+
 
 end

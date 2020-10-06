@@ -10,15 +10,25 @@ class CustomerUser < ApplicationRecord
 
     has_many :orders
 
+    has_many :list_products
+
     has_one :driver, dependent: :destroy
 
     has_one :cart, dependent: :destroy
 
     has_many :lists, dependent: :destroy
 
+
     after_create :create_cart, :save_stripe_customer_token, :create_default_list
 
     before_destroy :delete_stripe_account
+
+
+    def added_list_product?(product_id)
+
+        self.list_products.find_by(product_id: product_id) != nil
+
+    end
 
 
     def push_token
