@@ -231,6 +231,8 @@ class ProductsController < ApplicationController
 
                         @similar_items = Product.similar_items(product, customer_user)
 
+                        @has_added_list_product = customer_user.added_list_product?(product.id)
+
 
 
 
