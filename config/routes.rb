@@ -316,5 +316,7 @@ Rails.application.routes.draw do
 
   post '/toggle-list-item' => 'list#toggle_list_item'
 
+  post '/edit-list' => 'list#edit_list'
+
 
 end

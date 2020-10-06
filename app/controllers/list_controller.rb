@@ -7,6 +7,68 @@ class ListController < ApplicationController
   include OrderHelper
 
 
+  def edit_list
+
+    if current_user.store_user?
+
+      head :unauthorized
+
+      return
+
+    else
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        @success = false
+
+        return
+
+      end
+
+    end
+
+    list = customer_user.lists.find_by(id: params[:list_id])
+
+    if list != nil
+
+
+      name = params[:name]
+
+      if !name.blank?
+
+        name = name.strip
+
+        list.update!(name: name)
+
+      end
+
+      privacy = params[:privacy]
+
+
+      if !privacy.blank? && is_privacy_valid?(privacy)
+
+        privacy = privacy.to_i
+
+        list.update!(privacy: privacy)
+
+      end
+
+      @success = true
+
+      @lists = customer_user_lists(customer_user)
+
+    else
+
+      @success = false
+
+    end
+
+
+
+  end
+
   def toggle_list_item
 
     if current_user.store_user?
