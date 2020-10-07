@@ -3,9 +3,9 @@ class ProductsController < ApplicationController
 
     before_action :deny_to_visitors
 
-
     include MoneyHelper
 
+    include ListHelper
 
     def search_all_products
 
@@ -233,7 +233,7 @@ class ProductsController < ApplicationController
 
                         @has_added_list_product = customer_user.added_list_product?(product.id)
 
-
+                        @lists = customer_user_lists(customer_user)
 
 
                     else

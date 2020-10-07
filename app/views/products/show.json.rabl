@@ -60,5 +60,8 @@ if @has_added_list_product != nil
     node(:has_added_list_product) {  @has_added_list_product }
 end
 
+if @lists != nil
+    node(:lists) { @lists }
+end
 
 node(:maximum_delivery_distance) { @maximum_delivery_distance }
