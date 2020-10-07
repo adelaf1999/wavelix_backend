@@ -199,62 +199,58 @@ class ListController < ApplicationController
 
     end
 
+    # A product can only belong to one and only one list
 
-    list = customer_user.lists.find_by(id: params[:list_id])
+    list_product = customer_user.list_products.find_by(product_id: params[:product_id])
 
-    product = Product.find_by(id: params[:product_id])
+    if list_product == nil
 
-    if list != nil && product != nil
+      product = Product.find_by(id: params[:product_id])
 
-      has_added_list_product = customer_user.added_list_product?(product.id)
+      if product != nil
 
-     if product.product_available
+        if product.product_available
 
-       # A product can only belong to one and only one list
+          list = customer_user.lists.find_by(id: params[:list_id])
 
-       @success = true
+          if list != nil
 
-       if has_added_list_product
+            ListProduct.create!(list_id: list.id, product_id: product.id, customer_user_id: customer_user.id)
 
-         list_product = customer_user.list_products.find_by(product_id: product.id)
+            @success = true
 
-         list_product.destroy!
+            @has_added_list_product = true
 
-         @has_added_list_product = false
+          else
 
-       else
+            @success = false
 
-         ListProduct.create!(list_id: list.id, product_id: product.id, customer_user_id: customer_user.id)
-
-
-         @has_added_list_product = true
-
-       end
+          end
 
 
+        else
 
-     else
+          @success = false
 
-       @success = false
-
-       if has_added_list_product
-
-         list_product = customer_user.list_products.find_by(product_id: product.id)
-
-         list_product.destroy!
-
-       end
+        end
 
 
-     end
+      else
+
+        @success = false
+
+      end
+
 
     else
 
-      @success = false
+      list_product.destroy!
 
+      @success = true
+
+      @has_added_list_product = false
 
     end
-
 
 
   end
