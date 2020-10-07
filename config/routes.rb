@@ -314,13 +314,13 @@ Rails.application.routes.draw do
 
   post '/create-list' => 'list#create'
 
-  post '/toggle-list-item' => 'list#toggle_list_item'
+  post '/toggle-list-product' => 'list#toggle_list_product'
 
   post '/edit-list' => 'list#edit_list'
 
   post '/remove-list' => 'list#remove_list'
 
-  post '/remove-list-item' => 'list#remove_list_item'
+  post '/remove-list-product' => 'list#remove_list_product'
 
 
 end

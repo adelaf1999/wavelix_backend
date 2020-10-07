@@ -7,7 +7,7 @@ class ListController < ApplicationController
   include OrderHelper
 
 
-  def remove_list_item
+  def remove_list_product
 
 
     if current_user.store_user?
@@ -176,7 +176,7 @@ class ListController < ApplicationController
 
   end
 
-  def toggle_list_item
+  def toggle_list_product
 
     if current_user.store_user?
 
