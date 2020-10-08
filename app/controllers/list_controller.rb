@@ -8,6 +8,34 @@ class ListController < ApplicationController
 
   include ListHelper
 
+
+  def index
+
+    if current_user.store_user?
+
+      head :unauthorized
+
+      return
+
+    else
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if !customer_user.phone_number_verified?
+
+        head :unauthorized
+
+        return
+
+      end
+
+    end
+
+    @lists = customer_user_lists(customer_user)
+
+
+  end
+
   def remove_list_product
 
 

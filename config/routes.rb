@@ -322,5 +322,6 @@ Rails.application.routes.draw do
 
   post '/remove-list-product' => 'list#remove_list_product'
 
+  get '/get-customer-lists' => 'list#index'
 
 end
