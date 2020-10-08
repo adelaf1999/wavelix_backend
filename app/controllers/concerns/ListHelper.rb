@@ -49,6 +49,7 @@ module ListHelper
                      name: list.name,
                      privacy: list.privacy,
                      is_default: list.is_default,
+                     privacy_numeric: list.privacy_before_type_cast,
                      products: products
                  })
 
