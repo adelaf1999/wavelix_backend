@@ -1,12 +1,101 @@
 class ListController < ApplicationController
 
-  before_action :authenticate_user!
+  before_action :authenticate_user!, except: [:show]
 
   include ValidationsHelper
 
   include OrderHelper
 
   include ListHelper
+
+
+
+  def show
+
+    # error_codes
+
+    # { 0: LIST_NOT_FOUND, 1: PRIVATE_LIST_ERROR }
+
+    list = List.find_by(id: params[:list_id])
+
+    if list != nil
+
+      if list.private_list?
+
+        @success = false
+
+        @error_code = 1
+
+      else
+
+
+        customer_user = list.customer_user
+
+        customer = customer_user.customer
+
+        customer_currency = customer_user.default_currency
+
+        products = []
+
+        list.list_products.each do |list_product|
+
+          product = Product.find_by(id: list_product.product_id)
+
+          if product != nil
+
+            if product.product_available
+
+              products.push({
+                                name: product.name,
+                                price: convert_amount(product.price, product.currency, customer_currency),
+                                currency: customer_currency,
+                                picture: product.main_picture.url,
+                                product_id: product.id,
+                                list_product_id: list_product.id
+                            })
+
+            else
+
+              list_product.destroy!
+
+            end
+
+          end
+
+        end
+
+
+        products = products.sort_by { |item| item[:name] }
+
+
+        @success = true
+
+        @list = {
+            id: list.id,
+            name: list.name,
+            products: products
+        }
+
+
+        @customer = {
+            username: customer.username,
+            picture: customer.profile.profile_picture.url
+        }
+
+
+      end
+
+    else
+
+      @success = false
+
+      @error_code = 0
+
+    end
+
+
+  end
+
 
 
   def index

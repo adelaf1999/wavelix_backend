@@ -324,4 +324,6 @@ Rails.application.routes.draw do
 
   get '/get-customer-lists' => 'list#index'
 
+  post '/view-list' => 'list#show'
+
 end
