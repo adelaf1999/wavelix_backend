@@ -2,7 +2,7 @@ class SearchController < ApplicationController
 
   include MoneyHelper
 
-  include ValidationsHelper
+  include OrderHelper
 
   before_action :authenticate_user!
 
@@ -254,7 +254,7 @@ class SearchController < ApplicationController
 
           profile = user.profile
 
-          distance = calculate_distance(current_user_location, store.store_address)
+          distance = calculate_distance_km(current_user_location, store.store_address)
 
           @results.push({
                             profile_picture: profile.profile_picture.url,
@@ -341,7 +341,7 @@ class SearchController < ApplicationController
 
             if store_user.verified?
 
-              distance = calculate_distance(current_user_location, store_user.store_address)
+              distance = calculate_distance_km(current_user_location, store_user.store_address)
 
               @results = add_product(product, store_user, base_currency, distance, @results)
 
@@ -367,7 +367,7 @@ class SearchController < ApplicationController
 
             if store_user.verified?
 
-              distance = calculate_distance(current_user_location, store_user.store_address)
+              distance = calculate_distance_km(current_user_location, store_user.store_address)
 
               @results = add_product(product, store_user, base_currency, distance, @results)
 
@@ -499,30 +499,6 @@ class SearchController < ApplicationController
     end
 
   end
-
-  def calculate_distance(loc1, loc2)
-
-    # https://stackoverflow.com/questions/12966638/how-to-calculate-the-distance-between-two-gps-coordinates-without-using-google-m
-
-
-    rad_per_deg = Math::PI/180  # PI / 180
-    rkm = 6371                  # Earth radius in kilometers
-    rm = rkm * 1000             # Radius in meters
-
-    dlat_rad = (loc2[:latitude]-loc1[:latitude]) * rad_per_deg  # Delta, converted to rad
-    dlon_rad = (loc2[:longitude]-loc1[:longitude]) * rad_per_deg
-
-
-    lat1_rad = loc1[:latitude] * rad_per_deg
-    lat2_rad = loc2[:latitude] * rad_per_deg
-
-    a = Math.sin(dlat_rad/2)**2 + Math.cos(lat1_rad) * Math.cos(lat2_rad) * Math.sin(dlon_rad/2)**2
-    c = 2 * Math::atan2(Math::sqrt(a), Math::sqrt(1-a))
-
-    (rm * c) / 1000.0 # Delta in KM
-
-  end
-
 
 
 

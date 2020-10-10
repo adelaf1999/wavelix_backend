@@ -45,12 +45,4 @@ module ValidationsHelper
   end
 
 
-  def is_decimal_number?(arg)
-
-    arg = arg.to_s
-
-    /^-?(\d+\.?\d*|\d*\.?\d+)$/.match(arg) != nil
-
-  end
-
 end
