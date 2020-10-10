@@ -182,6 +182,8 @@ class SearchController < ApplicationController
 
     # Only verified stores appear in searches
 
+    @results = []
+
     store_name = params[:store_name]
 
     country_code = params[:country_code]
@@ -190,10 +192,12 @@ class SearchController < ApplicationController
 
     limit = params[:limit]
 
+    latitude = params[:latitude]
 
-    @results = []
+    longitude = params[:longitude]
 
-    if store_name != nil && country_code != nil && limit != nil
+
+    if store_name != nil && country_code != nil && limit != nil && latitude != nil && longitude != nil
 
       store_name = store_name.strip
 
@@ -202,9 +206,15 @@ class SearchController < ApplicationController
       is_limit_valid = is_limit_valid?(limit)
 
 
-      if store_name.length > 0 && country != nil && is_limit_valid
+      if store_name.length > 0 && country != nil && is_limit_valid && is_decimal_number?(latitude) && is_decimal_number?(longitude)
 
         limit = limit.to_i
+
+        latitude = latitude.to_d
+
+        longitude = longitude.to_d
+
+        current_user_location = {latitude: latitude, longitude: longitude}
 
         if current_user.store_user?
 
@@ -219,11 +229,7 @@ class SearchController < ApplicationController
 
           end
 
-
-
-          store_user = StoreUser.find_by(store_id: current_user.id)
-
-          user_address = store_user.store_address
+          
 
         else
 
@@ -239,10 +245,6 @@ class SearchController < ApplicationController
 
 
 
-          customer_user = CustomerUser.find_by(customer_id: current_user.id)
-
-          user_address = customer_user.home_address
-
         end
 
 
@@ -252,7 +254,7 @@ class SearchController < ApplicationController
 
           profile = user.profile
 
-          distance = calculate_distance(user_address, store.store_address)
+          distance = calculate_distance(current_user_location, store.store_address)
 
           @results.push({
                             profile_picture: profile.profile_picture.url,
