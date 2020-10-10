@@ -2,6 +2,8 @@ class SearchController < ApplicationController
 
   include MoneyHelper
 
+  include ValidationsHelper
+
   before_action :authenticate_user!
 
   def index
@@ -294,6 +296,8 @@ class SearchController < ApplicationController
 
     # Store users can see their own products in search
 
+    @results = []
+
     product_name = params[:product_name]
 
     country_code = params[:country_code]
@@ -302,10 +306,10 @@ class SearchController < ApplicationController
 
     limit = params[:limit]
 
-    @results = []
+    current_user_location = params[:current_user_location]
 
-    if product_name != nil  && country_code != nil && base_currency != nil && limit != nil
 
+    if product_name != nil  && country_code != nil && base_currency != nil && limit != nil && current_user_location != nil
 
       country = ISO3166::Country.new(country_code)
 
@@ -316,66 +320,83 @@ class SearchController < ApplicationController
 
         limit = limit.to_i
 
+        current_user_location = eval(current_user_location)
 
-        if current_user.store_user?
 
-          current_store_address = StoreUser.find_by(store_id: current_user.id).store_address
+        if current_user_location.instance_of?(Hash) && !current_user_location.empty?
 
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true, store_country: country_code).limit(limit)
+          latitude = current_user_location[:latitude]
 
-          all_products.each do |product|
+          longitude = current_user_location[:longitude]
 
-            store_user = StoreUser.find_by(id: product.category.store_user_id)
 
-            if store_user.verified?
+          if latitude != nil && longitude != nil
 
-              distance = calculate_distance(current_store_address, store_user.store_address)
+            if is_decimal_number?(latitude) && is_decimal_number?(longitude)
 
-              @results = add_product(product, store_user, base_currency, distance, @results)
+
+              if current_user.store_user?
+
+
+                all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true, store_country: country_code).limit(limit)
+
+                all_products.each do |product|
+
+                  store_user = StoreUser.find_by(id: product.category.store_user_id)
+
+                  if store_user.verified?
+
+                    distance = calculate_distance(current_user_location, store_user.store_address)
+
+                    @results = add_product(product, store_user, base_currency, distance, @results)
+
+                  end
+
+                end
+
+
+                sort_by_price = params[:sort_by_price]
+
+                sort_by_distance = params[:sort_by_distance]
+
+                @results = sort_products(sort_by_price, sort_by_distance, @results)
+
+
+              else
+
+                all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true, store_country: country_code).limit(limit)
+
+                all_products.each do |product|
+
+                  store_user = StoreUser.find_by(id: product.category.store_user_id)
+
+                  if store_user.verified?
+
+                    distance = calculate_distance(current_user_location, store_user.store_address)
+
+                    @results = add_product(product, store_user, base_currency, distance, @results)
+
+
+                  end
+
+                end
+
+
+                sort_by_price = params[:sort_by_price]
+
+                sort_by_distance = params[:sort_by_distance]
+
+                @results = sort_products(sort_by_price, sort_by_distance, @results)
+
+
+              end
+
+
 
             end
 
-          end
-
-
-          sort_by_price = params[:sort_by_price]
-
-          sort_by_distance = params[:sort_by_distance]
-
-          @results = sort_products(sort_by_price, sort_by_distance, @results)
-
-
-        else
-
-
-          customer_user = CustomerUser.find_by(customer_id: current_user.id)
-
-          current_customer_address = customer_user.home_address
-
-          all_products = Product.all.where("name ILIKE ?", "%#{product_name}%").where(product_available: true, store_country: country_code).limit(limit)
-
-          all_products.each do |product|
-
-            store_user = StoreUser.find_by(id: product.category.store_user_id)
-
-            if store_user.verified?
-
-              distance = calculate_distance(current_customer_address, store_user.store_address)
-
-              @results = add_product(product, store_user, base_currency, distance, @results)
-
-
-            end
 
           end
-
-
-          sort_by_price = params[:sort_by_price]
-
-          sort_by_distance = params[:sort_by_distance]
-
-          @results = sort_products(sort_by_price, sort_by_distance, @results)
-
 
 
         end
