@@ -111,6 +111,8 @@ class CustomerSettingsController < ApplicationController
 
         end
 
+        @home_address = customer_user.home_address
+
 
       end
 
