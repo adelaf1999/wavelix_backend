@@ -180,6 +180,8 @@ class CustomerSettingsController < ApplicationController
 
         @home_address = customer_user.home_address
 
+        @phone_number = customer_user.phone_number
+
 
       end
 

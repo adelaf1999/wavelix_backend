@@ -18,6 +18,11 @@ if @home_address != nil
     node(:home_address) { @home_address }
 end
 
+
+if @phone_number != nil
+    node(:phone_number) { @phone_number }
+end
+
 if @currencies != nil
     node(:currencies) { @currencies }
 end
