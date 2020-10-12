@@ -6,6 +6,73 @@ class CustomerSettingsController < ApplicationController
 
   include PaymentsHelper
 
+  include OrderHelper
+
+  def update_home_address
+
+    if current_user.customer_user?
+
+      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+
+      if customer_user.phone_number_verified?
+
+        latitude = params[:latitude]
+
+        longitude = params[:longitude]
+
+        if !latitude.blank? && !longitude.blank?
+
+          if is_decimal_number?(latitude) && is_decimal_number?(longitude)
+
+            latitude = latitude.to_d
+
+            longitude = longitude.to_d
+
+            geo_location = Geocoder.search([latitude, longitude])
+
+            if geo_location.size > 0
+
+              @success = true
+
+              @home_address = { latitude: latitude, longitude: longitude }
+
+              customer_user.update!(home_address: @home_address)
+
+            else
+
+              @success = false
+
+            end
+
+          else
+
+            @success = false
+
+
+          end
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        head :unauthorized
+
+        return
+
+
+      end
+
+
+    end
+
+
+  end
+
 
   def update_apartment_floor
 
@@ -120,6 +187,9 @@ class CustomerSettingsController < ApplicationController
     end
 
   end
+
+
+
 
 
 end
