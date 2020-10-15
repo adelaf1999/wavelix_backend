@@ -328,4 +328,8 @@ Rails.application.routes.draw do
 
   post '/view-list' => 'list#show'
 
+  # Recaptcha Routes
+
+  post '/verify-recaptcha-token' => 'recaptcha#verify_recaptcha_token'
+
 end
