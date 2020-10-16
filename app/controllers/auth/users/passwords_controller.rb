@@ -14,7 +14,7 @@ module Auth
         
               if @resource
                 yield @resource if block_given?
-                @resource.send_reset_password_instructions(
+                @resource.delay.send_reset_password_instructions(
                   email: @email,
                   provider: 'email',
                   redirect_url: Rails.env.production? ? ENV.fetch("PRODUCTION_WEBSITE_URL") : ENV.fetch("DEVELOPMENT_WEBSITE_URL"),

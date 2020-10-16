@@ -41,7 +41,7 @@ module Auth
         
               return render_not_found_error unless @resource
         
-              @resource.send_confirmation_instructions({
+              @resource.delay.send_confirmation_instructions({
                 redirect_url: Rails.env.production? ?  ENV.fetch("PRODUCTION_WEBSITE_URL")  : ENV.fetch("DEVELOPMENT_WEBSITE_URL"),
                 client_config: resource_params[:config_name]
               })

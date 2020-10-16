@@ -56,7 +56,7 @@ module  Auth
         
                 unless @resource.confirmed?
                   # user will require email authentication
-                  @resource.send_confirmation_instructions({
+                  @resource.delay.send_confirmation_instructions({
                     client_config: params[:config_name],
                     redirect_url: @redirect_url
                   })

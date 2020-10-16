@@ -16,7 +16,7 @@ module Auth
               if @resource
                 yield @resource if block_given?
         
-                @resource.send_unlock_instructions(
+                @resource.delay.send_unlock_instructions(
                   email: @email,
                   provider: 'email',
                   client_config: params[:config_name]
