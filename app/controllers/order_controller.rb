@@ -8,6 +8,8 @@ class OrderController < ApplicationController
 
   include NotificationsHelper
 
+  include ProductsHelper
+
   before_action :deny_to_visitors
 
   def add_tracking_information
@@ -314,6 +316,8 @@ class OrderController < ApplicationController
 
             send_customer_orders(order)
 
+            notify_unavailable_products(order)
+
           else
 
 
@@ -336,6 +340,8 @@ class OrderController < ApplicationController
               increment_store_balance(order)
 
               increment_driver_balance(order, driver)
+
+              notify_unavailable_products(order)
 
 
             else
@@ -483,6 +489,8 @@ class OrderController < ApplicationController
                 increment_store_balance(order)
 
                 increment_driver_balance(order, driver)
+
+                notify_unavailable_products(order)
 
 
               else

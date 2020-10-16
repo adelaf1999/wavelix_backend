@@ -34,7 +34,7 @@ module NotificationsHelper
 
     store_user.employees.each do |employee|
 
-      if employee.has_roles?(:order_manager)
+      if employee.has_roles?(:order_manager) && employee.active?
 
         send_push_notification(employee.push_token, message_body, message_title, message_data )
 
