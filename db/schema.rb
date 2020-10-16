@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_06_143805) do
+ActiveRecord::Schema.define(version: 2020_10_16_084155) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -111,13 +111,6 @@ ActiveRecord::Schema.define(version: 2020_10_06_143805) do
     t.text "vehicle_registration_document_pictures", null: false
     t.boolean "account_blocked", default: false
     t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
-  end
-
-  create_table "earning_accounts", force: :cascade do |t|
-    t.decimal "balance", default: "0.0"
-    t.string "currency", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "earnings", force: :cascade do |t|

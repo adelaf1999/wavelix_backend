@@ -201,23 +201,6 @@ module OrderHelper
   end
 
 
-  def increment_earning_account_usd(amount)
-
-    earning_account = EarningAccount.find_by(currency: 'USD')
-
-    if earning_account == nil
-
-      earning_account = EarningAccount.create!(currency: 'USD')
-
-      earning_account.increment!(:balance, amount)
-
-    else
-
-      earning_account.increment!(:balance, amount)
-
-    end
-
-  end
 
 
   def increment_store_balance(order)
