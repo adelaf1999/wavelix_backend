@@ -70,5 +70,7 @@ Rails.application.configure do
       enable_starttls_auto: true
   }
 
+  config.action_mailer.preview_path = "#{Rails.root}/app/mailers/previews"
+
 
 end
