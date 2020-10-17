@@ -1079,6 +1079,8 @@ class OrderController < ApplicationController
             }
         )
 
+        OrderMailer.delay.store_rejected_order(order.get_customer_email, order.get_store_name)
+
 
       else
 

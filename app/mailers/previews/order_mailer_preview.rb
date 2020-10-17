@@ -7,4 +7,10 @@ class OrderMailerPreview < ActionMailer::Preview
     OrderMailer.order_canceled(email, store_name)
   end
 
+  def store_rejected_order
+    email = 'adel_abouf@outlook.com'
+    store_name = 'Nike'
+    OrderMailer.store_rejected_order(email, store_name)
+  end
+
 end
