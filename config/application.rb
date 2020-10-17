@@ -57,5 +57,7 @@ module TheProductLand
 
     # config.action_cable.allowed_request_origins = ['https://rubyonrails.com', %r{http://ruby.*}]
 
+    config.assets.precompile += %w( foundation_emails.scss )
+
   end
 end

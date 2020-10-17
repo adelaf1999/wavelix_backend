@@ -419,6 +419,8 @@ class OrderController < ApplicationController
               }
           )
 
+          OrderMailer.delay.order_canceled(current_user.email, order.get_store_name)
+
 
 
 
