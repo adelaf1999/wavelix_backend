@@ -13,4 +13,10 @@ class OrderMailerPreview < ActionMailer::Preview
     OrderMailer.store_rejected_order(email, store_name)
   end
 
+  def no_drivers
+    email = 'adel_abouf@outlook.com'
+    store_name = 'Nike'
+    OrderMailer.no_drivers(email, store_name)
+  end
+
 end

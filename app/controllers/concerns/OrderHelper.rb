@@ -667,7 +667,7 @@ module OrderHelper
     )
 
 
-
+    OrderMailer.delay.no_drivers(order.get_customer_email, order.get_store_name)
 
 
   end

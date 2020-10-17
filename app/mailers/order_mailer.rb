@@ -10,4 +10,9 @@ class OrderMailer < ApplicationMailer
     mail to: email, subject: "Order rejected by #{store_name}"
   end
 
+  def no_drivers(email, store_name)
+    @store_name = store_name
+    mail to: email, subject: 'Order Canceled'
+  end
+
 end
