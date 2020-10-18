@@ -7,11 +7,12 @@
 
   #title{
      font-size: 35px;
-     font-weight: 400;
      margin: 2;
      font-family: 'Lato', Helvetica, Arial, sans-serif;
      letter-spacing: 4px;
      text-align: center;
+     color: #1f67ff;
+     font-weight: 'bold';
   }
 
   #paragraph{
@@ -51,7 +52,7 @@
 
       <spacer size="16"></spacer>
 
-      <h1 id="title">Wavelix</h1>
+      <h1 id="title">WAVELIX</h1>
 
       <spacer size="16"></spacer>
 
