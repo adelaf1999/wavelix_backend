@@ -19,4 +19,12 @@ class OrderMailerPreview < ActionMailer::Preview
     OrderMailer.no_drivers(email, store_name)
   end
 
+  def confirm_store_delivery
+    email = 'adelwaboufakher@gmail.com'
+    store_name = 'Nike'
+    customer_name = 'Adel Abou Fakher'
+    OrderMailer.confirm_store_delivery(email, store_name, customer_name)
+  end
+
+
 end

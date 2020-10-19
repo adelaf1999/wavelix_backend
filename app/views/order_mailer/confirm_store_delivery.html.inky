@@ -1,0 +1,98 @@
+<style type="text/css">
+  body,
+  html,
+  .body {
+    background: #f3f3f3 !important;
+  }
+
+  #title{
+     font-size: 35px;
+     margin: 2;
+     font-family: 'Lato', Helvetica, Arial, sans-serif;
+     letter-spacing: 4px;
+     text-align: center;
+     color: #1f67ff;
+     font-weight: 'bold';
+  }
+
+  .paragraph{
+    color: #666666;
+    font-family: 'Lato', Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0px;
+    padding: 20px 30px 40px 30px;
+  }
+
+  #regards-text{
+    margin: 0;
+    padding: 0px 30px 40px 30px;
+     border-radius: 0px 0px 4px 4px;
+      color: #666666;
+      font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400;
+  }
+
+  .header-box{
+    background: #1f67ff; height: 100px; width: 100%;
+  }
+
+
+
+</style>
+
+
+
+
+<container>
+
+<row class="header-box">
+</row>
+
+
+  <row>
+    <columns>
+
+      <spacer size="16"></spacer>
+
+      <h1 id="title">WAVELIX</h1>
+
+      <spacer size="16"></spacer>
+
+      <p class="paragraph">
+        Dear <%= @customer_name %>,
+      </p>
+
+      <p class="paragraph">
+           If you have successfully received your order from <%= @store_name %>, please confirm the order in the orders page.
+           Otherwise, you may open a dispute and we will investigate with the store any issues that may have occurred regarding the order.
+      </p>
+
+
+        <center>
+
+           <button
+            class="large"
+            href="<%= "#{Rails.env.development?  ?  ENV.fetch('DEVELOPMENT_WEBSITE_URL') : ENV.fetch('PRODUCTION_WEBSITE_URL') }/customer-orders"  %>"
+            target="_blank"
+           >
+            Confirm Order
+           </button>
+
+        </center>
+
+
+
+      <spacer size="16"></spacer>
+
+      <p id="regards-text">Cheers,<br>Wavelix Team</p>
+
+
+    </columns>
+  </row>
+
+  <spacer size="16"></spacer>
+</container>
+
+
+
+

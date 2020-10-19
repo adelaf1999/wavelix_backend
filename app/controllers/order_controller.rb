@@ -932,6 +932,14 @@ class OrderController < ApplicationController
               )
 
 
+              Delayed::Job.enqueue(
+                  ConfirmStoreDeliveryJob.new(order_id),
+                  queue: 'confirm_store_delivery_job_queue',
+                  priority: 0,
+                  run_at: delivery_time_limit + 6.hours
+              )
+
+
 
             end
 
