@@ -37,7 +37,6 @@
   }
 
 
-
 </style>
 
 
@@ -71,7 +70,7 @@
         <center>
 
            <button
-            class="large"
+            class="large success"
             href="<%= "#{Rails.env.development?  ?  ENV.fetch('DEVELOPMENT_WEBSITE_URL') : ENV.fetch('PRODUCTION_WEBSITE_URL') }/customer-orders"  %>"
             target="_blank"
            >
