@@ -641,6 +641,8 @@ class OrderController < ApplicationController
                       }
                   )
 
+                  OrderMailer.delay.confirm_driver_delivery(order.get_customer_email, order.get_store_name, order.get_customer_name)
+
                   driver = Driver.find_by(id: order.driver_id)
 
                   if order.exclusive?

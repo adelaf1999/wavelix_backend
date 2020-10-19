@@ -21,4 +21,10 @@ class OrderMailer < ApplicationMailer
     mail to: email, subject: 'Confirm Your Order'
   end
 
+  def confirm_driver_delivery(email, store_name, customer_name)
+    @store_name = store_name
+    @customer_name = customer_name
+    mail to: email, subject: 'Confirm Your Order'
+  end
+
 end
