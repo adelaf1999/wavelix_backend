@@ -2,43 +2,77 @@ class CategoryProductsChannel < ApplicationCable::Channel
 
   def subscribed
 
-
-    if  ( current_user.blank? && current_employee.blank? ) || ( category.blank? )
+    if  current_user.blank? && current_employee.blank?
 
       reject
 
     else
 
-      if !current_user.blank?
+      category_id = params[:category_id]
+
+      if !category_id.blank?
 
 
-        if current_user.store_user?
+        if !current_user.blank?
 
-          store_user = StoreUser.find_by(id: current_user.id)
 
-          stream_from "category_#{category.id}_products_store_user_#{store_user.id}"
+          if current_user.store_user?
 
-        else
+            store_user = StoreUser.find_by(id: current_user.id)
 
-          reject
+            category = store_user.categories.find_by(id: category_id)
+
+            if category != nil
+
+              stream_from "category_#{category.id}_products_store_user_#{store_user.id}"
+
+            else
+
+              reject
+
+            end
+
+
+
+          else
+
+            reject
+
+          end
+
+
+        elsif !current_employee.blank?
+
+
+          if current_employee.has_roles?(:product_manager)
+
+            store_user = current_employee.store_user
+
+            category = store_user.categories.find_by(id: category_id)
+
+            if category != nil
+
+              stream_from "category_#{category.id}_products_store_user_#{store_user.id}"
+
+            else
+
+              reject
+
+            end
+
+
+
+          else
+
+            reject
+
+          end
 
         end
 
+      else
 
-      elsif !current_employee.blank?
-
-
-        if current_employee.has_roles?(:product_manager)
-
-          store_user = current_employee.store_user
-
-          stream_from "category_#{category.id}_products_store_user_#{store_user.id}"
-
-        else
-
-          reject
-
-        end
+        reject
 
       end
 

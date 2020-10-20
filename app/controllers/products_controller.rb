@@ -713,9 +713,6 @@ class ProductsController < ApplicationController
                 @category_name = category.name
 
 
-                cookies.encrypted[:category_id] = category.id
-
-
             end
 
 

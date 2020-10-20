@@ -2,12 +2,10 @@ module ApplicationCable
   class Connection < ActionCable::Connection::Base
 
     identified_by :current_user
-    identified_by :category
     identified_by :current_employee
 
     def connect
       self.current_user = find_user
-      self.category = find_category
       self.current_employee = find_employee
     end
 
@@ -39,27 +37,6 @@ module ApplicationCable
 
     end
 
-    def find_category
-
-
-      store_user = StoreUser.find_by(store_id: cookies.encrypted[:user_id])
-
-      if store_user != nil
-
-
-        category = store_user.categories.find_by(id: cookies.encrypted[:category_id])
-
-        if category != nil
-
-          category
-
-        end
-
-
-      end
-
-
-    end
 
 
 
