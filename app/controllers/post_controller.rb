@@ -9,7 +9,7 @@ class PostController < ApplicationController
   before_action :authenticate_user!
 
   def add_story_post_viewer
-    
+
     if current_user.customer_user?
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
@@ -260,31 +260,27 @@ class PostController < ApplicationController
 
     product_id = params[:product_id]
 
-    if media_file == nil || !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
-
-      @success = false
-      @message = "Upload a media file with appropriate extension and try again"
+    base64 = params[:base64]
 
 
-    else
+    if !media_file.blank? && !base64.blank?
+
+      base64 = eval(base64)
 
       post = Post.new
 
       post.profile_id = profile.id
 
-      media_type = get_media_file_type(media_file)
-
-      post.media_type = media_type
 
       caption = params[:caption]
 
-      if caption != nil && caption.length > 0
+      if !caption.blank?
 
         post.caption = caption
 
       end
 
-      if is_story != nil
+      if !is_story.blank?
 
         is_story = eval(is_story.downcase)
 
@@ -297,7 +293,7 @@ class PostController < ApplicationController
       end
 
 
-      if current_user.store_user? && !product_id.nil?
+      if current_user.store_user? && !product_id.blank?
 
         store_user = StoreUser.find_by(store_id: current_user.id)
 
@@ -318,10 +314,115 @@ class PostController < ApplicationController
       end
 
 
+      # Validate and configure the media file based on whether its base64 or not
+
+      if base64
+
+        media_file = eval(media_file)
+
+        if media_file.instance_of?(Hash) && media_file.size > 0
+
+          name = media_file[:name]
+
+          type = media_file[:type]
+
+          uri = media_file[:uri]
+
+          if name != nil && type != nil && uri != nil
+
+            base64_uri_array = uri.split(",")
+
+            base64_uri = base64_uri_array[base64_uri_array.length - 1]
+
+            temp_file = Tempfile.new(name)
+
+            temp_file.binmode
+
+            temp_file.write Base64.decode64(base64_uri)
+
+            temp_file.rewind
+
+            name_array = name.split(".")
+
+            extension = name_array[name_array.length - 1]
+
+            if media_file_valid_extensions.include?(extension)
+
+              media_file = ActionDispatch::Http::UploadedFile.new({
+                                                                        tempfile: temp_file,
+                                                                        type: type,
+                                                                        filename: name
+                                                                    })
+
+              post.media_type = get_media_file_type(extension)
+
+
+            else
+
+              @success = false
+              @message = 'Upload a media file with appropriate extension and try again'
+              return
+
+            end
+
+
+
+          else
+
+            @success = false
+            @message = 'Invalid media file'
+            return
+
+          end
+
+
+
+        else
+
+
+          @success = false
+          @message = 'Invalid media file'
+          return
+
+
+        end
+
+
+
+        else
+
+
+        if !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
+
+
+          @success = false
+          @message = 'Upload a media file with appropriate extension and try again'
+          return
+
+
+        else
+
+          filename = media_file.original_filename.split(".")
+
+          extension = filename[filename.length - 1]
+
+          post.media_type = get_media_file_type(extension)
+
+
+
+        end
+
+
+
+      end
+
+
+
+      media_type = post.media_type_before_type_cast
+
       if media_type == 0
 
         # The user will wait till his image is uploaded and encoded
-
 
         if post.save!
 
@@ -335,14 +436,13 @@ class PostController < ApplicationController
             @success = true
 
             if post.is_story
-            
+
               Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
 
             end
 
 
             PostBroadcastJob.perform_later(current_user.id)
-
 
             return
 
@@ -358,8 +458,6 @@ class PostController < ApplicationController
 
 
       else
-
-
 
         video = FFMPEG::Movie.new(media_file.tempfile.path)
 
@@ -422,7 +520,17 @@ class PostController < ApplicationController
       end
 
 
+
+
+
+    else
+
+      @success = false
+      @message = 'Error creating post'
+
+
     end
+
 
 
   end
@@ -431,24 +539,28 @@ class PostController < ApplicationController
 
   private
 
+
+  def media_file_valid_extensions
+    %w(png jpeg jpg gif flv avi mp4 wmv mov mkv 3gp)
+  end
+
   def is_media_file_valid?(media_file)
 
     filename = media_file.original_filename.split(".")
+
     extension = filename[filename.length - 1]
-    valid_extensions = ["png" , "jpeg", "jpg", "gif", "flv", "avi", "mp4", "wmv", "mov", "mkv", "3gp"]
-    valid_extensions.include?(extension)
+
+    media_file_valid_extensions.include?(extension)
 
   end
 
-  def get_media_file_type(media_file)
 
-    filename = media_file.original_filename.split(".")
 
-    extension = filename[filename.length - 1]
+  def get_media_file_type(extension)
 
-    image_extensions = ["png" , "jpeg", "jpg", "gif"]
+    image_extensions = %w(png jpeg jpg gif)
 
-    video_extensions = ["flv", "avi", "mp4", "wmv", "mov", "mkv", "3gp"]
+    video_extensions = %w(flv avi mp4 wmv mov mkv 3gp)
 
     if image_extensions.include?(extension)
       0
