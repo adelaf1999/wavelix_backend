@@ -310,10 +310,6 @@ class ProfileController < ApplicationController
 
     profile = current_user.profile
 
-    if profile_picture != nil && profile_picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(profile_picture)
-      profile.profile_picture = profile_picture
-    end
-
 
     if profile_bio != nil
 
@@ -334,6 +330,80 @@ class ProfileController < ApplicationController
       end
 
     end
+
+
+
+    if profile_picture != nil
+
+      base64 = params[:base64]
+
+      if !base64.blank?
+
+        base64 = eval(base64)
+
+        if base64
+
+            profile_picture = eval(profile_picture)
+
+            if profile_picture.instance_of?(Hash) && profile_picture.size > 0
+
+              name = profile_picture[:name]
+
+              type = profile_picture[:type]
+
+              uri = profile_picture[:uri]
+
+              if name != nil && type != nil && uri != nil
+
+                base64_uri_array = uri.split(",")
+
+                base64_uri = base64_uri_array[base64_uri_array.length - 1]
+
+                temp_file = Tempfile.new(name)
+
+                temp_file.binmode
+
+                temp_file.write Base64.decode64(base64_uri)
+
+                temp_file.rewind
+
+                name_array = name.split(".")
+
+                extension = name_array[name_array.length - 1]
+
+                if valid_profile_pic_extensions.include?(extension)
+
+                  profile_picture = ActionDispatch::Http::UploadedFile.new({
+                                                                          tempfile: temp_file,
+                                                                          type: type,
+                                                                          filename: name
+                                                                      })
+
+                  profile.profile_picture = profile_picture
+
+
+                end
+
+              end
+
+            end
+
+        else
+
+          if profile_picture.is_a?(ActionDispatch::Http::UploadedFile) && is_picture_valid?(profile_picture)
+
+            profile.profile_picture = profile_picture
+
+          end
+
+        end
+
+
+      end
+
+    end
+
+
 
     profile.save!
 
@@ -633,12 +703,17 @@ class ProfileController < ApplicationController
 
   end
 
+  def valid_profile_pic_extensions
+    %w(png jpeg jpg gif)
+  end
+
   def is_picture_valid?(picture)
 
     filename = picture.original_filename.split(".")
+
     extension = filename[filename.length - 1]
-    valid_extensions = ["png" , "jpeg", "jpg", "gif"]
-    valid_extensions.include?(extension)
+
+    valid_profile_pic_extensions.include?(extension)
 
   end
 
