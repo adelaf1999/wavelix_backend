@@ -6,7 +6,7 @@ module  Auth
             before_action :validate_sign_up_params, only: :create
             skip_after_action :update_auth_header, only: [:create]
             include RegistrationHelper
-            
+            include MoneyHelper
             
         
             def create
@@ -86,14 +86,14 @@ module  Auth
         
 
             def customer_user_params
-              params.permit(:full_name, :date_of_birth, :home_address, :building_name, :apartment_floor)
+              params.permit(:full_name, :home_address, :building_name, :apartment_floor)
             end
 
             def validate_customer_user_params
 
               valid = true
 
-              req_params = [:full_name, :date_of_birth, :home_address ]
+              req_params = [:full_name, :home_address ]
 
               customer_params = customer_user_params
 
@@ -110,7 +110,6 @@ module  Auth
                 # no parameters are missings (except maybe optional)
 
                 full_name = customer_params[:full_name]
-                date_of_birth = customer_params[:date_of_birth]
                 home_address = eval(customer_params[:home_address])
                 latitude = home_address[:latitude]
                 longitude = home_address[:longitude]
@@ -120,9 +119,6 @@ module  Auth
                   valid = false
                 end
 
-                if valid && !is_birthdate_valid?(date_of_birth)
-                  valid = false
-                end
 
                 if valid && latitude != nil
                   latitude = latitude.to_d
@@ -157,11 +153,29 @@ module  Auth
                   if !is_country_blocked?(country_code)
 
 
+                    begin
+
+                      currency_code = ISO3166::Country.new(country_code).currency_code
+
+                      if currency_code == nil || !is_currency_valid?(currency_code)
+
+                        currency_code = 'USD'
+
+                      end
+
+                    rescue => e
+
+                      currency_code = 'USD'
+
+                    end
+
+
+
                     @resource.customer_user = CustomerUser.new(
                         full_name: full_name,
-                        date_of_birth: date_of_birth,
                         country: country_code,
-                        home_address: home_address
+                        home_address: home_address,
+                        default_currency: currency_code
                     )
 
                     if building_name != nil && building_name.length > 0
@@ -204,36 +218,6 @@ module  Auth
             end
 
 
-
-            def is_birthdate_valid?(date)
-
-              valid = true
-              
-
-              begin
-                
-
-                t_date = Time.strptime(date,'%Y-%m-%d')
-
-
-                # t_date_values = t_date.strftime('%Y-%m-%d').split("-")
-
-                date_values = date.split("-")
-
-                if t_date.year != date_values[0].to_i || t_date.month != date_values[1].to_i || t_date.day != date_values[2].to_i
-                  valid = false
-                end
-                
-           
-             rescue ArgumentError => e
-                valid = false
-             end
-
-             valid
-              
-              
-  
-            end
   
         
             def build_resource
