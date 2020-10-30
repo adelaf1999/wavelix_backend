@@ -13,7 +13,7 @@ class Customer < User
 
 
     def reject_customer_user(attributes)
-        attributes['full_name'].blank? || attributes['date_of_birth'].blank?  || attributes['gender'].blank? || attributes['country'].blank? || attributes['home_address'].blank?
+        attributes['full_name'].blank? || attributes['date_of_birth'].blank?  || attributes['country'].blank? || attributes['home_address'].blank?
     end
 
     def set_user_type
