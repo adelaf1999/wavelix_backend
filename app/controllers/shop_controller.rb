@@ -183,17 +183,40 @@ class ShopController < ApplicationController
 
             @categories = []
 
-            store_user.categories.order(name: :asc).each do |category|
+            store_user.categories.where(parent_id: nil).order(name: :asc).each do |category|
 
-              products = category.products.where(product_available: true)
+              if category.subcategories.length > 0
 
-              products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+                parent_category = traverse_subcategories(category)
 
-              if products.length > 0
+                if parent_category != nil
 
-                @categories.push({ id: category.id, name: category.name })
+                  @categories.push(parent_category)
+
+                end
+
+
+              else
+
+
+                products = category.products.where(product_available: true)
+
+                products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+
+                if products.length > 0
+
+                  @categories.push({
+                                       id: category.id,
+                                       name: category.name,
+                                       subcategories: [],
+                                       has_products: true
+                                   })
+
+                end
+
 
               end
+
 
             end
 
@@ -226,6 +249,63 @@ class ShopController < ApplicationController
 
 
   private
+
+  def traverse_subcategories(category)
+
+    subcategories = []
+
+    parent_category = {
+        id: category.id,
+        name: category.name,
+        has_products: false
+    }
+
+
+    category.subcategories.order(name: :asc).each do |subcategory|
+
+      if subcategory.subcategories.length > 0
+
+        traverse_subcategories(subcategory)
+
+      else
+
+        products = subcategory.products.where(product_available: true)
+
+        products = products.where(stock_quantity: nil).or( products.where('stock_quantity > ?', 0) )
+
+        if products.length > 0
+
+          subcategories.push({
+                               id: subcategory.id,
+                               name: subcategory.name,
+                               subcategories: [],
+                               has_products: true
+                           })
+
+        end
+
+
+      end
+
+    end
+
+
+
+    if subcategories.length > 0
+
+      parent_category[:subcategories] = subcategories
+
+      parent_category
+
+    else
+
+      nil
+
+    end
+
+
+
+  end
 
   def get_product(product, customer_currency)
 
