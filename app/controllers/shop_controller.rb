@@ -209,7 +209,7 @@ class ShopController < ApplicationController
                                        id: category.id,
                                        name: category.name,
                                        subcategories: [],
-                                       has_products: true
+                                       parent_id: category.parent_id
                                    })
 
                 end
@@ -257,7 +257,7 @@ class ShopController < ApplicationController
     parent_category = {
         id: category.id,
         name: category.name,
-        has_products: false
+        parent_id: category.parent_id
     }
 
 
@@ -265,7 +265,14 @@ class ShopController < ApplicationController
 
       if subcategory.subcategories.length > 0
 
-        traverse_subcategories(subcategory)
+        child_category = traverse_subcategories(subcategory)
+
+        if child_category != nil
+
+          subcategories.push(child_category)
+
+        end
+
 
       else
 
@@ -279,7 +286,7 @@ class ShopController < ApplicationController
                                id: subcategory.id,
                                name: subcategory.name,
                                subcategories: [],
-                               has_products: true
+                               parent_id: subcategory.parent_id
                            })
 
         end
