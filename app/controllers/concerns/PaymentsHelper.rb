@@ -48,43 +48,54 @@ module PaymentsHelper
 
   def get_customer_card_info(customer_token)
 
-    customer = Stripe::Customer.retrieve(customer_token)
+    payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
 
-    card_id = customer.default_source
+    if payment_methods.length > 0
 
-    Stripe::Customer.retrieve_source(customer_token, card_id)
+      payment_method = payment_methods[0]
+
+      payment_method.card
+
+    else
+
+      nil
+
+    end
 
   end
 
 
   def get_customer_card(customer_token)
 
-    customer = Stripe::Customer.retrieve(customer_token)
+    payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
 
-    customer.default_source
+    payment_method = payment_methods[0]
+
+    payment_method.id
 
 
   end
 
   def delete_existing_card(customer_token)
 
-    customer = Stripe::Customer.retrieve(customer_token)
+   payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
 
-    customer_card = customer.default_source
+    if payment_methods.length > 0
 
-    if customer_card != nil
+      payment_method = payment_methods[0]
 
-      Stripe::Customer.delete_source(customer_token, customer_card)
+      Stripe::PaymentMethod.detach(payment_method.id)
 
     end
 
   end
 
-  def is_token_id_valid?(token_id)
+
+  def is_payment_method?(token)
 
     begin
 
-      Stripe::Token.retrieve(token_id)
+      Stripe::PaymentMethod.retrieve(token)
 
       true
 
@@ -94,9 +105,7 @@ module PaymentsHelper
 
     end
 
-
   end
-
 
 
   def create_setup_intent(customer_token)
@@ -117,10 +126,9 @@ module PaymentsHelper
 
   def has_saved_card?(customer_token)
 
-    customer = Stripe::Customer.retrieve(customer_token)
+    payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
 
-    customer.default_source != nil
-
+    payment_methods.length > 0
 
   end
 

@@ -166,17 +166,17 @@ class CustomerSettingsController < ApplicationController
 
         stripe_customer_token = customer_user.stripe_customer_token
 
-        if customer_user.payment_source_setup?
+        card_info = get_customer_card_info(stripe_customer_token)
 
-          card_info = get_customer_card_info(stripe_customer_token)
+        if card_info != nil
 
-          @card_info = {
-              brand: card_info.brand,
-              last4: card_info.last4
-          }
-
+            @card_info = {
+                brand: card_info.brand,
+                last4: card_info.last4
+            }
 
         end
+
 
         @home_address = customer_user.home_address
 

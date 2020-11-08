@@ -106,12 +106,11 @@ StripeEvent.configure do |events|
 
     stripe_customer_token = event.data.object.customer
 
-    card_id = event.data.object.payment_method
+    payment_method = Stripe::PaymentMethod.retrieve(event.data.object.payment_method)
+
+    card = payment_method.card
 
     customer_user = CustomerUser.find_by(stripe_customer_token: stripe_customer_token)
-
-    card = Stripe::Customer.retrieve_source(stripe_customer_token, card_id)
-
 
     if customer_user != nil
 

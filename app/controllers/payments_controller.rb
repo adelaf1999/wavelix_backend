@@ -13,18 +13,13 @@ class PaymentsController < ApplicationController
 
       customer_token = customer_user.stripe_customer_token
 
-      stripe_customer = Stripe::Customer.retrieve(customer_token)
+      if has_saved_card?(customer_token)
 
-      customer_card = stripe_customer.default_source
-
-      if customer_card != nil
-
-        @has_saved_card = true
+          @has_saved_card = true
 
       else
 
-        @has_saved_card = false
-
+          @has_saved_card = false
 
       end
 
@@ -44,22 +39,7 @@ class PaymentsController < ApplicationController
 
       customer_token = customer_user.stripe_customer_token
 
-      stripe_customer = Stripe::Customer.retrieve(customer_token)
-
-      customer_card = stripe_customer.default_source
-
-       if customer_card != nil
-         
-         Stripe::Customer.delete_source(customer_token, customer_card)
-
-         @success = true
-
-
-       else
-
-         @success = false
-
-       end
+      delete_existing_card(customer_token)
 
     end
 
@@ -80,91 +60,97 @@ class PaymentsController < ApplicationController
 
       if token_id != nil && !token_id.empty?
 
-        if is_token_id_valid?(token_id)
+        begin
 
-          begin
+          # If the customer already has a payment method, delete it to create a new one
 
-            # If the customer already has a payment source, delete it to create a new one
+          delete_existing_card(stripe_customer_token)
 
-            delete_existing_card(stripe_customer_token)
+          if is_payment_method?(token_id)
 
-            card = Stripe::Customer.create_source(stripe_customer_token, {source: token_id})
+            payment_method = Stripe::PaymentMethod.attach(token_id, {customer: stripe_customer_token})
 
-            setup_intent_id = create_setup_intent(stripe_customer_token).id
+            card = payment_method.card
 
-            result = Stripe::SetupIntent.confirm(
-                setup_intent_id,
-                {
-                    payment_method: card.id,
-                    return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL')
-                }
-            )
 
-            status = result.status
+          else
 
-            if status == 'succeeded'
 
-              @success = true
+            payment_method  = Stripe::PaymentMethod.create({type: 'card', card: {token: token_id}})
 
-              @card_info = {
-                  brand: card.brand,
-                  last4: card.last4
+            card = payment_method.card
+
+
+          end
+
+
+          setup_intent_id = create_setup_intent(stripe_customer_token).id
+
+          result = Stripe::SetupIntent.confirm(
+              setup_intent_id,
+              {
+                  payment_method: payment_method.id,
+                  return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL')
               }
+          )
+
+          status = result.status
+
+          if status == 'succeeded'
+
+            @success = true
+
+            @card_info = {
+                brand: card.brand,
+                last4: card.last4
+            }
 
 
 
-            elsif status == 'requires_action' || result.next_action != nil
-
-              @success = false
-
-              @error_code = 0
-
-              next_action = result.next_action
-
-              @redirect_url = next_action.redirect_to_url.url
-
-
-            elsif status == 'requires_payment_method'
-
-              @success = false
-
-            end
-
-          rescue Stripe::CardError => e
-
-            # puts "Status is: #{e.http_status}"
-            # puts "Type is: #{e.error.type}"
-            # puts "Charge ID is: #{e.error.charge}"
-            # # The following fields are optional
-            # puts "Code is: #{e.error.code}" if e.error.code
-            # puts "Decline code is: #{e.error.decline_code}" if e.error.decline_code
-            # puts "Param is: #{e.error.param}" if e.error.param
-            # puts "Message is: #{e.error.message}" if e.error.message
+          elsif status == 'requires_action' || result.next_action != nil
 
             @success = false
 
-            @error_code = 1
+            @error_code = 0
 
-            if e.error.message
+            next_action = result.next_action
 
-              @error_message =  e.error.message
+            @redirect_url = next_action.redirect_to_url.url
 
-            end
 
-          rescue => e
+          elsif status == 'requires_payment_method'
 
             @success = false
 
           end
 
+        rescue Stripe::CardError => e
 
+          # puts "Status is: #{e.http_status}"
+          # puts "Type is: #{e.error.type}"
+          # puts "Charge ID is: #{e.error.charge}"
+          # # The following fields are optional
+          # puts "Code is: #{e.error.code}" if e.error.code
+          # puts "Decline code is: #{e.error.decline_code}" if e.error.decline_code
+          # puts "Param is: #{e.error.param}" if e.error.param
+          # puts "Message is: #{e.error.message}" if e.error.message
 
+          @success = false
 
-        else
+          @error_code = 1
+
+          if e.error.message
+
+            @error_message =  e.error.message
+
+          end
+
+        rescue => e
 
           @success = false
 
         end
+
 
 
 
