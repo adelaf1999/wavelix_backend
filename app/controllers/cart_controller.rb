@@ -999,21 +999,32 @@ class CartController < ApplicationController
 
                 product_options = params[:product_options] # optional can be nil/empty
 
-                if product_options != nil && !product_options.empty?
+                if !product_options.blank?
 
-                  product_options = eval(product_options)
+                  begin
 
-                  if !product_options.instance_of?(Hash) || product_options.size == 0
+                    product_options = eval(product_options)
 
-                    product_options = nil
+                    if !product_options.instance_of?(Hash) || product_options.size == 0
+
+                      product_options = {}
+
+                    end
+
+                  rescue => e
+
+                    product_options = {}
 
                   end
 
+
+
                 else
 
-                  product_options = nil
+                  product_options = {}
 
                 end
+
 
                 @success = true
 

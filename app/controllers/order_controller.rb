@@ -1473,113 +1473,29 @@ class OrderController < ApplicationController
 
                   product_options = params[:product_options] # optional
 
-                  product_attributes = product.product_attributes
+                  if !product_options.blank?
 
-                  if product_attributes != nil && product_attributes.size > 0
-
-                    if product_options == nil
-
-                      @success = false
-
-                      @error_code = 3
-
-                      @product_options = {}
-
-                      product_attributes.each do |key, value|
-
-                        if value.instance_of?(Array)
-
-                          value.prepend('Select option')
-
-                          @product_options[key] = value
-
-                        end
-
-                      end
-
-                      return
-
-
-                    else
+                    begin
 
                       product_options = eval(product_options)
 
-                      if !product_options.instance_of?(Hash) ||  product_options.size < product_attributes.size || product_options.size > product_attributes.size
+                      if !product_options.instance_of?(Hash) || product_options.size == 0
 
-                        @success = false
-
-                        @error_code = 3
-
-                        @product_options = {}
-
-                        product_attributes.each do |key, value|
-
-                          if value.instance_of?(Array)
-
-                            value.prepend('Select option')
-
-                            @product_options[key] = value
-
-                          end
-
-                        end
-
-                        return
-
-                      else
-
-                        product_options_valid = true
-
-                        product_options.each do |key, value|
-
-                          key = key.to_sym
-
-                          attribute_values = product_attributes[key]
-
-                          if attribute_values == nil || !attribute_values.include?(value)
-
-                            product_options_valid = false
-
-                            break
-
-                          end
-
-                        end
-
-
-                        if !product_options_valid
-
-                          @success = false
-
-                          @error_code = 3
-
-                          @product_options = {}
-
-                          product_attributes.each do |key, value|
-
-                            if value.instance_of?(Array)
-
-                              value.prepend('Select option')
-
-                              @product_options[key] = value
-
-                            end
-
-                          end
-
-                          return
-
-                        end
+                        product_options = {}
 
                       end
 
+                    rescue => e
+
+                        product_options = {}
+
                     end
+
+
 
                   else
 
-
-                    product_options = nil
-
+                    product_options = {}
 
                   end
 
