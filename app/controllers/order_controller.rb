@@ -1410,9 +1410,9 @@ class OrderController < ApplicationController
 
     #  {0: PRODUCT_NOT_AVAILABLE, 1: OUT_OF_STOCK_ERROR, 2: QUANTITY_ORDERED_GT_STOCK_QUANTITY}
 
-    # { 3: INVALID_PRODUCT_OPTIONS, 4: INVALID_DELIVERY_LOCATION, 5: STORE_CLOSED_ERROR  }
+    # { 3: INVALID_DELIVERY_LOCATION, 4: STORE_CLOSED_ERROR  }
 
-    # { 6: CARD_AUTH_REQUIRED, 7: CARD_ERROR }
+    # { 5: CARD_AUTH_REQUIRED, 6: CARD_ERROR }
 
     if current_user.customer_user?
 
@@ -1573,7 +1573,7 @@ class OrderController < ApplicationController
 
                                     @success = false
 
-                                    @error_code = 5
+                                    @error_code = 4
 
                                   end
 
@@ -1583,7 +1583,7 @@ class OrderController < ApplicationController
 
                                   @success = false
 
-                                  @error_code = 4
+                                  @error_code = 3
 
                                   @has_sensitive_products = has_sensitive_products
 
@@ -1620,7 +1620,7 @@ class OrderController < ApplicationController
 
                                   @success = false
 
-                                  @error_code = 5
+                                  @error_code = 4
 
                                 end
 
@@ -1663,7 +1663,7 @@ class OrderController < ApplicationController
 
                                     @success = false
 
-                                    @error_code = 5
+                                    @error_code = 4
 
                                   end
 
@@ -1741,7 +1741,7 @@ class OrderController < ApplicationController
 
                                         @success = false
 
-                                        @error_code = 5
+                                        @error_code = 4
 
                                       end
 
@@ -2032,7 +2032,7 @@ class OrderController < ApplicationController
 
         @success = false
 
-        @error_code = 6
+        @error_code = 5
 
         next_action = result.next_action
 
@@ -2052,7 +2052,7 @@ class OrderController < ApplicationController
 
       @success = false
 
-      @error_code = 7
+      @error_code = 6
 
       if e.error.message
 
