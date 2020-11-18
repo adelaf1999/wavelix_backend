@@ -1,9 +1,9 @@
 class HomeChannel < ApplicationCable::Channel
 
 
-  def start_stream(user_id)
+  def start_stream(current_user)
 
-    stream_from "home_channel_#{user_id}"
+    stream_from "home_channel_#{current_user.id}"
 
   end
 
@@ -21,7 +21,7 @@ class HomeChannel < ApplicationCable::Channel
 
       if user != nil && user.valid_token?(access_token, client)
 
-        start_stream(user.id)
+        start_stream(user)
 
       else
 
@@ -32,7 +32,7 @@ class HomeChannel < ApplicationCable::Channel
 
     else
 
-      start_stream(current_user.id)
+      start_stream(current_user)
 
     end
 
