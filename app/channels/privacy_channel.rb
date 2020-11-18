@@ -1,28 +1,16 @@
 class PrivacyChannel < ApplicationCable::Channel
 
-  def subscribed
+  def start_stream
 
-    if current_user.blank?
+    profile = Profile.find_by(id: params[:profile_id])
 
-      reject
+    if profile != nil
 
-    else
-      
-      profile = Profile.find_by(id: params[:profile_id])
+      user = profile.user
 
-      if profile != nil
+      if user.customer_user?
 
-        user = profile.user
-
-        if user.customer_user?
-
-          stream_from "privacy_channel_#{profile.id}"
-
-        else
-
-          reject
-
-        end
+        stream_from "privacy_channel_#{profile.id}"
 
       else
 
@@ -30,6 +18,39 @@ class PrivacyChannel < ApplicationCable::Channel
 
       end
 
+    else
+
+      reject
+
+    end
+
+  end
+
+  def subscribed
+
+    if current_user.blank?
+
+      access_token = params[:access_token]
+
+      client = params[:client]
+
+      uid = params[:uid]
+
+      user = User.find_by_uid(uid)
+
+      if user != nil && user.valid_token?(access_token, client)
+
+        start_stream
+
+      else
+
+        reject
+
+      end
+
+    else
+      
+      start_stream
 
 
     end

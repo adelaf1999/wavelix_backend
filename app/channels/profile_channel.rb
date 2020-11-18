@@ -1,60 +1,83 @@
 class ProfileChannel < ApplicationCable::Channel
 
-  def subscribed
 
-    if current_user.blank?
+  def start_stream(current_user)
 
-      reject
+    profile = Profile.find_by(id: params[:profile_id])
 
-    else
+    if profile != nil
 
-      profile = Profile.find_by(id: params[:profile_id])
+      user = profile.user
 
-      if profile != nil
+      is_following = current_user.following?(user)
 
-        user = profile.user
+      is_private = profile.private_account?
 
-        is_following = current_user.following?(user)
+      if user.customer_user?
 
-        is_private = profile.private_account?
+        if !is_private || (is_private && is_following)
 
-        if user.customer_user?
-
-          if !is_private || (is_private && is_following)
-
-            stream_from "profile_channel_#{profile.id}"
-
-          else
-
-            reject
-
-          end
+          stream_from "profile_channel_#{profile.id}"
 
         else
 
-          store_user = StoreUser.find_by(store_id: user.id)
-
-          if store_user.verified?
-
-            stream_from "profile_channel_#{profile.id}"
-
-          else
-
-            reject
-
-          end
-
+          reject
 
         end
 
       else
 
+        store_user = StoreUser.find_by(store_id: user.id)
+
+        if store_user.verified?
+
+          stream_from "profile_channel_#{profile.id}"
+
+        else
+
+          reject
+
+        end
+
+
+      end
+
+    else
+
+
+      reject
+
+    end
+
+
+
+  end
+
+  def subscribed
+
+    if current_user.blank?
+
+      access_token = params[:access_token]
+
+      client = params[:client]
+
+      uid = params[:uid]
+
+      user = User.find_by_uid(uid)
+
+      if user != nil && user.valid_token?(access_token, client)
+
+        start_stream(user)
+
+      else
 
         reject
 
       end
 
+    else
 
+      start_stream(current_user)
 
     end
 
