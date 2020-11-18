@@ -1,34 +1,23 @@
 class CartChannel < ApplicationCable::Channel
 
-  def subscribed
 
-    if current_user.blank?
+  def start_stream(current_user)
 
-      reject
+    if current_user.customer_user?
 
-    else
+      cart_id = params[:cart_id]
 
-      if current_user.customer_user?
+      if !cart_id.blank?
 
-        cart_id = params[:cart_id]
+        customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-        if !cart_id.blank?
+        cart = Cart.find_by(id: cart_id)
 
-          customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+        if cart != nil
 
-          cart = Cart.find_by(id: cart_id)
+          if cart.id == customer_user.cart.id
 
-          if cart != nil
-
-            if cart.id == customer_user.cart.id
-
-              stream_from "cart_#{cart.id}_user_#{current_user.id}_channel"
-
-            else
-
-              reject
-
-            end
+            stream_from "cart_#{cart.id}_user_#{current_user.id}_channel"
 
           else
 
@@ -42,13 +31,50 @@ class CartChannel < ApplicationCable::Channel
 
         end
 
+      else
+
+        reject
+
+      end
+
+
+    else
+
+      reject
+
+
+    end
+
+  end
+
+
+  def subscribed
+
+    if current_user.blank?
+
+      access_token = params[:access_token]
+
+      client = params[:client]
+
+      uid = params[:uid]
+
+      user = User.find_by_uid(uid)
+
+      if user != nil && user.valid_token?(access_token, client)
+
+        start_stream(user)
 
       else
 
         reject
 
-
       end
+
+
+    else
+
+      start_stream(current_user)
+
 
     end
 
