@@ -1,27 +1,51 @@
 class OrdersChannel < ApplicationCable::Channel
 
 
+  def start_stream(current_user)
+
+    if current_user.store_user?
+
+      stream_from "store_orders_channel_#{current_user.id}"
+
+    elsif current_user.customer_user?
+
+      stream_from "customer_orders_channel_#{current_user.id}"
+
+    else
+
+      reject
+
+    end
+
+  end
+
   def subscribed
 
     if current_user.blank?
 
-      reject
+      access_token = params[:access_token]
 
-    else
+      client = params[:client]
 
-      if current_user.store_user?
+      uid = params[:uid]
 
-        stream_from "store_orders_channel_#{current_user.id}"
+      user = User.find_by_uid(uid)
 
-      elsif current_user.customer_user?
+      if user != nil && user.valid_token?(access_token, client)
 
-        stream_from "customer_orders_channel_#{current_user.id}"
+        start_stream(user)
 
       else
 
         reject
 
       end
+
+
+    else
+
+
+      start_stream(current_user)
 
     end
 
