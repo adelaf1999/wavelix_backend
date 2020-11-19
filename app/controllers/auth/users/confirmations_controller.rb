@@ -12,6 +12,18 @@ module Auth
 
                 redirect_to_web
 
+                if @resource.store_user?
+
+                  email = @resource.email
+
+                  store_user = StoreUser.find_by(store_id: @resource.id)
+
+                  store_owner_name = store_user.store_owner_full_name
+
+                  StoreMailer.delay.account_verification(email, store_owner_name)
+
+                end
+
               else
 
                 # raise ActionController::RoutingError, 'Not Found'
