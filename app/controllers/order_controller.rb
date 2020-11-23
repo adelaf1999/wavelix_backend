@@ -938,7 +938,7 @@ class OrderController < ApplicationController
                   ConfirmStoreDeliveryJob.new(order_id),
                   queue: 'confirm_store_delivery_job_queue',
                   priority: 0,
-                  run_at: delivery_time_limit + 6.hours
+                  run_at: delivery_time_limit + 2.hours
               )
 
 
