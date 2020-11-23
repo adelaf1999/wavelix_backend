@@ -128,19 +128,26 @@ class SearchController < ApplicationController
 
   def search_users
 
-    if current_user.customer_user?
+    if user_signed_in?
 
-      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+      if current_user.customer_user?
 
-      if !customer_user.phone_number_verified?
+        customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-        @success = false
+        if !customer_user.phone_number_verified?
 
-        return
+          @success = false
+
+          return
+
+        end
 
       end
 
     end
+
+
+
 
     # search for users by full_name and username
 
@@ -164,7 +171,7 @@ class SearchController < ApplicationController
 
           customer_user = CustomerUser.find_by(customer_id: user.id)
 
-          if customer_user.phone_number_verified? && user.id != current_user.id
+          if !user_signed_in? ||  customer_user.phone_number_verified? && user.id != current_user.id
 
             user_ids.push(user.id)
 
@@ -178,7 +185,7 @@ class SearchController < ApplicationController
 
         customer_users_by_full_name.each do |customer_user|
 
-          if customer_user.customer_id != current_user.id
+          if  !user_signed_in? || customer_user.customer_id != current_user.id
 
             user_ids.push(customer_user.customer_id)
 
