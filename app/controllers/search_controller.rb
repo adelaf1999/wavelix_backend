@@ -4,54 +4,58 @@ class SearchController < ApplicationController
 
   include OrderHelper
 
-  before_action :authenticate_user!
+
 
   def index
 
     @currencies = get_currencies
 
-    if current_user.customer_user?
+    if user_signed_in?
 
-      customer_user = CustomerUser.find_by(customer_id: current_user.id)
+      if current_user.customer_user?
 
-      if customer_user.phone_number_verified?
+        customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-        @currency = customer_user.default_currency
+        if customer_user.phone_number_verified?
 
-        current_location = params[:current_location]
+          @currency = customer_user.default_currency
 
-        if current_location != nil
+          current_location = params[:current_location]
 
-          current_location = eval(current_location)
+          if current_location != nil
 
-          if current_location.instance_of?(Hash)
+            current_location = eval(current_location)
 
-            latitude = current_location[:latitude]
+            if current_location.instance_of?(Hash)
 
-            longitude = current_location[:longitude]
+              latitude = current_location[:latitude]
 
-            if latitude != nil && longitude != nil
+              longitude = current_location[:longitude]
 
-              if is_number?(latitude) && is_number?(longitude)
+              if latitude != nil && longitude != nil
 
-                latitude = latitude.to_d
+                if is_number?(latitude) && is_number?(longitude)
 
-                longitude = longitude.to_d
+                  latitude = latitude.to_d
 
-                geo_location = Geocoder.search([latitude, longitude])
+                  longitude = longitude.to_d
 
-                if geo_location.size > 0
+                  geo_location = Geocoder.search([latitude, longitude])
 
-                  geo_location_country_code = geo_location.first.country_code
+                  if geo_location.size > 0
 
-                  customer_user.update!(country: geo_location_country_code)
+                    geo_location_country_code = geo_location.first.country_code
 
-                  @country = geo_location_country_code
+                    customer_user.update!(country: geo_location_country_code)
+
+                    @country = geo_location_country_code
 
 
-                else
+                  else
 
-                  @country = customer_user.country
+                    @country = customer_user.country
+
+                  end
 
                 end
 
@@ -61,21 +65,64 @@ class SearchController < ApplicationController
 
           end
 
+
         end
 
+
+      else
+
+        store_user = StoreUser.find_by(store_id: current_user.id)
+
+        @country = store_user.store_country
+
+        @currency = store_user.currency
 
       end
 
 
     else
 
-      store_user = StoreUser.find_by(store_id: current_user.id)
 
-      @country = store_user.store_country
+      current_location = params[:current_location]
 
-      @currency = store_user.currency
+      current_location = eval(current_location)
+
+      latitude = current_location[:latitude]
+
+      longitude = current_location[:longitude]
+
+
+      latitude = latitude.to_d
+
+      longitude = longitude.to_d
+
+      geo_location = Geocoder.search([latitude, longitude])
+
+      @country = geo_location.first.country_code
+
+
+      begin
+
+        @currency = ISO3166::Country.new(@country).currency_code
+
+        if @currency == nil || !is_currency_valid?(@currency)
+
+          @currency = 'USD'
+
+        end
+
+      rescue => e
+
+        @currency = 'USD'
+
+      end
+
+
+
 
     end
+
+
 
   end
 
@@ -229,7 +276,7 @@ class SearchController < ApplicationController
 
           end
 
-          
+
 
         else
 
