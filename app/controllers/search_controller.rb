@@ -220,19 +220,25 @@ class SearchController < ApplicationController
 
   def search_stores
 
-    if current_user.customer_user?
+    if user_signed_in?
 
-      customer_user  = CustomerUser.find_by(customer_id: current_user.id)
+      if current_user.customer_user?
 
-      if !customer_user.phone_number_verified?
+        customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-        @success = false
+        if !customer_user.phone_number_verified?
 
-        return
+          @success = false
+
+          return
+
+        end
 
       end
 
+
     end
+
 
     # Only verified stores appear in searches
 
@@ -270,7 +276,7 @@ class SearchController < ApplicationController
 
         current_user_location = {latitude: latitude, longitude: longitude}
 
-        if current_user.store_user?
+        if user_signed_in? && current_user.store_user?
 
 
           if street_name != nil && street_name.length > 0
