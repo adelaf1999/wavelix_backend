@@ -1,11 +1,13 @@
 require 'csv'
 class ProductsController < ApplicationController
 
-    before_action :deny_to_visitors
+    before_action :deny_to_visitors, except: [:show]
 
     include MoneyHelper
 
     include ListHelper
+
+    include OrderHelper
 
     def search_all_products
 
@@ -122,19 +124,27 @@ class ProductsController < ApplicationController
 
     def show
 
-        if current_user.customer_user?
+        if user_signed_in?
 
-            customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-            if !customer_user.phone_number_verified?
+            if current_user.customer_user?
 
-                @success = false
+                customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
-                return
+                if !customer_user.phone_number_verified?
+
+                    @success = false
+
+                    return
+
+                end
 
             end
 
+
         end
+
+
 
         product = Product.find_by(id: params[:product_id])
 
@@ -157,8 +167,6 @@ class ProductsController < ApplicationController
                 store_profile = store.profile
 
                 if store_user.verified?
-
-                    @success = true
 
 
                     @product_pictures = []
@@ -201,63 +209,129 @@ class ProductsController < ApplicationController
                     @maximum_delivery_distance = store_user.maximum_delivery_distance
 
 
-                    if current_user.customer_user?
+                    if user_signed_in?
 
-                        customer_user = CustomerUser.find_by(customer_id: current_user.id)
+                        @success = true
 
-                        @customer_country = customer_user.country
+                        if current_user.customer_user?
 
-                        @home_address = customer_user.home_address
+                            customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-                        # Show the product price in the default selected currency of the customer
+                            @customer_country = customer_user.country
 
-                        @product_currency = customer_user.default_currency
+                            @home_address = customer_user.home_address
+
+                            # Show the product price in the default selected currency of the customer
+
+                            @product_currency = customer_user.default_currency
 
 
-                        if product.currency == @product_currency
+                            @product_price = convert_amount(product.price, product.currency, @product_currency)
 
-                            @product_price = product.price
+                            @has_saved_card = customer_user.payment_source_setup?
+
+
+                            @similar_items = Product.similar_items(product, customer_user)
+
+                            @has_added_list_product = customer_user.added_list_product?(product.id)
+
+                            @lists = customer_user_lists(customer_user)
+
 
                         else
 
-                            exchange_rates = get_exchange_rates(@product_currency)
 
-                            @product_price = product.price / exchange_rates[product.currency]
+                            current_store_user = StoreUser.find_by(store_id: current_user.id)
+
+                            @product_currency = current_store_user.currency
+
+
+                            @product_price = convert_amount(product.price, product.currency, @product_currency)
+
+
 
                         end
-
-                        @has_saved_card = customer_user.payment_source_setup?
-
-
-                        @similar_items = Product.similar_items(product, customer_user)
-
-                        @has_added_list_product = customer_user.added_list_product?(product.id)
-
-                        @lists = customer_user_lists(customer_user)
 
 
                     else
 
 
-                        current_store_user = StoreUser.find_by(store_id: current_user.id)
+                        latitude = params[:latitude]
 
-                        @product_currency = current_store_user.currency
+                        longitude = params[:longitude]
 
-                        if product.currency == @product_currency
 
-                            @product_price = product.price
+                        if !latitude.blank? && !longitude.blank?
+
+                            if is_decimal_number?(latitude) && is_decimal_number?(longitude)
+
+                                latitude = latitude.to_d
+
+                                longitude = longitude.to_d
+
+                                geo_location = Geocoder.search([latitude, longitude])
+
+                                if geo_location.size > 0
+
+                                    @success = true
+
+                                    @customer_country = geo_location.first.country_code
+
+
+                                    begin
+
+                                        @product_currency = ISO3166::Country.new(@customer_country).currency_code
+
+                                        if @product_currency == nil || !is_currency_valid?(@product_currency)
+
+                                            @product_currency = 'USD'
+
+                                        end
+
+                                    rescue => e
+
+                                        @product_currency = 'USD'
+
+                                    end
+
+
+                                    @product_price = convert_amount(product.price, product.currency, @product_currency)
+
+                                    @similar_items = Product.similar_items(product, nil, @customer_country, @product_currency)
+
+
+
+
+                                else
+
+                                    @success = false
+
+                                end
+
+
+                            else
+
+                                @success = false
+
+                            end
+
 
                         else
 
-                            exchange_rates = get_exchange_rates(@product_currency)
 
-                            @product_price = product.price / exchange_rates[product.currency]
+                            @success = false
+
 
                         end
 
 
 
+
+
                     end
+
+
+
 
 
 
@@ -1755,6 +1829,7 @@ class ProductsController < ApplicationController
     end
 
     private
+
 
     def is_boolean?(arg)
         [true, false].include?(arg)

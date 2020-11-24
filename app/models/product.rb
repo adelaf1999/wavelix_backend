@@ -22,12 +22,12 @@ class Product < ApplicationRecord
 
 
 
-  def self.similar_items(product, customer_user)
+  def self.similar_items(product, customer_user = nil, customer_country = nil, customer_currency = nil)
 
 
 
       items = self.where(stock_quantity: nil).or(where('stock_quantity > ?', 0))
-                  .where(product_available: true, store_country: customer_user.country)
+                  .where(product_available: true, store_country: customer_user.nil? ? customer_country :  customer_user.country)
                   .where.not(id: product.id)
                   .joins(:store_user).where('store_users.status = 1')
                   .where('similarity(name, ?) > 0.3 AND similarity(name, ?) < 1', product.name, product.name)
@@ -40,15 +40,17 @@ class Product < ApplicationRecord
 
       similar_items = []
 
+      to_currency = customer_user.nil? ? customer_currency : customer_user.default_currency
+
       items.each do |item|
 
 
         similar_items.push({
                                name: item.name,
-                               price: convert_amount(item.price, item.currency, customer_user.default_currency),
+                               price: convert_amount(item.price, item.currency, to_currency),
                                picture: item.main_picture.url,
                                id: item.id,
-                               currency: customer_user.default_currency
+                               currency: to_currency
                            })
 
       end
