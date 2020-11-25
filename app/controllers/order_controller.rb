@@ -1138,11 +1138,11 @@ class OrderController < ApplicationController
 
         send_customer_orders(order)
 
-        refund_order(order)
+        cancel_order(order)
 
         send_customer_notification(
             order,
-            "A refund has been issued for the order you made from #{order.get_store_name}",
+            "A full refund has been issued for the order you made from #{order.get_store_name}",
             "Order rejected by #{order.get_store_name}",
             {
                 show_orders: true
