@@ -1101,7 +1101,8 @@ class CartController < ApplicationController
               setup_future_usage: 'on_session',
               metadata: {
                   order_request_ids: order_request_ids.to_s
-              }
+              },
+              capture_method: 'manual'
           }
       )
 
@@ -1116,7 +1117,7 @@ class CartController < ApplicationController
 
       status = result.status
 
-      if status == 'succeeded'
+      if status == 'requires_capture'
 
         @success = true
 
@@ -1130,9 +1131,7 @@ class CartController < ApplicationController
         end
 
 
-
-
-      elsif status == 'requires_source_action' || result.next_action != nil
+      elsif status == 'requires_action' || result.next_action != nil
 
         @success = false
 

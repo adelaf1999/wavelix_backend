@@ -898,48 +898,79 @@ class OrderController < ApplicationController
 
               end
 
-              order.ongoing!
 
               order.store_accepted!
 
-              order.update!(delivery_time_limit: delivery_time_limit)
 
-              send_store_orders(order)
+              payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
 
-              send_customer_orders(order)
+              if payment_intent.status == 'succeeded'
 
-              send_customer_notification(
-                  order,
-                  'Make sure that your order has arrived well when it does, and to confirm the order in the orders page afterwards',
-                  "Order Accepted by #{order.get_store_name}",
-                  {
-                      show_orders: true
-                  }
-              )
+                order.ongoing!
 
+                order.update!(delivery_time_limit: delivery_time_limit)
 
-              # After the x amount of time the store promised to do the delivery
+                send_store_orders(order)
 
-              # The customer can choose to confirm or open a dispute
+                send_customer_orders(order)
 
-              # After 24 hours if the customer took no action the order will be completed
-
-              # And the store balance will be incremented
-
-              Delayed::Job.enqueue(
-                  StoreDeliveryTimeJob.new(order_id),
-                  queue: 'store_delivery_time_job_queue',
-                  priority: 0,
-                  run_at: delivery_time_limit + 24.hours
-              )
+                send_customer_notification(
+                    order,
+                    'Make sure that your order has arrived well when it does, and to confirm the order in the orders page afterwards',
+                    "Order Accepted by #{order.get_store_name}",
+                    {
+                        show_orders: true
+                    }
+                )
 
 
-              Delayed::Job.enqueue(
-                  ConfirmStoreDeliveryJob.new(order_id),
-                  queue: 'confirm_store_delivery_job_queue',
-                  priority: 0,
-                  run_at: delivery_time_limit + 3.hours
-              )
+                # After the x amount of time the store promised to do the delivery
+
+                # The customer can choose to confirm or open a dispute
+
+                # After 24 hours if the customer took no action the order will be completed
+
+                # And the store balance will be incremented
+
+                Delayed::Job.enqueue(
+                    StoreDeliveryTimeJob.new(order_id),
+                    queue: 'store_delivery_time_job_queue',
+                    priority: 0,
+                    run_at: delivery_time_limit + 24.hours
+                )
+
+
+                Delayed::Job.enqueue(
+                    ConfirmStoreDeliveryJob.new(order_id),
+                    queue: 'confirm_store_delivery_job_queue',
+                    priority: 0,
+                    run_at: delivery_time_limit + 3.hours
+                )
+
+
+              else
+
+                order.canceled!
+
+                order.update!(order_canceled_reason: 'Order has expired')
+
+                send_store_orders(order)
+
+                send_customer_orders(order)
+
+
+                send_customer_notification(
+                    order,
+                    "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
+                    'Order has expired',
+                    {
+                        show_orders: true
+                    }
+                )
+
+
+
+              end
 
 
 
@@ -949,49 +980,77 @@ class OrderController < ApplicationController
 
         else
 
-
           order.store_accepted!
 
-          send_store_orders(order)
+          payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
 
-          send_customer_orders(order)
+          if payment_intent.status == 'succeeded'
 
-          send_customer_notification(
-              order,
-              "Make sure that your order has arrived well when it does, and to scan the order QR code on the driver's phone before the driver leaves",
-              "Order Accepted by #{order.get_store_name}",
-              {
-                  show_orders: true
-              }
-          )
+            send_store_orders(order)
 
-          has_sensitive_products = store_user.has_sensitive_products
+            send_customer_orders(order)
 
-          store_location = store_user.store_address
+            send_customer_notification(
+                order,
+                "Make sure that your order has arrived well when it does, and to scan the order QR code on the driver's phone before the driver leaves",
+                "Order Accepted by #{order.get_store_name}",
+                {
+                    show_orders: true
+                }
+            )
 
-          store_latitude = store_location[:latitude]
+            has_sensitive_products = store_user.has_sensitive_products
 
-          store_longitude = store_location[:longitude]
+            store_location = store_user.store_address
 
-          if has_sensitive_products
+            store_latitude = store_location[:latitude]
 
-            drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
+            store_longitude = store_location[:longitude]
 
-          else
+            if has_sensitive_products
 
-
-            if order.exclusive?
-
-              drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
+              drivers_has_sensitive_products(order, store_user, store_latitude, store_longitude)
 
             else
 
-              drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
+
+              if order.exclusive?
+
+                drivers_exclusive_delivery(order, store_user, store_latitude, store_longitude)
+
+              else
+
+                drivers_standard_delivery(order, store_user, store_latitude, store_longitude)
+
+              end
+
 
             end
 
 
+          else
+
+            order.canceled!
+
+            order.update!(order_canceled_reason: 'Order has expired')
+
+            send_store_orders(order)
+
+            send_customer_orders(order)
+
+            send_customer_notification(
+                order,
+                "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
+                'Order has expired',
+                {
+                    show_orders: true
+                }
+            )
+
+
+
           end
+
 
 
         end
@@ -2006,7 +2065,8 @@ class OrderController < ApplicationController
               setup_future_usage: 'on_session',
               metadata: {
                   order_request_id: order_request.id
-              }
+              },
+              capture_method: 'manual'
           }
       )
 
@@ -2021,14 +2081,14 @@ class OrderController < ApplicationController
 
       status = result.status
 
-      if status == 'succeeded'
+      if status == 'requires_capture'
 
         @success = true
 
         OrderRequest.create_order(order_request, payment_intent.id)
 
 
-      elsif status == 'requires_source_action' || result.next_action != nil
+      elsif status == 'requires_action' || result.next_action != nil
 
         @success = false
 
