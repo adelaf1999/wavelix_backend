@@ -11,6 +11,13 @@ module PaymentsHelper
     5.9
   end
 
+
+  def cancel_order(order)
+
+    Stripe::PaymentIntent.cancel(order.stripe_payment_intent)
+
+  end
+
   def refund_order(order)
 
     payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
