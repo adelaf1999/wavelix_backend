@@ -34,4 +34,11 @@ class OrderMailerPreview < ActionMailer::Preview
   end
 
 
+  def order_expired
+    email = 'adel_abouf@outlook.com'
+    store_name = 'Nike'
+    OrderMailer.order_expired(email, store_name)
+  end
+
+
 end

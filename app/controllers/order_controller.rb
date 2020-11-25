@@ -969,6 +969,8 @@ class OrderController < ApplicationController
                     }
                 )
 
+                OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
+
 
 
               end
@@ -1003,6 +1005,8 @@ class OrderController < ApplicationController
                     show_orders: true
                 }
             )
+
+            OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
 
 
           else
