@@ -12,7 +12,7 @@ module PaymentsHelper
   end
 
 
-  def cancel_order(order)
+  def cancel_payment(order)
 
     Stripe::PaymentIntent.cancel(order.stripe_payment_intent)
 

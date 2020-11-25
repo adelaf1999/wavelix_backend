@@ -355,37 +355,69 @@ module OrderHelper
 
         if can_contact_driver?(driver.id)
 
-          order.update!(prospective_driver_id: driver.id)
+          payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
-          puts "Contacting new driver #{driver.name} with ID #{driver.id}"
+          if payment_intent.status == 'canceled'
 
-          delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
+            # If payment_intent is canceled then cancel the order and dont contact the new driver
 
-          order_type = order.order_type
+            # This is an optimization and this is already being handled when driver accepts order request as well
 
-          ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
-              contacting_driver: true,
-              order_id: order.id,
-              store_latitude: store_user.store_address[:latitude],
-              store_longitude: store_user.store_address[:longitude],
-              delivery_location_latitude: order.delivery_location[:latitude],
-              delivery_location_longitude: order.delivery_location[:longitude],
-              store_name: store_user.store_name,
-              delivery_fee: delivery_fee,
-              order_type: order_type,
-              currency: driver.currency
-          }
+            order.canceled!
 
-          Delayed::Job.enqueue(
-              OrderJob.new(order.id, driver.id),
-              queue: 'order_job_queue',
-              priority: 0,
-              run_at: 30.seconds.from_now
-          )
+            order.update!(order_canceled_reason: 'Order has expired')
 
-          driver_found = true
+            send_store_orders(order)
+
+            send_customer_orders(order)
+
+            send_customer_notification(
+                order,
+                "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
+                'Order has expired',
+                {
+                    show_orders: true
+                }
+            )
+
+          else
+
+            order.update!(prospective_driver_id: driver.id)
+
+            puts "Contacting new driver #{driver.name} with ID #{driver.id}"
+
+            delivery_fee = convert_amount(order.delivery_fee, order.delivery_fee_currency, driver.currency)
+
+            order_type = order.order_type
+
+            ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+                contacting_driver: true,
+                order_id: order.id,
+                store_latitude: store_user.store_address[:latitude],
+                store_longitude: store_user.store_address[:longitude],
+                delivery_location_latitude: order.delivery_location[:latitude],
+                delivery_location_longitude: order.delivery_location[:longitude],
+                store_name: store_user.store_name,
+                delivery_fee: delivery_fee,
+                order_type: order_type,
+                currency: driver.currency
+            }
+
+            Delayed::Job.enqueue(
+                OrderJob.new(order.id, driver.id),
+                queue: 'order_job_queue',
+                priority: 0,
+                run_at: 30.seconds.from_now
+            )
+
+            driver_found = true
+
+
+          end
+
 
           break
+
 
         end
 
@@ -643,9 +675,19 @@ module OrderHelper
 
     send_customer_orders(order)
 
-    refund_order(order)
 
-    customer_user = order.customer_user
+    payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+    if payment_intent.status == 'requires_capture'
+
+      cancel_payment(order)
+
+    else
+
+      refund_order(order)
+
+    end
+
 
     send_store_notification(
         order,
@@ -659,7 +701,7 @@ module OrderHelper
 
     send_customer_notification(
         order,
-        'No drivers were found and a refund has been issued for your purchase',
+        'No drivers were found and a refund has been issued for your order',
         'Your order was canceled',
         {
             show_orders: true

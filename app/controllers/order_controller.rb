@@ -398,7 +398,7 @@ class OrderController < ApplicationController
 
           send_customer_orders(order)
 
-          cancel_order(order)
+          cancel_payment(order)
 
 
           send_store_notification(
@@ -983,9 +983,29 @@ class OrderController < ApplicationController
 
           order.store_accepted!
 
-          payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
+          payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
-          if payment_intent.status == 'succeeded'
+          if payment_intent.status == 'canceled'
+
+            order.canceled!
+
+            order.update!(order_canceled_reason: 'Order has expired')
+
+            send_store_orders(order)
+
+            send_customer_orders(order)
+
+            send_customer_notification(
+                order,
+                "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
+                'Order has expired',
+                {
+                    show_orders: true
+                }
+            )
+
+
+          else
 
             send_store_orders(order)
 
@@ -1028,25 +1048,6 @@ class OrderController < ApplicationController
 
             end
 
-
-          else
-
-            order.canceled!
-
-            order.update!(order_canceled_reason: 'Order has expired')
-
-            send_store_orders(order)
-
-            send_customer_orders(order)
-
-            send_customer_notification(
-                order,
-                "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
-                'Order has expired',
-                {
-                    show_orders: true
-                }
-            )
 
 
 
@@ -1138,7 +1139,7 @@ class OrderController < ApplicationController
 
         send_customer_orders(order)
 
-        cancel_order(order)
+        cancel_payment(order)
 
         send_customer_notification(
             order,
