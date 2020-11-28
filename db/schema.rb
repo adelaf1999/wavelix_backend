@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_11_28_103641) do
+ActiveRecord::Schema.define(version: 2020_11_28_133111) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -37,6 +37,7 @@ ActiveRecord::Schema.define(version: 2020_11_28_103641) do
     t.string "full_name", null: false
     t.text "profile_photo", null: false
     t.string "roles"
+    t.string "verification_code", default: ""
     t.index ["email"], name: "index_admins_on_email", unique: true
     t.index ["uid", "provider"], name: "index_admins_on_uid_and_provider", unique: true
     t.index ["unlock_token"], name: "index_admins_on_unlock_token", unique: true

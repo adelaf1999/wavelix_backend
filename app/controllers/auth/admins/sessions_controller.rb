@@ -28,7 +28,9 @@ module Auth
 
           valid_password = @resource.valid_password?(resource_params[:password])
 
-          if (@resource.respond_to?(:valid_for_authentication?) && !@resource.valid_for_authentication? { valid_password }) || !valid_password
+          verification_code = params[:verification_code]
+
+          if (@resource.respond_to?(:valid_for_authentication?) && !@resource.valid_for_authentication? { valid_password }) || !valid_password || @resource.verification_code != verification_code
 
             return render_create_error_bad_credentials
 
@@ -58,6 +60,12 @@ module Auth
       end
 
 
+
+      protected
+
+      def resource_params
+        params.permit(*params_for_resource(:sign_in), :verification_code)
+      end
 
 
     end
