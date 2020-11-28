@@ -51,11 +51,11 @@ Rails.application.routes.draw do
 
 
   mount_devise_token_auth_for 'Admin', controllers: {
-      sessions: 'auth/admins/sessions'
+      sessions: 'auth/admins/sessions',
+      unlocks: 'auth/admins/unlocks'
   }, at: 'admin_auth', :skip => [
       :passwords,
       :confirmations,
-      :unlocks,
       :registrations,
       :omniauth_callbacks
   ]
