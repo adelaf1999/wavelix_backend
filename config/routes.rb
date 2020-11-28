@@ -49,6 +49,17 @@ Rails.application.routes.draw do
       :omniauth_callbacks
   ]
 
+
+  mount_devise_token_auth_for 'Admin', controllers: {
+      sessions: 'auth/admins/sessions'
+  }, at: 'admin_auth', :skip => [
+      :passwords,
+      :confirmations,
+      :unlocks,
+      :registrations,
+      :omniauth_callbacks
+  ]
+
   devise_scope :user do
     get '/auth/confirmation' => "auth/users/confirmations#show", as: :user_confirmation
     post '/auth/confirmation' => "auth/users/confirmations#create"
