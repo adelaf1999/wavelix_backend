@@ -343,4 +343,8 @@ Rails.application.routes.draw do
 
   post '/verify-recaptcha-token' => 'recaptcha#verify_recaptcha_token'
 
+  # Admin Auth Routes
+
+  post '/check-admin-email' => 'admin_auth#check_email'
+
 end

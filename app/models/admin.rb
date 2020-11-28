@@ -13,6 +13,18 @@ class Admin < ActiveRecord::Base
 
   petergate(roles: [:root_admin, :profile_manager, :order_manager, :account_manager, :employee_manager], multiple: true)
 
+  before_create :setup_verification_code
+
+  private
+
+  def setup_verification_code
+
+    self.renew_verification_code_at = DateTime.now.utc + 10.minutes
+
+    self.verification_code = rand.to_s[2..7]
+
+  end
+
 
 
 
