@@ -60,7 +60,7 @@ module Auth
 
           # render_show_error
 
-          if @resource.locked_at? != nil && @resource.locked_at? == false
+          if !@resource.locked_at?
 
             # already unlocked
 
