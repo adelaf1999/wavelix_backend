@@ -347,4 +347,6 @@ Rails.application.routes.draw do
 
   post '/check-admin-email' => 'admin_auth#check_email'
 
+  post '/resend-admin-verification-code' => 'admin_auth#resend_verification_code'
+
 end
