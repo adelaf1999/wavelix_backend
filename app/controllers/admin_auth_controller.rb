@@ -78,7 +78,7 @@ class AdminAuthController < ApplicationController
 
         @success = false
 
-        @message = 'Account locked because of excessive number invalid login attempts. Please unlock your account using account unlock link sent to your email'
+        @message = 'Account locked because of an excessive number invalid login attempts. Please unlock your account using account unlock link sent to your email.'
 
       end
 
