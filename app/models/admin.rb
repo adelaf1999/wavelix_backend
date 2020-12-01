@@ -27,7 +27,7 @@ class Admin < ActiveRecord::Base
 
   def setup_expire_at
 
-    self.expire_at = DateTime.now.utc + 10.minutes
+    self.expire_at = DateTime.now.utc + 15.minutes
 
   end
 

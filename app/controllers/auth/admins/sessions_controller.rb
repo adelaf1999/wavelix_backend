@@ -38,7 +38,7 @@ module Auth
 
           @token = @resource.create_token
 
-          @resource.update!(expire_at: DateTime.now.utc + 10.minutes)
+          @resource.update!(expire_at: DateTime.now.utc + 15.minutes)
 
           @resource.save
 

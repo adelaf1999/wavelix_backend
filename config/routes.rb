@@ -349,4 +349,8 @@ Rails.application.routes.draw do
 
   post '/resend-admin-verification-code' => 'admin_auth#resend_verification_code'
 
+  # Admin Home Routes
+
+  get '/admin-home-index' => 'admin_home#index'
+
 end
