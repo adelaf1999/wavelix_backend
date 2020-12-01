@@ -38,6 +38,8 @@ module Auth
 
           @token = @resource.create_token
 
+          @resource.update!(expire_at: DateTime.now.utc + 10.minutes)
+
           @resource.save
 
           sign_in(:user, @resource, store: false, bypass: false)

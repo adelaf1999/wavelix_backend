@@ -13,9 +13,23 @@ class Admin < ActiveRecord::Base
 
   petergate(roles: [:root_admin, :profile_manager, :order_manager, :account_manager, :employee_manager], multiple: true)
 
-  before_create :setup_verification_code
+  before_create :setup_verification_code, :setup_expire_at
+
+  def roles=(v)
+
+    self[:roles] = v.map(&:to_sym).to_a.select{|r| r.size > 0 && ROLES.include?(r)}
+
+    self.save!
+
+  end
 
   private
+
+  def setup_expire_at
+
+    self.expire_at = DateTime.now.utc + 10.minutes
+
+  end
 
   def setup_verification_code
 
