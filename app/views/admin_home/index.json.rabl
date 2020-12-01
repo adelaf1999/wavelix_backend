@@ -9,7 +9,3 @@ end
 if @email != nil
     node(:email) { @email }
 end
-
-if @roles != nil
-    node(:roles) { @roles }
-end

@@ -21,8 +21,6 @@ class AdminHomeController < ApplicationController
 
       @email = current_admin.email
 
-      @roles = current_admin.roles
-
 
     end
 
