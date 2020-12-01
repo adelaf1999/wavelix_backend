@@ -8,7 +8,9 @@ class RecaptchaController < ApplicationController
 
     if !token.blank?
 
-      uri = URI.parse("https://www.google.com/recaptcha/api/siteverify?secret=#{ENV.fetch('RECAPTCHA_SECRET_KEY')}&response=#{token}")
+      secret_key = params[:is_admin].blank? ? ENV.fetch('RECAPTCHA_SECRET_KEY') : ENV.fetch('ADMIN_RECAPTCHA_SECRET_KEY')
+
+      uri = URI.parse("https://www.google.com/recaptcha/api/siteverify?secret=#{secret_key}&response=#{token}")
 
       response = Net::HTTP.get_response(uri)
 
@@ -20,6 +22,8 @@ class RecaptchaController < ApplicationController
       if success
 
         score = data['score']
+
+        puts "SCORE IS #{score}"
 
         if score >= 0.5
 
