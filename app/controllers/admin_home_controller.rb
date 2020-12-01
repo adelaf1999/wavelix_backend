@@ -31,7 +31,18 @@ class AdminHomeController < ApplicationController
 
   def get_roles
 
-    @roles = current_admin.roles
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+
+      @roles = current_admin.roles
+
+    end
+
+
 
   end
 
