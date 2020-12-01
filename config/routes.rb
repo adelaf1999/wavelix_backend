@@ -353,4 +353,6 @@ Rails.application.routes.draw do
 
   get '/admin-home-index' => 'admin_home#index'
 
+  get '/get-admin-roles' => 'admin_home#get_roles'
+
 end

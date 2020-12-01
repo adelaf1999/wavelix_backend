@@ -6,6 +6,7 @@ class AdminHomeController < ApplicationController
 
   # This controller includes actions that can be accessed by any admin with any role(s)
 
+
   def index
 
     if is_admin_session_expired?(current_admin)
@@ -27,6 +28,12 @@ class AdminHomeController < ApplicationController
 
   end
 
+
+  def get_roles
+
+    @roles = current_admin.roles
+
+  end
 
 
 end
