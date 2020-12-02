@@ -357,4 +357,6 @@ Rails.application.routes.draw do
 
   post '/change-admin-email' => 'admin_home#change_email'
 
+  post '/change-admin-password' => 'admin_home#change_password'
+
 end

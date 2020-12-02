@@ -7,6 +7,44 @@ class AdminHomeController < ApplicationController
   # This controller includes actions that can be accessed by any admin with any role(s)
 
 
+  def change_password
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+      password = params[:password]
+
+      if !password.blank?
+
+        if password.length < 8
+
+          @success = false
+
+          @message = 'Password must be at least 8 characters long'
+
+        else
+
+          current_admin.update!(password: password)
+
+          @success = true
+
+        end
+
+      else
+
+        @success = false
+
+        @message = 'Password cannot be empty'
+
+      end
+
+    end
+
+  end
+
 
   def change_email
 
@@ -16,10 +54,9 @@ class AdminHomeController < ApplicationController
 
     else
 
-
       email = params[:email]
 
-      if email.empty?
+      if email.blank?
 
         @success = false
 
@@ -31,9 +68,7 @@ class AdminHomeController < ApplicationController
 
         if is_email_valid
 
-          admin = Admin.find_by(email: email)
-
-          if admin.nil?
+          if can_use_email?(email)
 
             current_admin.update!(email: email)
 
@@ -109,6 +144,18 @@ class AdminHomeController < ApplicationController
     end
 
 
+
+  end
+
+  private
+
+  def can_use_email?(email)
+
+    # If the admin is nil that means the email is not being used by any other account and it can be used
+
+    admin = Admin.find_by(email: email)
+
+    admin.nil?
 
   end
 
