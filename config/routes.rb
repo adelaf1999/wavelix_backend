@@ -355,4 +355,6 @@ Rails.application.routes.draw do
 
   get '/get-admin-roles' => 'admin_home#get_roles'
 
+  post '/change-admin-email' => 'admin_home#change_email'
+
 end
