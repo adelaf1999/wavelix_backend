@@ -363,4 +363,6 @@ Rails.application.routes.draw do
 
   post '/create-admin-account' => 'admin_accounts#create'
 
+  post '/view-admin-account' => 'admin_accounts#view_admin_account'
+
 end
