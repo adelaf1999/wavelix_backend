@@ -359,4 +359,8 @@ Rails.application.routes.draw do
 
   post '/change-my-admin-password' => 'admin_home#change_password'
 
+  # Admin Accounts
+
+  post '/create-admin-account' => 'admin_accounts#create'
+
 end

@@ -15,13 +15,7 @@ class Admin < ActiveRecord::Base
 
   before_create :setup_verification_code, :setup_expire_at
 
-  def roles=(v)
 
-    self[:roles] = v.map(&:to_sym).to_a.select{|r| r.size > 0 && ROLES.include?(r)}
-
-    self.save!
-
-  end
 
   private
 
