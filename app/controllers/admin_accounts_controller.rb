@@ -285,7 +285,7 @@ class AdminAccountsController < ApplicationController
   end
 
 
-  def view_admin_account
+  def show
 
     if is_admin_session_expired?(current_admin)
 
@@ -314,8 +314,6 @@ class AdminAccountsController < ApplicationController
           @success = false
 
         elsif current_admin.id == admin.id
-
-          # Cannot view your own account
 
           @success = false
 
@@ -346,6 +344,94 @@ class AdminAccountsController < ApplicationController
 
   end
 
+
+  def change_password
+
+    # Error codes
+
+    # { 0: ACCOUNT_INVALID, 1: UNAUTHORIZED_ACTION, 2: PASSWORD_ERROR }
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :employee_manager)
+
+      head :unauthorized
+
+    else
+
+      admin = Admin.find_by(id: params[:admin_id])
+
+      if admin != nil
+
+        if admin.has_roles?(:root_admin)
+
+          # Root admin account cannot be updated by anyone
+
+          @success = false
+
+          @error_code = 1
+
+        elsif current_admin.has_roles?(:employee_manager) && admin.has_roles?(:employee_manager)
+
+          # Employee managers cannot update other employee managers account
+
+          @success = false
+
+          @error_code = 1
+
+        elsif current_admin.id == admin.id
+
+          @success = false
+
+          @error_code = 1
+
+        else
+
+          password = params[:password]
+
+          if password.blank?
+
+            @success = false
+
+            @error_code = 2
+
+            @message = 'Password cannot be empty'
+
+          elsif password.length < 8
+
+            @success = false
+
+            @error_code = 2
+
+            @message = 'Password must be at least 8 characters long'
+
+          else
+
+            admin.update!(password: password)
+
+            @success = true
+
+          end
+
+
+
+        end
+
+      else
+
+        @success = false
+
+        @error_code = 0
+
+      end
+
+
+    end
+
+
+  end
 
 
 
