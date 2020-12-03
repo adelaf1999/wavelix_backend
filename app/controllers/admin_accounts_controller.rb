@@ -434,6 +434,177 @@ class AdminAccountsController < ApplicationController
   end
 
 
+  def change_roles
+
+    # Error codes
+
+    # { 0: ACCOUNT_INVALID, 1: UNAUTHORIZED_ACTION, 2: ROLES_ERROR }
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :employee_manager)
+
+      head :unauthorized
+
+    else
+
+      admin = Admin.find_by(id: params[:admin_id])
+
+      if admin != nil
+
+        if admin.has_roles?(:root_admin)
+
+          # Root admin account cannot be updated by anyone
+
+          @success = false
+
+          @error_code = 1
+
+        elsif current_admin.has_roles?(:employee_manager) && admin.has_roles?(:employee_manager)
+
+          # Employee managers cannot update other employee managers account
+
+          @success = false
+
+          @error_code = 1
+
+
+        elsif current_admin.id == admin.id
+
+          @success = false
+
+          @error_code = 1
+
+        else
+
+          roles = params[:roles]
+
+          if roles.blank?
+
+            @success = false
+
+            @error_code = 2
+
+            @message = 'Roles cannot be empty'
+
+          else
+
+            begin
+
+
+              roles = eval(roles)
+
+              if roles.instance_of?(Array)
+
+                if roles.size == 0
+
+                  @success = false
+
+                  @error_code = 2
+
+                  @message = 'Please select at least one role'
+
+                else
+
+                  roles = roles.map &:to_sym
+
+                  if are_roles_valid?(roles)
+
+
+                    if roles.include?(:root_admin)
+
+                      # root_admin role cannot be given by anyone, account has to be created as root_admin to receive that role
+
+                      @success = false
+
+                      @error_code = 2
+
+                      @message = 'Error updating roles'
+
+
+                    elsif current_admin.has_roles?(:employee_manager) &&  roles.include?(:employee_manager)
+
+                      # Employee managers are unauthorized to give other admin accounts employee_manager role
+
+                      @success = false
+
+                      @error_code = 2
+
+                      @message = 'Error updating roles'
+
+
+                    else
+
+
+                      admin.update!(roles: roles)
+
+                      @success = true
+
+                      @admin_roles = admin.roles
+
+
+                    end
+
+
+
+                  else
+
+                    @success = false
+
+                    @error_code = 2
+
+                    @message = 'Error updating roles'
+
+                  end
+
+
+                end
+
+              else
+
+                @success = false
+
+                @error_code = 2
+
+                @message = 'Error updating roles'
+
+              end
+
+
+            rescue => e
+
+              @success = false
+
+              @error_code = 2
+
+              @message = 'Error updating roles'
+
+            end
+
+          end
+
+
+        end
+
+
+      else
+
+        @success = false
+
+        @error_code = 0
+
+      end
+
+
+    end
+
+
+
+  end
+
+
 
 
   private
