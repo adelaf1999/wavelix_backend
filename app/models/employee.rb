@@ -19,13 +19,7 @@ class Employee < ApplicationRecord
 
   enum status: { inactive: 0, active: 1 }
 
-  def roles=(v)
-
-    self[:roles] = v.map(&:to_sym).to_a.select{|r| r.size > 0 && ROLES.include?(r)}
-
-    self.save!
-
-  end
+ 
 
   def get_store_currency
 
