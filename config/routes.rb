@@ -369,4 +369,6 @@ Rails.application.routes.draw do
 
   post '/change-admin-account-roles' => 'admin_accounts#change_roles'
 
+  delete '/destroy-admin-account' => 'admin_accounts#destroy'
+
 end

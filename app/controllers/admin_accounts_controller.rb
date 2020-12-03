@@ -605,6 +605,63 @@ class AdminAccountsController < ApplicationController
   end
 
 
+  def destroy
+
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :employee_manager)
+
+      head :unauthorized
+
+    else
+
+      admin = Admin.find_by(id: params[:admin_id])
+
+      if admin != nil
+
+        if admin.has_roles?(:root_admin)
+
+          # Root admin account cannot be deleted by anyone
+
+          @success = false
+
+        elsif current_admin.has_roles?(:employee_manager) && admin.has_roles?(:employee_manager)
+
+          # Employee managers cannot delete other employee managers account
+
+          @success = false
+
+        elsif current_admin.id == admin.id
+
+          @success = false
+
+        else
+
+          admin.destroy!
+
+          @success = true
+
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+
+  end
+
+
 
 
   private
