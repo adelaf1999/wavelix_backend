@@ -20,4 +20,10 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.password_change_notice(email, notice)
   end
 
+  def account_deleted_notice
+    email = 'adelwaboufakher@gmail.com'
+    notice = 'Adel Abou Fakher deleted the account of Wajih abou fakher with email wajih@example.com.'
+    AdminAccountMailer.account_deleted_notice(email, notice)
+  end
+
 end

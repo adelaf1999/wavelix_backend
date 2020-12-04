@@ -15,4 +15,9 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'Admin Roles Changed'
   end
 
+  def account_deleted_notice(email, notice)
+    @notice = notice
+    mail to: email, subject: 'Admin Account Deleted'
+  end
+
 end

@@ -669,9 +669,25 @@ class AdminAccountsController < ApplicationController
 
         else
 
+          admin_full_name = admin.full_name
+
+          admin_email = admin.email
+
           admin.destroy!
 
           @success = true
+
+          Admin.role_root_admins.each do |root_admin|
+
+            if current_admin.id != root_admin.id
+
+              notice = "#{current_admin.full_name} deleted the account of #{admin_full_name} with email #{admin_email}."
+
+              AdminAccountMailer.delay.account_deleted_notice(root_admin.email, notice)
+
+            end
+
+          end
 
 
         end
