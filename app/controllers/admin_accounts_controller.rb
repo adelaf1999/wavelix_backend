@@ -760,7 +760,7 @@ class AdminAccountsController < ApplicationController
 
     roles.each do |role|
 
-      if !Admin::ROLES.include?(role)
+      if !Admin::ROLES.include?(role) || role == :user
 
         valid = false
 
