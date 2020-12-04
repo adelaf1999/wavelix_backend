@@ -371,4 +371,6 @@ Rails.application.routes.draw do
 
   delete '/destroy-admin-account' => 'admin_accounts#destroy'
 
+  get '/admins-accounts' => 'admin_accounts#index'
+
 end

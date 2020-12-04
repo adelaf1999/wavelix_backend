@@ -189,7 +189,7 @@ class AdminAccountsController < ApplicationController
       else
 
         begin
-          
+
           roles = eval(roles)
 
           if roles.instance_of?(Array)
@@ -657,6 +657,93 @@ class AdminAccountsController < ApplicationController
 
     end
 
+
+
+  end
+
+
+  def index
+
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :employee_manager)
+
+      head :unauthorized
+
+    else
+
+
+
+      if current_admin.has_roles?(:root_admin)
+
+
+        # Root admins can only be seen by other root admins
+
+        # Only root admins have option to filter by root_admin role
+
+        admins = Admin.all.order(full_name: :asc)
+                     .where.not(id: current_admin.id)
+
+        @available_roles = Admin::ROLES
+
+        @available_roles.delete(:user)
+
+      else
+
+        # Employee manager can see other employee managers
+
+        admins = Admin.all.order(full_name: :asc)
+                     .where.not(id: current_admin.id)
+                     .where.not("roles ILIKE ?", "%root_admin%")
+
+        @available_roles = Admin::ROLES
+
+        @available_roles.delete(:user)
+
+        @available_roles.delete(:root_admin)
+
+
+      end
+
+
+      @admins = []
+
+
+      admins.each do |admin|
+
+        if admin.has_roles?(:root_admin)
+
+          @admins.push({
+                           profile_photo: admin.profile_photo.url,
+                           full_name: admin.full_name,
+                           email: nil,
+                           roles: admin.roles,
+                           current_sign_in_ip: nil,
+                           last_sign_in_ip: nil
+                       })
+
+        else
+
+          @admins.push({
+                           profile_photo: admin.profile_photo.url,
+                           full_name: admin.full_name,
+                           email: admin.email,
+                           roles: admin.roles,
+                           current_sign_in_ip: admin.current_sign_in_ip,
+                           last_sign_in_ip: admin.last_sign_in_ip
+                       })
+
+        end
+
+      end
+
+
+
+
+    end
 
 
   end
