@@ -705,36 +705,7 @@ class AdminAccountsController < ApplicationController
       end
 
 
-      @admins = []
-
-
-      admins.each do |admin|
-
-        if admin.has_roles?(:root_admin)
-
-          @admins.push({
-                           profile_photo: admin.profile_photo.url,
-                           full_name: admin.full_name,
-                           email: nil,
-                           roles: admin.roles,
-                           current_sign_in_ip: nil,
-                           last_sign_in_ip: nil
-                       })
-
-        else
-
-          @admins.push({
-                           profile_photo: admin.profile_photo.url,
-                           full_name: admin.full_name,
-                           email: admin.email,
-                           roles: admin.roles,
-                           current_sign_in_ip: admin.current_sign_in_ip,
-                           last_sign_in_ip: admin.last_sign_in_ip
-                       })
-
-        end
-
-      end
+      @admins = get_admin_accounts(admins)
 
 
 
@@ -745,10 +716,122 @@ class AdminAccountsController < ApplicationController
   end
 
 
+  def search_admin
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :employee_manager)
+
+      head :unauthorized
+
+    else
+
+      # search for admins by email or full name
+
+      # can also filter for admin by role
+
+      @admins = []
+
+      search = params[:search]
+
+      role = params[:role]
+
+      if !search.blank?
+
+        admins = Admin.all.where("email ILIKE ?", "%#{search}%").or( Admin.all.where("full_name ILIKE ?", "%#{search}%") )
+
+        admins = admins.where.not(id: current_admin.id)
+
+        if !role.blank?
+
+          role = role.to_sym
+
+          if admin_role_valid?(role)
+
+            admins = admins.where("roles ILIKE ?", "%#{role}%")
+
+          end
+
+        end
+
+
+        if !current_admin.has_roles?(:root_admin)
+
+          # Root admins only appear in search results of root admin
+
+          admins = admins.where.not("roles ILIKE ?", "%root_admin%")
+
+        end
+
+        @admins = get_admin_accounts(admins)
+
+        
+
+      end
+
+
+
+
+    end
+
+
+
+  end
+
+
 
 
   private
 
+
+  def get_admin_accounts(admins)
+
+    admin_accounts = []
+
+    admins.each do |admin|
+
+      if admin.has_roles?(:root_admin)
+
+        admin_accounts.push({
+                                profile_photo: admin.profile_photo.url,
+                                full_name: admin.full_name,
+                                email: nil,
+                                roles: admin.roles,
+                                current_sign_in_ip: nil,
+                                last_sign_in_ip: nil
+                            })
+
+      else
+
+        admin_accounts.push({
+                                profile_photo: admin.profile_photo.url,
+                                full_name: admin.full_name,
+                                email: admin.email,
+                                roles: admin.roles,
+                                current_sign_in_ip: admin.current_sign_in_ip,
+                                last_sign_in_ip: admin.last_sign_in_ip
+                            })
+
+      end
+
+    end
+
+    admin_accounts
+
+
+  end
+
+
+
+  def admin_role_valid?(role)
+
+    available_roles = get_admin_roles
+
+    available_roles.include?(role)
+
+  end
 
 
   def get_admin_roles

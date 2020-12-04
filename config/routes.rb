@@ -373,4 +373,6 @@ Rails.application.routes.draw do
 
   get '/admins-accounts' => 'admin_accounts#index'
 
+  post '/search-admin' => 'admin_accounts#search_admin'
+
 end
