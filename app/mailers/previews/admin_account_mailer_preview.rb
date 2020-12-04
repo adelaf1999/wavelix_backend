@@ -6,4 +6,11 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.send_verification_code(email, verification_code)
   end
 
+
+  def password_change_notice
+    email = 'adelwaboufakher@gmail.com'
+    notice = 'Adel Abou Fakher has changed the password of Wajih Abou Fakher.'
+    AdminAccountMailer.password_change_notice(email, notice)
+  end
+
 end

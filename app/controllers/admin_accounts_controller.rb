@@ -413,6 +413,22 @@ class AdminAccountsController < ApplicationController
 
             @success = true
 
+
+            Admin.role_root_admins.each do |root_admin|
+
+              if current_admin.id != root_admin.id
+
+                notice = "#{current_admin.full_name} has changed the password of #{admin.full_name}."
+
+                AdminAccountMailer.delay.password_change_notice(root_admin.email, notice)
+
+
+              end
+
+
+
+            end
+
           end
 
 
