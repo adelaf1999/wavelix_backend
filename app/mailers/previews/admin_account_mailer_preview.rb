@@ -26,4 +26,10 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.account_deleted_notice(email, notice)
   end
 
+  def admin_account_created
+    email = 'adelwaboufakher@gmail.com'
+    notice = 'Adel Abou Fakher created an account for Wajih Abou Fakher with the following roles: Order manager, Profile manager'
+    AdminAccountMailer.account_created_notice(email, notice)
+  end
+
 end

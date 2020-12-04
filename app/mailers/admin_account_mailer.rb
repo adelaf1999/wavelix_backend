@@ -20,4 +20,9 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'Admin Account Deleted'
   end
 
+  def account_created_notice(email, notice)
+    @notice = notice
+    mail to: email, subject: 'Admin Account Created'
+  end
+
 end

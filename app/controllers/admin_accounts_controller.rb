@@ -268,6 +268,18 @@ class AdminAccountsController < ApplicationController
 
         @success = true
 
+        Admin.role_root_admins.each do |root_admin|
+
+          if current_admin.id != root_admin.id
+
+            notice = "#{current_admin.full_name} created an admin account for #{admin.full_name} with the following roles: #{admin.roles_text}."
+
+            AdminAccountMailer.delay.account_created_notice(root_admin.email, notice)
+
+          end
+
+        end
+
       else
 
         @success = false
