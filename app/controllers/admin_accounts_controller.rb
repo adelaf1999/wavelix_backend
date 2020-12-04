@@ -561,6 +561,19 @@ class AdminAccountsController < ApplicationController
                       @admin_roles = admin.roles
 
 
+                      Admin.role_root_admins.each do |root_admin|
+
+                        if current_admin.id != root_admin.id
+
+                          notice = "#{current_admin.full_name} updated the roles of #{admin.full_name} to the following: #{admin.roles_text}."
+
+                          AdminAccountMailer.delay.roles_changed_notice(root_admin.email, notice)
+
+                        end
+
+                      end
+
+
                     end
 
 

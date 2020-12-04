@@ -13,4 +13,11 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.password_change_notice(email, notice)
   end
 
+
+  def roles_changed_notice
+    email = 'adelwaboufakher@gmail.com'
+    notice = 'Adel Abou Fakher updated the roles of Farida Abou Fakher to the following: order manager, profile manager.'
+    AdminAccountMailer.password_change_notice(email, notice)
+  end
+
 end

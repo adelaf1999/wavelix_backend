@@ -10,4 +10,9 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'Admin Password Changed'
   end
 
+  def roles_changed_notice(email, notice)
+    @notice = notice
+    mail to: email, subject: 'Admin Roles Changed'
+  end
+
 end

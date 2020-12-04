@@ -22,6 +22,33 @@ class Admin < ActiveRecord::Base
   end
 
 
+  def roles_text
+
+    roles = self.roles
+
+    roles_text = ''
+
+    for i in 0..roles.size - 1
+
+      role = roles[i].to_s
+
+      if i == 0
+
+        roles_text +=  role.split("_").join(" ").capitalize
+
+      else
+
+        roles_text += ', ' +  role.split("_").join(" ").capitalize
+
+      end
+
+    end
+
+    roles_text
+
+
+  end
+
   private
 
   def setup_expire_at
