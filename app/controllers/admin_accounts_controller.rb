@@ -765,9 +765,11 @@ class AdminAccountsController < ApplicationController
 
         end
 
+        admins = admins.order(full_name: :asc)
+
         @admins = get_admin_accounts(admins)
 
-        
+
 
       end
 
