@@ -689,8 +689,6 @@ class AdminAccountsController < ApplicationController
 
         @available_roles = Admin::ROLES
 
-        @available_roles.delete(:user)
-
       else
 
         # Employee manager can see other employee managers
@@ -700,8 +698,6 @@ class AdminAccountsController < ApplicationController
                      .where.not("roles ILIKE ?", "%root_admin%")
 
         @available_roles = Admin::ROLES
-
-        @available_roles.delete(:user)
 
         @available_roles.delete(:root_admin)
 
