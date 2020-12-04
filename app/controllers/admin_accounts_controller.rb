@@ -687,9 +687,7 @@ class AdminAccountsController < ApplicationController
         admins = Admin.all.order(full_name: :asc)
                      .where.not(id: current_admin.id)
 
-        @available_roles = Admin::ROLES
-
-        @available_roles.delete(:user)
+        @available_roles = get_admin_roles
 
       else
 
@@ -699,9 +697,7 @@ class AdminAccountsController < ApplicationController
                      .where.not(id: current_admin.id)
                      .where.not("roles ILIKE ?", "%root_admin%")
 
-        @available_roles = Admin::ROLES
-
-        @available_roles.delete(:user)
+        @available_roles = get_admin_roles
 
         @available_roles.delete(:root_admin)
 
@@ -754,13 +750,26 @@ class AdminAccountsController < ApplicationController
   private
 
 
+
+  def get_admin_roles
+
+    available_roles = Admin::ROLES
+
+    available_roles.delete(:user)
+
+    available_roles
+
+  end
+
   def are_roles_valid?(roles)
 
     valid = true
 
+    available_roles = get_admin_roles
+
     roles.each do |role|
 
-      if !Admin::ROLES.include?(role) || role == :user
+      if !available_roles.include?(role)
 
         valid = false
 
