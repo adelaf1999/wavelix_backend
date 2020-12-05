@@ -795,7 +795,9 @@ class AdminAccountsController < ApplicationController
 
       role = params[:role]
 
-      if !search.blank?
+      if search != nil
+
+        search = search.strip
 
         admins = Admin.all.where("email ILIKE ?", "%#{search}%").or( Admin.all.where("full_name ILIKE ?", "%#{search}%") )
 
@@ -825,7 +827,7 @@ class AdminAccountsController < ApplicationController
         admins = admins.order(full_name: :asc)
 
         @admins = get_admin_accounts(admins)
-
+        
 
 
       end
