@@ -341,6 +341,25 @@ class AdminAccountsController < ApplicationController
 
           @admin_roles = admin.roles
 
+          available_roles = get_admin_roles
+
+
+          # root_admin role cannot be given by anyone, account has to be created as root_admin to receive that role
+
+          available_roles.delete(:root_admin)
+
+          if current_admin.has_roles?(:employee_manager)
+
+            # Employee managers are unauthorized to give other admin accounts employee_manager role
+
+            available_roles.delete(:employee_manager)
+
+          end
+
+          @available_roles = available_roles
+
+
+
 
         end
 

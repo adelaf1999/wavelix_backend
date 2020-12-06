@@ -17,3 +17,7 @@ end
 if @admin_roles != nil
     node(:admin_roles) { @admin_roles }
 end
+
+if @available_roles != nil
+    node(:available_roles) { @available_roles }
+end
