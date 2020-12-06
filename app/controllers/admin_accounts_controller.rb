@@ -359,6 +359,10 @@ class AdminAccountsController < ApplicationController
           @available_roles = available_roles
 
 
+          @current_sign_in_ip = admin.current_sign_in_ip
+
+          @last_sign_in_ip = admin.last_sign_in_ip
+
 
 
         end

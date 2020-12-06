@@ -21,3 +21,11 @@ end
 if @available_roles != nil
     node(:available_roles) { @available_roles }
 end
+
+if @current_sign_in_ip != nil
+    node(:current_sign_in_ip) { @current_sign_in_ip }
+end
+
+if @last_sign_in_ip != nil
+    node(:last_sign_in_ip) { @last_sign_in_ip }
+end
