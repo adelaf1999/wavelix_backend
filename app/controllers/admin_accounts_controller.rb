@@ -880,7 +880,8 @@ class AdminAccountsController < ApplicationController
                                 email: nil,
                                 roles: admin.roles,
                                 current_sign_in_ip: nil,
-                                last_sign_in_ip: nil
+                                last_sign_in_ip: nil,
+                                id: nil
                             })
 
       else
@@ -891,7 +892,8 @@ class AdminAccountsController < ApplicationController
                                 email: admin.email,
                                 roles: admin.roles,
                                 current_sign_in_ip: admin.current_sign_in_ip,
-                                last_sign_in_ip: admin.last_sign_in_ip
+                                last_sign_in_ip: admin.last_sign_in_ip,
+                                id: admin.id
                             })
 
       end
