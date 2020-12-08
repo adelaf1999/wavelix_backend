@@ -373,7 +373,7 @@ Rails.application.routes.draw do
 
   post '/destroy-admin-account' => 'admin_accounts#destroy'
 
-  get '/admins-accounts' => 'admin_accounts#index'
+  post '/admins-accounts' => 'admin_accounts#index'
 
   post '/search-admin' => 'admin_accounts#search_admin'
 

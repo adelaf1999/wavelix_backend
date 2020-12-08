@@ -2,6 +2,8 @@ class AdminAccountsController < ApplicationController
 
   include AdminHelper
 
+  include ValidationsHelper
+
   before_action :authenticate_admin!
 
 
@@ -783,22 +785,46 @@ class AdminAccountsController < ApplicationController
       if current_admin.has_roles?(:root_admin)
 
 
-        # Root admins can only be seen by other root admins
+        limit = params[:limit]
+
+        if !limit.blank? && is_positive_integer?(limit)
+
+          # Root admins can only be seen by other root admins
+
+          limit = limit.to_i
+
+          admins = Admin.all.order(full_name: :asc)
+                       .where.not(id: current_admin.id).limit(limit)
+        else
+
+          admins = []
+
+        end
 
         # Only root admins have option to filter by root_admin role
-
-        admins = Admin.all.order(full_name: :asc)
-                     .where.not(id: current_admin.id)
 
         @available_roles = get_admin_roles
 
       else
 
-        # Employee manager can see other employee managers
 
-        admins = Admin.all.order(full_name: :asc)
-                     .where.not(id: current_admin.id)
-                     .where.not("roles ILIKE ?", "%root_admin%")
+        limit = params[:limit]
+
+        if !limit.blank? && is_positive_integer?(limit)
+
+          # Employee manager can see other employee managers
+
+          admins = Admin.all.order(full_name: :asc)
+                       .where.not(id: current_admin.id)
+                       .where.not("roles ILIKE ?", "%root_admin%").limit(limit)
+
+
+        else
+
+          admins = []
+
+        end
+
 
         @available_roles = get_admin_roles
 
