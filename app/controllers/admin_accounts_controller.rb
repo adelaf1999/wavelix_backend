@@ -5,6 +5,29 @@ class AdminAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def new_account
+
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+
+    elsif !current_admin.has_roles?(:root_admin)
+
+      head :unauthorized
+
+    else
+
+      @available_roles = get_admin_roles
+
+    end
+
+
+
+  end
+
+
   def create
 
     # Only a root admin can create admin accounts (including root admin accounts)

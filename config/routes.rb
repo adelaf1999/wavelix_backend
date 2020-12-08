@@ -361,6 +361,8 @@ Rails.application.routes.draw do
 
   # Admin Accounts
 
+  get '/new-admin-account' => 'admin_accounts#new_account'
+
   post '/create-admin-account' => 'admin_accounts#create'
 
   post '/view-admin-account' => 'admin_accounts#show'
