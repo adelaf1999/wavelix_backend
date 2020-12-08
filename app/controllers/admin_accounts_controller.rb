@@ -787,11 +787,9 @@ class AdminAccountsController < ApplicationController
 
         limit = params[:limit]
 
-        if !limit.blank? && is_positive_integer?(limit)
+        if  is_positive_integer?(limit)
 
           # Root admins can only be seen by other root admins
-
-          limit = limit.to_i
 
           admins = Admin.all.order(full_name: :asc)
                        .where.not(id: current_admin.id).limit(limit)
@@ -810,7 +808,7 @@ class AdminAccountsController < ApplicationController
 
         limit = params[:limit]
 
-        if !limit.blank? && is_positive_integer?(limit)
+        if  is_positive_integer?(limit)
 
           # Employee manager can see other employee managers
 
@@ -867,11 +865,13 @@ class AdminAccountsController < ApplicationController
 
       role = params[:role]
 
-      if search != nil
+      limit = params[:limit]
+
+      if search != nil && is_positive_integer?(limit)
 
         search = search.strip
 
-        admins = Admin.all.where("email ILIKE ?", "%#{search}%").or( Admin.all.where("full_name ILIKE ?", "%#{search}%") )
+        admins = Admin.all.where("email ILIKE ?", "%#{search}%").or( Admin.all.where("full_name ILIKE ?", "%#{search}%") ).limit(limit)
 
         admins = admins.where.not(id: current_admin.id)
 
