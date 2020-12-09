@@ -7,6 +7,56 @@ class CustomerAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def view_customer_account
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+      customer_user = CustomerUser.find_by(id: params[:customer_user_id])
+
+      if customer_user != nil
+
+        @success = true
+
+        @full_name = customer_user.full_name
+
+        @email = customer_user.get_email
+
+        @username = customer_user.get_username
+
+        @building_name = customer_user.building_name.blank? ? 'N/A' : customer_user.building_name
+
+        @apartment_floor = customer_user.apartment_floor.blank? ? 'N/A' : customer_user.apartment_floor
+
+        @country = customer_user.get_country_name
+
+        @phone_number = customer_user.phone_number.blank? ? 'N/A' : customer_user.phone_number
+
+        @current_sign_in_ip = customer_user.get_current_sign_in_ip.blank? ? 'N/A' : customer_user.get_current_sign_in_ip
+
+        @last_sign_in_ip = customer_user.get_last_sign_in_ip.blank? ? 'N/A' : customer_user.get_last_sign_in_ip
+
+        @profile_link = "#{Rails.env.development? ? ENV.fetch('DEVELOPMENT_WEBSITE_URL') : ENV.fetch('PRODUCTION_WEBSITE_URL') }/view-profile/profile_id=#{customer_user.get_profile_id}"
+
+
+
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
+
   def search_customer_accounts
 
     if is_admin_session_expired?(current_admin)

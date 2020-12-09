@@ -23,6 +23,24 @@ class CustomerUser < ApplicationRecord
 
     before_destroy :delete_stripe_account
 
+    def get_profile_id
+
+        self.customer.profile.id
+
+    end
+
+    def get_last_sign_in_ip
+
+        self.customer.last_sign_in_ip
+
+    end
+
+    def get_current_sign_in_ip
+
+        self.customer.current_sign_in_ip
+
+    end
+
 
     def get_username
 
