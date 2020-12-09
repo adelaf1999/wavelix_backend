@@ -377,4 +377,8 @@ Rails.application.routes.draw do
 
   post '/search-admin' => 'admin_accounts#search_admin'
 
+  # Customer Accounts
+
+  post '/get-customer-accounts' => 'customer_accounts#index'
+
 end

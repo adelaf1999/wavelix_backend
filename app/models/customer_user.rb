@@ -24,6 +24,26 @@ class CustomerUser < ApplicationRecord
     before_destroy :delete_stripe_account
 
 
+    def get_username
+
+        self.customer.username
+
+    end
+
+    def get_country_name
+
+        ISO3166::Country.new(self.country).name
+
+    end
+
+
+    def get_email
+
+        self.customer.email
+
+    end
+
+
     def added_list_product?(product_id)
 
         self.list_products.find_by(product_id: product_id) != nil
