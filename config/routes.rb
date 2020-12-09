@@ -381,4 +381,6 @@ Rails.application.routes.draw do
 
   post '/get-customer-accounts' => 'customer_accounts#index'
 
+  post '/search-customer-accounts' => 'customer_accounts#search_customer_accounts'
+
 end
