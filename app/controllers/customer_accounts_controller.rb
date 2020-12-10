@@ -100,7 +100,7 @@ class CustomerAccountsController < ApplicationController
         end
 
 
-        customer_users_by_number = CustomerUser.all.where("phone_number ILIKE ?", "%#{search}%").where.not(customer_id: customer_user_ids, phone_number: nil).limit(limit)
+        customer_users_by_number = CustomerUser.all.where("phone_number ILIKE ?", "%#{search}%").where.not(customer_id: customer_user_ids).where.not(phone_number: nil).limit(limit)
 
         customer_users_by_number.each do |customer_user|
 
