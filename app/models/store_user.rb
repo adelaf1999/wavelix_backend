@@ -102,6 +102,8 @@ class StoreUser < ApplicationRecord
 
 
 
+    private
+
     def get_child_subcategories(subcategories, parent_category)
 
         categories = []
@@ -146,8 +148,6 @@ class StoreUser < ApplicationRecord
         categories
 
     end
-
-    private
 
 
     def save_street_name
