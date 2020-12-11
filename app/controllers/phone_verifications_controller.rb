@@ -2,7 +2,7 @@ class PhoneVerificationsController < ApplicationController
 
   before_action :authenticate_user!
 
-  include RegistrationHelper
+  include CountriesHelper
 
   def is_phone_number_verified
 

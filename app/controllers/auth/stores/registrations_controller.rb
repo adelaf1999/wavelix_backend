@@ -3,7 +3,7 @@ module Auth
   module Stores
 
     class RegistrationsController < DeviseTokenAuth::ApplicationController
-      include RegistrationHelper
+      include CountriesHelper
       include MoneyHelper
       before_action :validate_sign_up_params, only: :create
       skip_after_action :update_auth_header, only: [:create]
