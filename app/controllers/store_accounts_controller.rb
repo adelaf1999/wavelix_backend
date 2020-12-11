@@ -4,6 +4,8 @@ class StoreAccountsController < ApplicationController
 
   include ValidationsHelper
 
+  include CountriesHelper
+
   before_action :authenticate_admin!
 
 
@@ -140,9 +142,14 @@ class StoreAccountsController < ApplicationController
 
         end
 
-
-
       end
+
+
+      @account_status_options = StoreUser.statuses
+
+      @review_status_options = StoreUser.review_statuses
+
+      @countries = get_countries
 
 
     end
@@ -158,7 +165,7 @@ class StoreAccountsController < ApplicationController
 
       review_status = review_status.to_i
 
-      [0, 1].include?(review_status)
+      StoreUser.review_statuses.values.include?(review_status)
 
     else
 
@@ -174,7 +181,7 @@ class StoreAccountsController < ApplicationController
 
       status = status.to_i
 
-      [0, 1].include?(status)
+      StoreUser.statuses.values.include?(status)
 
     else
 
