@@ -16,6 +16,8 @@ class StoreUser < ApplicationRecord
 
     enum status: {unverified: 0, verified: 1}
 
+    enum review_status: { unreviewed: 0, reviewed: 1 }
+
     has_many :orders
 
     has_one :schedule, dependent: :destroy
@@ -27,6 +29,54 @@ class StoreUser < ApplicationRecord
     has_many :employees
 
     after_create :save_street_name
+
+
+    def get_admins_declined
+
+        admins_declined = self.admins_declined.map &:to_i
+
+        admins_declined.each do |admin_id|
+
+            admin = Admin.find_by(id: admin_id)
+
+            if admin.nil?
+
+                admins_declined.delete(admin_id)
+
+            end
+
+
+        end
+
+        self.update!(admins_declined: admins_declined)
+
+        admins_declined
+
+    end
+
+
+    def get_admins_reviewing
+
+        admins_reviewing = self.admins_reviewing.map &:to_i
+
+        admins_reviewing.each do |admin_id|
+
+            admin = Admin.find_by(id: admin_id)
+
+            if admin.nil?
+
+                admins_reviewing.delete(admin_id)
+
+            end
+
+        end
+
+        self.update!(admins_reviewing: admins_reviewing)
+
+        admins_reviewing
+
+    end
+
 
 
     def push_token
