@@ -7,6 +7,117 @@ class StoreAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def search_store_accounts
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+      # search for store accounts by store username, store owner name or store name
+
+      # can also filter store by country, status, and review status
+
+
+      @store_accounts = []
+
+      search = params[:search]
+
+      limit = params[:limit]
+
+      country = params[:country]
+
+      status = params[:status]
+
+      review_status = params[:review_status]
+
+
+      if search != nil && is_positive_integer?(limit)
+
+        search = search.strip
+
+        store_user_ids = []
+
+
+        users_by_username = User.all.where(user_type: 1).where("username ILIKE ?", "%#{search}%").limit(limit)
+
+        users_by_username.each do |user|
+
+          store_user = StoreUser.find_by(store_id: user.id)
+
+          store_user_ids.push(store_user.id)
+
+        end
+
+
+        store_users_by_owner_name = StoreUser.all.where("store_owner_full_name ILIKE ?", "%#{search}%").where.not(id: store_user_ids).limit(limit)
+
+        store_users_by_owner_name.each do |store_user|
+
+          store_user_ids.push(store_user.id)
+
+        end
+
+
+        store_users_by_store_name = StoreUser.all.where("store_name ILIKE ?", "%#{search}%").where.not(id: store_user_ids).limit(limit)
+
+        store_users_by_store_name.each do |store_user|
+
+          store_user_ids.push(store_user.id)
+
+        end
+
+
+        store_user_ids.uniq!
+
+
+        store_users = StoreUser.where(id: store_user_ids)
+
+
+        if !country.blank?
+
+          store_users = store_users.where(store_country: country)
+
+        end
+
+        if is_status_valid?(status)
+
+          status = status.to_i
+
+          store_users = store_users.where(status: status)
+
+        end
+
+
+        if is_review_status_valid?(review_status)
+
+          review_status = review_status.to_i
+
+          store_users = store_users.where(review_status: review_status)
+
+        end
+
+
+
+        store_users = store_users.order(created_at: :desc)
+
+
+        store_users.each do |store_user|
+
+          @store_accounts.push(get_store_accounts_item(store_user))
+
+        end
+
+
+
+      end
+
+
+    end
+
+  end
+
   def index
 
     if is_admin_session_expired?(current_admin)
@@ -39,6 +150,39 @@ class StoreAccountsController < ApplicationController
   end
 
   private
+
+
+  def is_review_status_valid?(review_status)
+
+    if !review_status.blank?
+
+      review_status = review_status.to_i
+
+      [0, 1].include?(review_status)
+
+    else
+
+      false
+
+    end
+
+  end
+
+  def is_status_valid?(status)
+
+    if !status.blank?
+
+      status = status.to_i
+
+      [0, 1].include?(status)
+
+    else
+
+      false
+
+    end
+
+  end
 
   def get_store_accounts_item(store_user)
 
