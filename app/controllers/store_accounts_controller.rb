@@ -145,9 +145,9 @@ class StoreAccountsController < ApplicationController
       end
 
 
-      @account_status_options = StoreUser.statuses
+      @account_status_options = {0 => 'Unverified', 1 => 'Verified'}
 
-      @review_status_options = StoreUser.review_statuses
+      @review_status_options = { 0 => 'Unreviewed', 1 => 'Reviewed' }
 
       @countries = get_countries
 
