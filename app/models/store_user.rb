@@ -30,6 +30,24 @@ class StoreUser < ApplicationRecord
 
     after_create :save_street_name
 
+    def registered_at_utc
+
+        self.created_at.strftime('%Y-%m-%d %H:%M %Z')
+
+    end
+
+    def get_country_name
+
+        ISO3166::Country.new(self.store_country).name
+    end
+
+
+    def get_username
+
+        self.store.username
+
+    end
+
 
     def get_admins_declined
 

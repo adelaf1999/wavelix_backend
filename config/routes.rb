@@ -385,4 +385,8 @@ Rails.application.routes.draw do
 
   post '/view-customer-account' => 'customer_accounts#view_customer_account'
 
+  # Store Accounts
+
+  post '/get-store-accounts' => 'store_accounts#index'
+
 end
