@@ -201,7 +201,7 @@ class StoreAccountsController < ApplicationController
         country: store_user.get_country_name,
         account_status: store_user.status,
         review_status: store_user.review_status,
-        registed_at: store_user.registered_at_utc
+        registered_at: store_user.registered_at_utc
     }
 
   end
