@@ -69,10 +69,17 @@ module Auth
             update_auth_header
           end
 
+          ActionCable.server.broadcast 'store_accounts_channel', {new_store_registered: true}
+
+
           render_create_success
+
         else
+
           clean_up_passwords @resource
+
           render_create_error
+
         end
 
       end
