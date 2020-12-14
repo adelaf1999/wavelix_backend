@@ -49,7 +49,7 @@ class StoreAccountsController < ApplicationController
 
         @verified_by = store_user.verified_by
 
-
+        @store_email = store_user.get_email
 
         admins_declined = store_user.get_admins_declined
 

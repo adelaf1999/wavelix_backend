@@ -57,3 +57,7 @@ end
 if @declined_verification != nil
     node(:declined_verification) {  @declined_verification }
 end
+
+if @store_email != nil
+    node(:store_email) { @store_email }
+end

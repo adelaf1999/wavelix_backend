@@ -41,6 +41,10 @@ class StoreUser < ApplicationRecord
         ISO3166::Country.new(self.store_country).name
     end
 
+    def get_email
+        self.store.email
+    end
+
 
     def get_username
 
