@@ -25,4 +25,11 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'Admin Account Created'
   end
 
+
+  def store_registered_notice(email, store_user_id)
+    @store_user_id = store_user_id
+    @view_store_link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/store-accounts/store_user_id=#{store_user_id}"
+    mail to: email, subject: 'New Store Registered'
+  end
+
 end

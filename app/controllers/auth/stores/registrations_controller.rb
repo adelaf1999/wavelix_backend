@@ -72,6 +72,25 @@ module Auth
           ActionCable.server.broadcast 'store_accounts_channel', {new_store_registered: true}
 
 
+
+          # Send email to all account managers and root admins when a new store signs up
+
+          store_user = StoreUser.find_by(store_id: @resource.id)
+
+          admins = Admin.role_root_admins + Admin.role_account_managers
+
+          admins = admins.uniq
+
+          admins.each do |admin|
+
+            AdminAccountMailer.delay.store_registered_notice(admin.email, store_user.id)
+
+          end
+
+
+
+
+
           render_create_success
 
         else

@@ -32,4 +32,10 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.account_created_notice(email, notice)
   end
 
+  def store_registered_notice
+    email = 'adelwaboufakher@gmail.com'
+    store_user_id = 1
+    AdminAccountMailer.store_registered_notice(email, store_user_id)
+  end
+
 end
