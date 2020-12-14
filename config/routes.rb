@@ -391,4 +391,6 @@ Rails.application.routes.draw do
 
   post '/search-store-accounts' => 'store_accounts#search_store_accounts'
 
+  post '/view-store-account' => 'store_accounts#show'
+
 end

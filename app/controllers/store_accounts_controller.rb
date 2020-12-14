@@ -9,6 +9,61 @@ class StoreAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def show
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+      store_user = StoreUser.find_by(id: params[:store_user_id])
+
+      if store_user != nil
+
+        @success = true
+
+        @store_owner = store_user.store_owner_full_name
+
+        @store_username =  store_user.get_username
+
+        @store_name = store_user.store_name
+
+        @status = store_user.status
+
+        @review_status = store_user.review_status
+
+        @country =  store_user.get_country_name
+
+        @has_sensitive_products = store_user.has_sensitive_products
+
+        @business_license =  store_user.store_business_license.url
+
+        @registered_at =  store_user.registered_at_utc
+
+        @location =  store_user.store_address
+
+        @store_owner_number = store_user.store_owner_work_number
+
+        @store_number =  store_user.store_number
+
+        @verified_by = store_user.verified_by
+
+
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
+
   def search_store_accounts
 
     if is_admin_session_expired?(current_admin)
@@ -157,6 +212,7 @@ class StoreAccountsController < ApplicationController
   end
 
   private
+
 
 
   def is_review_status_valid?(review_status)
