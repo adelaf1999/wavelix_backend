@@ -53,3 +53,7 @@ end
 if @verified_by != nil
     node(:verified_by) { @verified_by }
 end
+
+if @declined_verification != nil
+    node(:declined_verification) {  @declined_verification }
+end
