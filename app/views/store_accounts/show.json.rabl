@@ -61,3 +61,7 @@ end
 if @admins_declined != nil
     node(:admins_declined) { @admins_declined }
 end
+
+if @unverified_reasons != nil
+    node(:unverified_reasons) { @unverified_reasons }
+end

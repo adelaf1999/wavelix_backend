@@ -32,6 +32,23 @@ class StoreUser < ApplicationRecord
 
     after_create :save_street_name
 
+    def get_unverified_reasons
+
+        unverified_reasons = []
+
+        self.unverified_reasons.each do |unverified_reason|
+
+            unverified_reasons.push({
+                                        admin_name: unverified_reason.admin_name,
+                                        reason: unverified_reason.reason
+                                    })
+
+        end
+
+        unverified_reasons
+
+    end
+
     def registered_at_utc
 
         self.created_at.strftime('%Y-%m-%d %H:%M %Z')

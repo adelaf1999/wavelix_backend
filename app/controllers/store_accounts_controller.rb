@@ -134,7 +134,7 @@ class StoreAccountsController < ApplicationController
 
         @admins_declined = store_user.get_admins_declined
 
-
+        @unverified_reasons = store_user.get_unverified_reasons
 
 
 
