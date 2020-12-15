@@ -38,9 +38,9 @@ class StoreAccountChannel < ApplicationCable::Channel
 
       if admin.has_roles?(:root_admin, :account_manager)
 
-        if store_user.unreviewed?
+        stream_from "store_account_channel_#{store_user.id}"
 
-          stream_from "store_account_channel_#{store_user.id}"
+        if store_user.unreviewed?
 
           admins_reviewing = store_user.get_admins_reviewing
 
@@ -49,10 +49,6 @@ class StoreAccountChannel < ApplicationCable::Channel
           store_user.update!(admins_reviewing: admins_reviewing)
 
           send_current_reviewers(admins_reviewing, store_user)
-
-        else
-
-          reject
 
         end
 
