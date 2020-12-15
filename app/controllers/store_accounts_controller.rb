@@ -9,6 +9,85 @@ class StoreAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def accept_verification
+
+    if is_admin_session_expired?(current_admin)
+
+    elsif !current_admin.has_roles?(:root_admin, :account_manager)
+
+      head :unauthorized
+
+    else
+
+      store_user = StoreUser.find_by(id: params[:store_user_id])
+
+      if store_user != nil
+
+        if store_user.unverified?
+
+          @success = true
+
+          store_user.verified!
+
+          store_user.reviewed!
+
+          verified_by = current_admin.full_name
+
+          store_user.update!(verified_by: verified_by, admins_reviewing: [])
+
+
+
+          store_account_item = get_store_accounts_item(store_user)
+
+          ActionCable.server.broadcast 'store_accounts_channel', {
+              store_account_item: store_account_item
+          }
+
+
+
+          ActionCable.server.broadcast "store_account_channel_#{store_user.id}", {
+              status: store_user.status,
+              review_status: store_user.review_status,
+              verified_by: verified_by,
+              current_reviewers: []
+          }
+
+
+
+          store_email = store_user.get_email
+
+          store_owner_name = store_user.store_owner_full_name
+
+          store_name = store_user.store_name
+
+
+          StoreMailer.delay.account_verified(store_email, store_owner_name, store_name)
+
+
+          message_body = "The business account for your store #{store_name} has been successfully verified so you can start selling products, and your store profile has been activated so others can start following your account and seeing your profile."
+
+          message_title = 'Business Account Verified'
+
+          store_user.send_notification(message_body, message_title)
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
+
   def show
 
     if is_admin_session_expired?(current_admin)
@@ -52,7 +131,7 @@ class StoreAccountsController < ApplicationController
         @store_email = store_user.get_email
 
         @admins_declined = store_user.get_admins_declined
-        
+
 
 
 
