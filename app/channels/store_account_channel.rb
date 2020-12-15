@@ -104,10 +104,6 @@ class StoreAccountChannel < ApplicationCable::Channel
 
       end
 
-    else
-
-      reject
-
     end
 
 
