@@ -28,6 +28,8 @@ class StoreUser < ApplicationRecord
 
     has_many :employees
 
+    has_many :unverified_reasons
+
     after_create :save_street_name
 
     def registered_at_utc

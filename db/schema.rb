@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_11_085738) do
+ActiveRecord::Schema.define(version: 2020_12_15_103417) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -350,6 +350,15 @@ ActiveRecord::Schema.define(version: 2020_12_11_085738) do
     t.string "verified_by", default: ""
     t.text "admins_reviewing", default: [], array: true
     t.text "admins_declined", default: [], array: true
+  end
+
+  create_table "unverified_reasons", force: :cascade do |t|
+    t.string "admin_name", null: false
+    t.string "reason", null: false
+    t.integer "store_user_id"
+    t.integer "driver_id"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "users", force: :cascade do |t|

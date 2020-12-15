@@ -12,6 +12,8 @@ class Driver < ApplicationRecord
 
   has_many :withdrawals
 
+  has_many :unverified_reasons
+
   enum status: { offline: 0, online: 1 }
 
   mount_uploader :profile_picture, ImageUploader
