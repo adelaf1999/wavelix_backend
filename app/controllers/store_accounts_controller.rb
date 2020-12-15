@@ -9,6 +9,87 @@ class StoreAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def decline_verification
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :account_manager)
+
+      head :unauthorized
+
+    else
+
+      store_user = StoreUser.find_by(id: params[:store_user_id])
+
+      declined_reason = params[:declined_reason]
+
+      if store_user != nil && !declined_reason.blank?
+
+        if store_user.unverified?
+
+          admins_declined = store_user.get_admins_declined
+
+          if admins_declined.include?(current_admin.id)
+
+            @success = false
+
+          else
+
+            @success = true
+
+            admins_declined.push(current_admin.id)
+
+            store_user.reviewed!
+
+            store_user.update!(admins_declined: admins_declined, admins_reviewing: [])
+
+            UnverifiedReason.create!(
+                admin_name: current_admin.full_name,
+                reason: declined_reason,
+                store_user_id: store_user.id
+            )
+
+
+            store_account_item = get_store_accounts_item(store_user)
+
+            ActionCable.server.broadcast 'store_accounts_channel', {
+                store_account_item: store_account_item
+            }
+
+
+            ActionCable.server.broadcast "store_account_channel_#{store_user.id}", {
+                admins_declined: admins_declined,
+                review_status: store_user.review_status,
+                current_reviewers: [],
+                unverified_reasons: store_user.get_unverified_reasons
+            }
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+
+    end
+
+
+  end
+
+
   def accept_verification
 
     if is_admin_session_expired?(current_admin)

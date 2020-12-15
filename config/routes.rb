@@ -395,4 +395,6 @@ Rails.application.routes.draw do
 
   post '/accept-store-verification' => 'store_accounts#accept_verification'
 
+  post '/decline-store-verification' => 'store_accounts#decline_verification'
+
 end
