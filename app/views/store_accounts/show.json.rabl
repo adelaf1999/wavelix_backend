@@ -54,10 +54,10 @@ if @verified_by != nil
     node(:verified_by) { @verified_by }
 end
 
-if @declined_verification != nil
-    node(:declined_verification) {  @declined_verification }
-end
-
 if @store_email != nil
     node(:store_email) { @store_email }
+end
+
+if @admins_declined != nil
+    node(:admins_declined) { @admins_declined }
 end

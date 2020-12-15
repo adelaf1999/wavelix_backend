@@ -51,18 +51,8 @@ class StoreAccountsController < ApplicationController
 
         @store_email = store_user.get_email
 
-        admins_declined = store_user.get_admins_declined
-
-        if admins_declined.include?(current_admin.id)
-
-          @declined_verification = true
-
-        else
-
-          @declined_verification = false
-
-        end
-
+        @admins_declined = store_user.get_admins_declined
+        
 
 
 
