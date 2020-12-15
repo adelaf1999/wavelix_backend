@@ -13,6 +13,8 @@ class StoreAccountsController < ApplicationController
 
     if is_admin_session_expired?(current_admin)
 
+      head 440
+
     elsif !current_admin.has_roles?(:root_admin, :account_manager)
 
       head :unauthorized
