@@ -38,15 +38,7 @@ class CustomerDeliveryJob < Struct.new(:order_id)
       # Block the driver account temporarily to investigate what happened with the order
 
       driver.update!(account_blocked: true)
-
-
-      # Notify store that order was canceled and driver has been requested to return products to store
-
-      # Request driver to return products to store
-
-
-      # Notify customer that the order has been canceled and that he will be refunded the full amount paid
-
+      
       refund_order(order)
 
 
