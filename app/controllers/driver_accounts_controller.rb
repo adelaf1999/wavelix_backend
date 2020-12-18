@@ -8,6 +8,99 @@ class DriverAccountsController < ApplicationController
 
   before_action :authenticate_admin!
 
+
+  def search_driver_accounts
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+      # search for driver accounts by driver name
+
+      # can also filter accounts by driver_verified, country, account_blocked, and review status
+
+      @driver_accounts = []
+
+      search = params[:search]
+
+      limit = params[:limit]
+
+      driver_verified = params[:driver_verified]
+
+      country = params[:country]
+
+      account_blocked = params[:account_blocked]
+
+      review_status = params[:review_status]
+
+
+      if search != nil && is_positive_integer?(limit)
+
+
+        search = search.strip
+
+        drivers = Driver.all.where("name ILIKE ?", "%#{search}%").limit(limit)
+
+
+        if !driver_verified.blank?
+
+          driver_verified = eval(driver_verified)
+
+          if is_boolean?(driver_verified)
+
+            drivers = drivers.where(driver_verified: driver_verified)
+
+          end
+
+        end
+
+
+        if !country.blank?
+
+          drivers = drivers.where(country: country)
+
+        end
+
+
+        if !account_blocked.blank?
+
+          account_blocked = eval(account_blocked)
+
+          if is_boolean?(account_blocked)
+
+            drivers = drivers.where(account_blocked: account_blocked)
+
+          end
+
+        end
+
+
+        if is_review_status_valid?(review_status)
+
+          review_status = review_status.to_i
+
+          drivers = drivers.where(review_status: review_status)
+
+        end
+
+
+        drivers = drivers.order(created_at: :desc)
+
+        drivers.each do |driver|
+
+          @driver_accounts.push(get_driver_accounts_item(driver))
+
+        end
+
+      end
+
+
+    end
+
+  end
+
   def index
 
     if is_admin_session_expired?(current_admin)
@@ -48,6 +141,31 @@ class DriverAccountsController < ApplicationController
 
 
   private
+
+
+  def is_review_status_valid?(review_status)
+
+    if !review_status.blank?
+
+      review_status = review_status.to_i
+
+      Driver.review_statuses.values.include?(review_status)
+
+    else
+
+      false
+
+    end
+
+  end
+
+
+
+  def is_boolean?(arg)
+
+    [true, false].include?(arg)
+
+  end
 
   def get_driver_accounts_item(driver)
 
