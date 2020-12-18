@@ -397,4 +397,8 @@ Rails.application.routes.draw do
 
   post '/decline-store-verification' => 'store_accounts#decline_verification'
 
+  # Driver Accounts
+
+  post '/get-driver-accounts' => 'driver_accounts#index'
+
 end
