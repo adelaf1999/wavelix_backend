@@ -132,6 +132,10 @@ class DriverAccountsController < ApplicationController
               current_reviewers: []
           }
 
+          ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+              driver_verified: driver.driver_verified
+          }
+
           DriverMailer.delay.account_verified(driver.get_email, driver.name)
 
           message_body = 'Your Wavelix driver account has been successfully verified and you can start making deliveries.'
