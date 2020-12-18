@@ -9,6 +9,84 @@ class DriverAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def decline_verification
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :account_manager)
+
+      head :unauthorized
+
+    else
+
+      driver = Driver.find_by(id: params[:driver_id])
+
+      declined_reason = params[:declined_reason]
+
+      if driver != nil && !declined_reason.blank?
+
+        if driver.driver_verified
+
+          @success = false
+
+        else
+
+          admins_declined = driver.get_admins_declined
+
+          if admins_declined.include?(current_admin.id)
+
+            @success = false
+
+          else
+
+            @success = true
+
+            admins_declined.push(current_admin.id)
+
+            driver.reviewed!
+
+            driver.update!(admins_declined: admins_declined, admins_reviewing: [])
+
+            UnverifiedReason.create!(
+                admin_name: current_admin.full_name,
+                reason: declined_reason,
+                driver_id: driver.id
+            )
+
+
+            driver_account_item = get_driver_accounts_item(driver)
+
+            ActionCable.server.broadcast 'driver_accounts_channel', {
+                driver_account_item: driver_account_item
+            }
+
+            ActionCable.server.broadcast "driver_account_channel_#{driver.id}", {
+                admins_declined: admins_declined,
+                review_status: driver.review_status,
+                current_reviewers: [],
+                unverified_reasons: driver.get_unverified_reasons
+            }
+
+
+
+          end
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
+
   def accept_verification
 
     if is_admin_session_expired?(current_admin)

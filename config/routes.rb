@@ -407,4 +407,6 @@ Rails.application.routes.draw do
 
   post '/accept-driver-verification' => 'driver_accounts#accept_verification'
 
+  post '/decline-driver-verification' => 'driver_accounts#decline_verification'
+
 end
