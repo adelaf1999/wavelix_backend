@@ -176,6 +176,12 @@ class DriverController < ApplicationController
                 profile_picture_url: driver.profile_picture.url
             }
 
+
+            ActionCable.server.broadcast 'driver_accounts_channel', {
+                new_driver_registered: true
+            }
+
+
             send_registered_notification(driver.id)
 
           else
