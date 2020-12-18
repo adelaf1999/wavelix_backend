@@ -405,4 +405,6 @@ Rails.application.routes.draw do
 
   post '/view-driver-account' => 'driver_accounts#show'
 
+  post '/accept-driver-verification' => 'driver_accounts#accept_verification'
+
 end
