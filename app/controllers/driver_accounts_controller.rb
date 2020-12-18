@@ -9,6 +9,73 @@ class DriverAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def accept_verification
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :account_manager)
+
+      head :unauthorized
+
+    else
+
+      driver = Driver.find_by(id: params[:driver_id])
+
+      if driver != nil
+
+        if driver.driver_verified
+
+          @success = false
+
+        else
+
+          @success = true
+
+          driver.reviewed!
+
+          driver.update!(
+              driver_verified: true,
+              verified_by: current_admin.full_name,
+              admins_reviewing: []
+          )
+
+          driver_account_item = get_driver_accounts_item(driver)
+
+          ActionCable.server.broadcast 'driver_accounts_channel', {
+              driver_account_item: driver_account_item
+          }
+
+          ActionCable.server.broadcast "driver_account_channel_#{driver.id}", {
+              review_status: driver.review_status,
+              driver_verified: driver.driver_verified,
+              verified_by: driver.verified_by,
+              current_reviewers: []
+          }
+
+          DriverMailer.delay.account_verified(driver.get_email, driver.name)
+
+          message_body = 'Your Wavelix driver account has been successfully verified and you can start making deliveries.'
+
+          message_title = 'Driver Account Verified'
+
+          driver.send_notification(message_body, message_title)
+
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
+
   def show
 
     if is_admin_session_expired?(current_admin)
@@ -77,6 +144,8 @@ class DriverAccountsController < ApplicationController
         @admins_declined = driver.get_admins_declined
 
         @unverified_reasons = driver.get_unverified_reasons
+
+        @email = driver.get_email
 
 
 

@@ -65,3 +65,7 @@ end
 if @unverified_reasons != nil
     node(:unverified_reasons) { @unverified_reasons }
 end
+
+if @email != nil
+    node(:email) { @email }
+end

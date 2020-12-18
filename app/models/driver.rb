@@ -33,6 +33,13 @@ class Driver < ApplicationRecord
   serialize :vehicle_registration_document_pictures, Array
 
 
+  def get_email
+
+    self.customer_user.customer.email
+
+  end
+
+
   def get_unverified_reasons
 
     unverified_reasons = []
