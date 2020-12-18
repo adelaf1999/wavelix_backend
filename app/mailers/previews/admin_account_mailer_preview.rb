@@ -38,4 +38,10 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.store_registered_notice(email, store_user_id)
   end
 
+  def driver_registered_notice
+    email = 'adelwaboufakher@gmail.com'
+    driver_id = 1
+    AdminAccountMailer.driver_registered_notice(email, driver_id)
+  end
+
 end

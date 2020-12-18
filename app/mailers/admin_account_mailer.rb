@@ -32,4 +32,10 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'New Store Registered'
   end
 
+  def driver_registered_notice(email, driver_id)
+    @driver_id = driver_id
+    @view_store_link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/driver-accounts/driver_id=#{driver_id}"
+    mail to: email, subject: 'New Driver Registered'
+  end
+
 end
