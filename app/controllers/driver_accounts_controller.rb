@@ -125,11 +125,7 @@ class DriverAccountsController < ApplicationController
 
       end
 
-      @verified_options = { yes: true, no: false  }
-
-      @account_blocked_options = { yes: true, no: false }
-
-      @review_status_options = { unreviewed: 0, reviewed: 1 }
+      @review_status_options = { 0 => 'Unreviewed', 1 => 'Reviewed' }
 
       @countries = get_countries
 
@@ -174,8 +170,8 @@ class DriverAccountsController < ApplicationController
         profile_picture: driver.profile_picture.url,
         name: driver.name,
         country: driver.get_country_name,
-        verified: driver.driver_verified ? 'yes' : 'no',
-        account_blocked: driver.account_blocked ? 'yes' : 'no',
+        driver_verified: driver.driver_verified,
+        account_blocked: driver.account_blocked,
         review_status: driver.review_status,
         registered_at: driver.registered_at_utc
     }
