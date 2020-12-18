@@ -403,4 +403,6 @@ Rails.application.routes.draw do
 
   post '/search-driver-accounts' => 'driver_accounts#search_driver_accounts'
 
+  post '/view-driver-account' => 'driver_accounts#show'
+
 end

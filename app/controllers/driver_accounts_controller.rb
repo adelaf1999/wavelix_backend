@@ -9,6 +9,89 @@ class DriverAccountsController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def show
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    else
+
+      driver = Driver.find_by(id: params[:driver_id])
+
+      if driver != nil
+
+        @success = true
+
+        @profile_picture = driver.profile_picture.url
+
+        @name = driver.name
+
+        @phone_number = driver.get_phone_number
+
+        @country = driver.get_country_name
+
+        @driver_verified = driver.driver_verified
+
+        @account_blocked = driver.account_blocked
+
+        @review_status = driver.review_status
+
+        @registered_at = driver.registered_at_utc
+
+        @latitude = driver.latitude
+
+        @longitude = driver.longitude
+
+
+
+        @driver_license_pictures = []
+
+        @national_id_pictures = []
+
+        @vehicle_registration_pictures = []
+
+
+        driver.driver_license_pictures.each do |picture|
+
+          @driver_license_pictures.push(picture.url)
+
+        end
+
+
+        driver.national_id_pictures.each do |picture|
+
+          @national_id_pictures.push(picture.url)
+
+        end
+
+
+        driver.vehicle_registration_document_pictures.each do |picture|
+
+          @vehicle_registration_pictures.push(picture.url)
+
+        end
+
+        @verified_by = driver.verified_by
+
+        @admins_declined = driver.get_admins_declined
+
+        @unverified_reasons = driver.get_unverified_reasons
+
+
+
+
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
   def search_driver_accounts
 
     if is_admin_session_expired?(current_admin)
