@@ -176,6 +176,8 @@ class DriverController < ApplicationController
                 profile_picture_url: driver.profile_picture.url
             }
 
+            send_registered_notification(driver.id)
+
           else
 
             @success = false
@@ -260,6 +262,23 @@ class DriverController < ApplicationController
   end
 
   private
+
+
+ def send_registered_notification(driver_id)
+
+   # Send email to all account managers and root admins when a new driver signs up
+
+   admins = Admin.role_root_admins + Admin.role_account_managers
+
+   admins = admins.uniq
+
+   admins.each do |admin|
+
+     AdminAccountMailer.delay.driver_registered_notice(admin.email, driver_id)
+
+   end
+
+ end
 
   def is_picture_valid?(picture)
 
