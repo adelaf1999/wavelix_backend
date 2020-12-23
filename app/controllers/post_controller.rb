@@ -229,8 +229,12 @@ class PostController < ApplicationController
 
       if store_user.unverified?
 
+        # store users can only create post if verified
+
         @success = false
-        @message = "You need to be verified to create post"
+
+        @message = 'You need to be verified to create post'
+
         return
 
       end
@@ -247,63 +251,74 @@ class PostController < ApplicationController
 
       end
 
-
     end
 
-    # store users can only create post / story if verified
 
     profile = current_user.profile
 
-    media_file = params[:media_file]
 
-    is_story = params[:is_story]
+    if profile.blocked?
 
-    product_id = params[:product_id]
+      @success = false
 
-    base64 = params[:base64]
+      @message = "Couldn't create post since profile has been blocked"
 
-
-    if !media_file.blank? && !base64.blank?
-
-      base64 = eval(base64)
-
-      post = Post.new
-
-      post.profile_id = profile.id
+    else
 
 
-      caption = params[:caption]
+      media_file = params[:media_file]
 
-      if !caption.blank?
+      is_story = params[:is_story]
 
-        post.caption = caption
+      product_id = params[:product_id]
 
-      end
+      base64 = params[:base64]
 
-      if !is_story.blank?
 
-        is_story = eval(is_story.downcase)
+      if !media_file.blank? && !base64.blank?
 
-        if is_story
+        base64 = eval(base64)
 
-          post.is_story = true
+        post = Post.new
+
+        post.profile_id = profile.id
+
+
+        caption = params[:caption]
+
+        if !caption.blank?
+
+          post.caption = caption
 
         end
 
-      end
+        if !is_story.blank?
+
+          is_story = eval(is_story.downcase)
+
+          if is_story
+
+            post.is_story = true
+
+          end
+
+        end
 
 
-      if current_user.store_user? && !product_id.blank?
+        if current_user.store_user? && !product_id.blank?
 
-        store_user = StoreUser.find_by(store_id: current_user.id)
+          store_user = StoreUser.find_by(store_id: current_user.id)
 
-        product = store_user.products.find_by(id: product_id)
+          product = store_user.products.find_by(id: product_id)
 
-        if product != nil
+          if product != nil
 
-          if product.product_available && product.stock_quantity != 0
+            if product.product_available && product.stock_quantity != 0
 
-            post.product_id = product_id
+              post.product_id = product_id
+
+            end
+
 
           end
 
@@ -311,56 +326,63 @@ class PostController < ApplicationController
         end
 
 
-      end
+        # Validate and configure the media file based on whether its base64 or not
 
+        if base64
 
-      # Validate and configure the media file based on whether its base64 or not
+          media_file = eval(media_file)
 
-      if base64
+          if media_file.instance_of?(Hash) && media_file.size > 0
 
-        media_file = eval(media_file)
+            name = media_file[:name]
 
-        if media_file.instance_of?(Hash) && media_file.size > 0
+            type = media_file[:type]
 
-          name = media_file[:name]
+            uri = media_file[:uri]
 
-          type = media_file[:type]
+            if name != nil && type != nil && uri != nil
 
-          uri = media_file[:uri]
+              base64_uri_array = uri.split(",")
 
-          if name != nil && type != nil && uri != nil
+              base64_uri = base64_uri_array[base64_uri_array.length - 1]
 
-            base64_uri_array = uri.split(",")
+              temp_file = Tempfile.new(name)
 
-            base64_uri = base64_uri_array[base64_uri_array.length - 1]
+              temp_file.binmode
 
-            temp_file = Tempfile.new(name)
+              temp_file.write Base64.decode64(base64_uri)
 
-            temp_file.binmode
+              temp_file.rewind
 
-            temp_file.write Base64.decode64(base64_uri)
+              name_array = name.split(".")
 
-            temp_file.rewind
+              extension = name_array[name_array.length - 1]
 
-            name_array = name.split(".")
+              if media_file_valid_extensions.include?(extension)
 
-            extension = name_array[name_array.length - 1]
-
-            if media_file_valid_extensions.include?(extension)
-
-              media_file = ActionDispatch::Http::UploadedFile.new({
+                media_file = ActionDispatch::Http::UploadedFile.new({
                                                                         tempfile: temp_file,
                                                                         type: type,
                                                                         filename: name
                                                                     })
 
-              post.media_type = get_media_file_type(extension)
+                post.media_type = get_media_file_type(extension)
+
+
+              else
+
+                @success = false
+                @message = 'Upload a media file with appropriate extension and try again'
+                return
+
+              end
+
 
 
             else
 
               @success = false
-              @message = 'Upload a media file with appropriate extension and try again'
+              @message = 'Invalid media file'
               return
 
             end
@@ -369,10 +391,12 @@ class PostController < ApplicationController
 
           else
 
+
             @success = false
             @message = 'Invalid media file'
             return
 
+
           end
 
 
@@ -380,33 +404,25 @@ class PostController < ApplicationController
         else
 
 
-          @success = false
-          @message = 'Invalid media file'
-          return
+          if !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
 
 
-        end
+            @success = false
+            @message = 'Upload a media file with appropriate extension and try again'
+            return
+
+
+          else
+
+            filename = media_file.original_filename.split(".")
+
+            extension = filename[filename.length - 1]
+
+            post.media_type = get_media_file_type(extension)
 
 
 
-        else
-
-
-        if !media_file.is_a?(ActionDispatch::Http::UploadedFile) || !is_media_file_valid?(media_file)
-
-
-          @success = false
-          @message = 'Upload a media file with appropriate extension and try again'
-          return
-
-
-        else
-
-          filename = media_file.original_filename.split(".")
-
-          extension = filename[filename.length - 1]
-
-          post.media_type = get_media_file_type(extension)
+          end
 
 
 
@@ -414,122 +430,125 @@ class PostController < ApplicationController
 
 
 
-      end
+        media_type = post.media_type_before_type_cast
+
+        if media_type == 0
+
+          # The user will wait till his image is uploaded and encoded
+
+          if post.save!
+
+            post.image_file = media_file
+
+            if post.delay.save!
+
+              post.complete!
 
 
+              @success = true
 
-      media_type = post.media_type_before_type_cast
+              if post.is_story
 
-      if media_type == 0
+                Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
 
-        # The user will wait till his image is uploaded and encoded
-
-        if post.save!
-
-          post.image_file = media_file
-
-          if post.delay.save!
-
-            post.complete!
+              end
 
 
-            @success = true
+              PostBroadcastJob.perform_later(current_user.id)
 
-            if post.is_story
-
-              Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
+              return
 
             end
 
+          else
 
-            PostBroadcastJob.perform_later(current_user.id)
-
+            @success = false
+            @message = "Error creating post"
             return
 
           end
 
+
         else
 
-          @success = false
-          @message = "Error creating post"
-          return
+          video = FFMPEG::Movie.new(media_file.tempfile.path)
+
+          thumbnail_filename = "#{Time.now.to_i}.jpeg"
+
+          thumbnail_path = "#{Rails.root}/tmp/#{thumbnail_filename}"
+
+          video.screenshot(thumbnail_path, seek_time: 1)
+
+          thumbnail_tempfile = File.new(thumbnail_path)
+
+
+          video_thumbnail = ActionDispatch::Http::UploadedFile.new({
+                                                                       tempfile: thumbnail_tempfile,
+                                                                       type: 'image/jpeg',
+                                                                       filename: thumbnail_filename
+                                                                   })
+
+          post.video_thumbnail = video_thumbnail
+
+          if post.save!
+
+            File.delete(thumbnail_path) if File.exist?(thumbnail_path)
+
+            @success = true
+
+            PostBroadcastJob.perform_later(current_user.id)
+
+
+            local_video = LocalVideo.new
+
+            local_video.video = media_file
+
+            if local_video.save!
+
+              post_id = post.id
+
+              local_video_id = local_video.id
+
+              user_id = current_user.id
+
+              Delayed::Job.enqueue(
+                  CompressVideoJob.new(post_id, local_video_id, user_id),
+                  queue: 'compress_video_queue',
+                  priority: 0
+              )
+
+              return
+
+            end
+
+          else
+
+            @success = false
+            @message = "Error creating post"
+            return
+
+          end
 
         end
+
+
+
 
 
       else
 
-        video = FFMPEG::Movie.new(media_file.tempfile.path)
+        @success = false
+        @message = 'Error creating post'
 
-        thumbnail_filename = "#{Time.now.to_i}.jpeg"
-
-        thumbnail_path = "#{Rails.root}/tmp/#{thumbnail_filename}"
-
-        video.screenshot(thumbnail_path, seek_time: 1)
-
-        thumbnail_tempfile = File.new(thumbnail_path)
-
-
-        video_thumbnail = ActionDispatch::Http::UploadedFile.new({
-                                                                     tempfile: thumbnail_tempfile,
-                                                                     type: 'image/jpeg',
-                                                                     filename: thumbnail_filename
-                                                                 })
-
-        post.video_thumbnail = video_thumbnail
-
-        if post.save!
-
-          File.delete(thumbnail_path) if File.exist?(thumbnail_path)
-
-          @success = true
-
-          PostBroadcastJob.perform_later(current_user.id)
-
-
-          local_video = LocalVideo.new
-
-          local_video.video = media_file
-
-          if local_video.save!
-
-            post_id = post.id
-
-            local_video_id = local_video.id
-
-            user_id = current_user.id
-
-            Delayed::Job.enqueue(
-                CompressVideoJob.new(post_id, local_video_id, user_id),
-                queue: 'compress_video_queue',
-                priority: 0
-            )
-
-            return
-
-          end
-
-        else
-
-          @success = false
-          @message = "Error creating post"
-          return
-
-        end
 
       end
 
 
 
-
-
-    else
-
-      @success = false
-      @message = 'Error creating post'
-
-
     end
+
+
+
 
 
 
