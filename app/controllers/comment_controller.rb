@@ -95,6 +95,8 @@ class CommentController < ApplicationController
 
     # unverified stores cannot comment
 
+    # blocked profiles cannot create comments
+
     # can only comment on profile posts
 
     if current_user.customer_user?
@@ -123,31 +125,41 @@ class CommentController < ApplicationController
 
         current_user_profile = current_user.profile
 
-        post_profile = post.profile
+        if current_user_profile.blocked?
 
-        post_user = post_profile.user
-
-        if current_user.store_user?
-
-          store_user = StoreUser.find_by(store_id: current_user.id)
-
-          if store_user.verified?
-
-            create_comment(current_user_profile, post_profile, post_user, post, text)
-
-          else
-
-            @success = false
-
-          end
+          @success = false
 
         else
 
+          post_profile = post.profile
 
-          create_comment(current_user_profile, post_profile, post_user, post, text)
+          post_user = post_profile.user
+
+          if current_user.store_user?
+
+            store_user = StoreUser.find_by(store_id: current_user.id)
+
+            if store_user.verified?
+
+              create_comment(current_user_profile, post_profile, post_user, post, text)
+
+            else
+
+              @success = false
+
+            end
+
+          else
+
+
+            create_comment(current_user_profile, post_profile, post_user, post, text)
+
+          end
 
 
         end
+
+
 
 
       else
@@ -162,6 +174,8 @@ class CommentController < ApplicationController
       @success = false
 
     end
+
+
 
   end
 
