@@ -19,6 +19,10 @@ class PhoneVerificationsController < ApplicationController
 
   def can_request_sms
 
+    # error_codes
+
+    # { 0: PHONE_NUMBER_EXISTS_ERROR, 1: CANT_REQUEST_SMS_ERROR }
+
     if current_user.customer_user?
 
       is_valid = true
@@ -54,17 +58,42 @@ class PhoneVerificationsController < ApplicationController
 
           phone_number = PhoneNumber.find_by(number: "#{country_code}#{number}")
 
-          if phone_number == nil || phone_number.can_request_sms?
 
-            @success = true
-
-          else
-
-            # Phone number exists but still cant make phone request
+          if !can_use_phone_number?(country_code, number)
 
             @success = false
 
+            @error_code = 0
+
+
+          else
+
+
+            if phone_number == nil || phone_number.can_request_sms?
+
+              @success = true
+
+            else
+
+              # Phone number exists but still cant make phone request
+
+              @success = false
+
+              @error_code = 1
+
+
+
+            end
+
+
           end
+
+
+
+
+
+
+
 
         end
 
