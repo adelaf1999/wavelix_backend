@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_23_102623) do
+ActiveRecord::Schema.define(version: 2020_12_23_140953) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -324,6 +324,7 @@ ActiveRecord::Schema.define(version: 2020_12_23_102623) do
     t.string "profile_bio"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.integer "status", default: 0
   end
 
   create_table "schedules", force: :cascade do |t|

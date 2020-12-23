@@ -4,6 +4,8 @@ class Profile < ApplicationRecord
 
   enum privacy: { public_account: 0, private_account: 1 }
 
+  enum status: { unblocked: 0, blocked: 1 }
+
   mount_uploader :profile_picture, ImageUploader
 
   has_many :posts, dependent: :destroy
