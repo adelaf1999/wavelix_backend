@@ -99,7 +99,13 @@ class CommentController < ApplicationController
 
     # can only comment on profile posts
 
-    if current_user.customer_user?
+    if current_user.profile.blocked?
+
+      @success = false
+
+      return
+
+    elsif current_user.customer_user?
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
@@ -113,6 +119,7 @@ class CommentController < ApplicationController
 
     end
 
+
     post = Post.find_by(id: params[:post_id])
 
     text = params[:text]
@@ -125,41 +132,30 @@ class CommentController < ApplicationController
 
         current_user_profile = current_user.profile
 
-        if current_user_profile.blocked?
+        post_profile = post.profile
 
-          @success = false
+        post_user = post_profile.user
 
-        else
+        if current_user.store_user?
 
-          post_profile = post.profile
+          store_user = StoreUser.find_by(store_id: current_user.id)
 
-          post_user = post_profile.user
-
-          if current_user.store_user?
-
-            store_user = StoreUser.find_by(store_id: current_user.id)
-
-            if store_user.verified?
-
-              create_comment(current_user_profile, post_profile, post_user, post, text)
-
-            else
-
-              @success = false
-
-            end
-
-          else
-
+          if store_user.verified?
 
             create_comment(current_user_profile, post_profile, post_user, post, text)
 
+          else
+
+            @success = false
+
           end
 
+        else
+
+
+          create_comment(current_user_profile, post_profile, post_user, post, text)
 
         end
-
-
 
 
       else
