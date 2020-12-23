@@ -53,13 +53,23 @@ class LikesController < ApplicationController
 
   def create
 
+
     # unverified stores cannot like
 
     # cannot like posts of private account unless following them
 
     # can like once and only once profile posts only
 
-    if current_user.customer_user?
+    # blocked profiles cannot like posts
+
+
+    if current_user.profile.blocked?
+
+      @success = false
+
+      return
+
+    elsif current_user.customer_user?
 
       customer_user  = CustomerUser.find_by(customer_id: current_user.id)
 
@@ -72,6 +82,7 @@ class LikesController < ApplicationController
       end
 
     end
+
 
     post = Post.find_by(id: params[:post_id])
 
