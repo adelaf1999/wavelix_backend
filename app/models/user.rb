@@ -20,11 +20,17 @@ class User < ActiveRecord::Base
   after_create :create_profile
 
   has_many :following_relationships, class_name: 'Follow', foreign_key: 'follower_id', dependent: :destroy
+
   has_many :follower_relationships, class_name: 'Follow', foreign_key: 'followed_id', dependent: :destroy
 
-
   has_many :following, through: :following_relationships, source: :followed
+
   has_many :followers, through: :follower_relationships, source: :follower
+
+  
+  has_many :comments, foreign_key: 'author_id'
+
+  has_many :likes, foreign_key: 'liker_id'
 
   def accept_follow_request(other)
 
