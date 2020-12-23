@@ -18,6 +18,7 @@ class CustomerUser < ApplicationRecord
 
     has_many :lists, dependent: :destroy
 
+    validates :phone_number, uniqueness: true, allow_nil: true
 
     after_create :create_cart, :save_stripe_customer_token, :create_default_list
 
