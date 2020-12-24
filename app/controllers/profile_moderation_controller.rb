@@ -28,13 +28,7 @@ class ProfileModerationController < ApplicationController
 
         profiles.each do |profile|
 
-          @profiles.push({
-                             username: profile.get_username,
-                             email: profile.get_email,
-                             user_type: profile.get_user_type,
-                             status: profile.status,
-                             profile_picture: profile.profile_picture.url
-                         })
+          @profiles.push(get_profile(profile))
 
         end
 
@@ -42,6 +36,21 @@ class ProfileModerationController < ApplicationController
 
     end
 
+
+  end
+
+  private
+
+  def get_profile(profile)
+
+    {
+        username: profile.get_username,
+        email: profile.get_email,
+        user_type: profile.get_user_type,
+        status: profile.status,
+        profile_picture: profile.profile_picture.url,
+        id: profile.id
+    }
 
   end
 
