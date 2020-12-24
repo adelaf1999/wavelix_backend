@@ -7,6 +7,82 @@ class ProfileModerationController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def request_store_profile_block
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:profile_manager)
+
+      head :unauthorized
+
+    else
+
+      profile = Profile.find_by(id: params[:profile_id])
+
+      reason = params[:reason]
+
+      if profile != nil && !reason.blank?
+
+        user = profile.user
+
+        if user.store_user? && profile.unblocked?
+
+          admins_requested_block = profile.get_admins_requested_block
+
+          if admins_requested_block.include?(current_admin.id)
+
+            @success = false
+
+          else
+
+            @success = true
+
+            admins_requested_block.push(current_admin.id)
+
+            profile.update!(admins_requested_block: admins_requested_block)
+
+            BlockRequest.create!(admin_name: current_admin.full_name, reason: reason, profile_id: profile.id)
+
+            ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
+                admins_requested_block: admins_requested_block,
+                block_requests: profile.get_block_requests
+            }
+
+
+            admins = Admin.role_root_admins
+
+            admins.each do |admin|
+
+              AdminAccountMailer.delay.store_profile_block_request(admin.email, profile.id)
+
+            end
+
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+
+    end
+
+
+  end
+
   def block_customer_profile
 
     if is_admin_session_expired?(current_admin)
