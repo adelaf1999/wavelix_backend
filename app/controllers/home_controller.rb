@@ -96,6 +96,8 @@ class HomeController < ApplicationController
 
     end
 
+    @profile_blocked = current_user.profile.blocked?
+
 
   end
 
