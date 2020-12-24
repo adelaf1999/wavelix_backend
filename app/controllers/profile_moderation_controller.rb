@@ -7,6 +7,68 @@ class ProfileModerationController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def block_customer_profile
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :profile_manager)
+
+      head :unauthorized
+
+    else
+
+      profile = Profile.find_by(id: params[:profile_id])
+
+      reason = params[:reason]
+
+      if profile != nil && !reason.blank?
+
+        user = profile.user
+
+        if user.customer_user? && profile.unblocked?
+
+          @success = true
+
+          profile.blocked!
+
+          admin_name = current_admin.full_name
+
+          profile.update!(blocked_by: admin_name)
+
+          BlockedReason.create!(admin_name: admin_name, reason: reason, profile_id: profile.id)
+
+          ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
+              status: profile.status,
+              blocked_by: profile.blocked_by,
+              blocked_reasons: profile.get_blocked_reasons
+          }
+
+          profile.posts.destroy_all
+
+          user.comments.destroy_all
+
+          user.likes.destroy_all
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+
+  end
 
   def show
 
@@ -46,32 +108,9 @@ class ProfileModerationController < ApplicationController
 
         @admins_requested_block = profile.get_admins_requested_block
 
-        @blocked_reasons = []
+        @blocked_reasons = profile.get_blocked_reasons
 
-        @block_requests = []
-
-
-        profile.blocked_reasons.each do |blocked_reason|
-
-          @blocked_reasons.push({
-                                  admin_name: blocked_reason.admin_name,
-                                  reason: blocked_reason.reason
-                                })
-
-        end
-
-        profile.block_requests.each do |block_request|
-
-          @block_requests.push({
-                                   admin_name: block_request.admin_name,
-                                   reason: block_request.reason
-                               })
-
-        end
-
-
-
-
+        @block_requests = profile.get_block_requests
 
 
       else

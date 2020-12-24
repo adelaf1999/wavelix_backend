@@ -417,4 +417,6 @@ Rails.application.routes.draw do
 
   post '/get-profile' => 'profile_moderation#show'
 
+  post '/block-customer-profile' => 'profile_moderation#block_customer_profile'
+
 end
