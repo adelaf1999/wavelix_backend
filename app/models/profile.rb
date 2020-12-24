@@ -14,6 +14,25 @@ class Profile < ApplicationRecord
 
   has_many :block_requests
 
+  def get_user_type
+
+    self.user.user_type
+
+  end
+
+
+  def get_email
+
+    self.user.email
+
+  end
+
+
+  def get_username
+
+    self.user.username
+
+  end
 
   def get_admins_requested_block
 

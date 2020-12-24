@@ -409,4 +409,8 @@ Rails.application.routes.draw do
 
   post '/decline-driver-verification' => 'driver_accounts#decline_verification'
 
+  # Profile Moderation Routes
+
+  post '/get-user-profiles' => 'profile_moderation#index'
+
 end
