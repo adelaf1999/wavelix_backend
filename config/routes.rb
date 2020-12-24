@@ -411,8 +411,10 @@ Rails.application.routes.draw do
 
   # Profile Moderation Routes
 
-  post '/get-user-profiles' => 'profile_moderation#index'
+  post '/get-profiles' => 'profile_moderation#index'
 
   post '/search-user-profiles' => 'profile_moderation#search_user_profiles'
+
+  post '/get-profile' => 'profile_moderation#show'
 
 end
