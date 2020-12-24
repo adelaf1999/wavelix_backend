@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_24_111343) do
+ActiveRecord::Schema.define(version: 2020_12_24_112957) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -43,6 +43,14 @@ ActiveRecord::Schema.define(version: 2020_12_24_111343) do
     t.index ["email"], name: "index_admins_on_email", unique: true
     t.index ["uid", "provider"], name: "index_admins_on_uid_and_provider", unique: true
     t.index ["unlock_token"], name: "index_admins_on_unlock_token", unique: true
+  end
+
+  create_table "block_requests", force: :cascade do |t|
+    t.string "admin_name", null: false
+    t.string "reason", null: false
+    t.integer "profile_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "cart_items", force: :cascade do |t|

@@ -12,6 +12,8 @@ class Profile < ApplicationRecord
 
   belongs_to :user
 
+  has_many :block_requests
+
 
   def get_admins_requested_block
 
