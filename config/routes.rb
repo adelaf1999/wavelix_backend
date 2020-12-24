@@ -413,4 +413,6 @@ Rails.application.routes.draw do
 
   post '/get-user-profiles' => 'profile_moderation#index'
 
+  post '/search-user-profiles' => 'profile_moderation#search_user_profiles'
+
 end
