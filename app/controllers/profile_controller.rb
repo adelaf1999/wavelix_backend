@@ -277,6 +277,7 @@ class ProfileController < ApplicationController
     end
 
     # common profile data
+
     profile = current_user.profile
 
     @profile_data[:profile] = get_profile(profile)
@@ -284,6 +285,9 @@ class ProfileController < ApplicationController
     @profile_data[:follow_relationships] = get_follow_relationships(current_user)
 
     @profile_data = @profile_data.to_json # at end convert to json
+
+    @profile_blocked = profile.blocked?
+
 
 
   end
