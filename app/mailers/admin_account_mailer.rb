@@ -38,4 +38,9 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'New Driver Registered'
   end
 
+  def store_profile_block_request(email, profile_id)
+    @view_profile_link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/profiles/profile_id=#{profile_id}"
+    mail to: email, subject: 'Store Profile Block Request'
+  end
+
 end

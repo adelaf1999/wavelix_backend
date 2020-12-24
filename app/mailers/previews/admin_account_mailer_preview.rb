@@ -44,4 +44,10 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.driver_registered_notice(email, driver_id)
   end
 
+  def store_profile_block_request
+    email = 'adelwaboufakher@gmail.com'
+    profile_id = 1
+    AdminAccountMailer.store_profile_block_request(email, profile_id)
+  end
+
 end
