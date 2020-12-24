@@ -123,6 +123,7 @@ class ProfileController < ApplicationController
 
           # Common data when user profile is public/private
           @success = true
+          @profile_blocked = current_user.profile.blocked?
 
           @profile_data[:is_following] = is_following
           @profile_data[:user_type] = user_type
@@ -200,7 +201,9 @@ class ProfileController < ApplicationController
 
           @profile_data = {}
           @success = true
+          @profile_blocked = current_user.profile.blocked?
 
+          
           username = user.username
           follow_relationships = get_follow_relationships(user)
           profile_picture = profile.profile_picture.url

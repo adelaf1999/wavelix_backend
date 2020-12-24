@@ -13,3 +13,7 @@ end
 if @customer_country != nil
     node(:customer_country) { @customer_country }
 end
+
+if @profile_blocked != nil
+    node(:profile_blocked) { @profile_blocked }
+end
