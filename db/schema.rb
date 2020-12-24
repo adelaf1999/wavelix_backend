@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_23_152534) do
+ActiveRecord::Schema.define(version: 2020_12_24_111343) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -326,6 +326,7 @@ ActiveRecord::Schema.define(version: 2020_12_23_152534) do
     t.datetime "updated_at", precision: 6, null: false
     t.integer "status", default: 0
     t.string "blocked_by", default: ""
+    t.text "admins_requested_block", default: [], array: true
   end
 
   create_table "schedules", force: :cascade do |t|

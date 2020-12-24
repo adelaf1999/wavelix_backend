@@ -12,4 +12,28 @@ class Profile < ApplicationRecord
 
   belongs_to :user
 
+
+  def get_admins_requested_block
+
+    admins_requested_block = self.admins_requested_block.map &:to_i
+
+    admins_requested_block.each do |admin_id|
+
+      admin = Admin.find_by(id: admin_id)
+
+      if admin.nil?
+
+        admins_requested_block.delete(admin_id)
+
+      end
+
+    end
+
+    self.update!(admins_requested_block: admins_requested_block)
+
+    admins_requested_block
+
+  end
+
+
 end
