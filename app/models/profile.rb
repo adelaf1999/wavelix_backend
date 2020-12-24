@@ -14,6 +14,8 @@ class Profile < ApplicationRecord
 
   has_many :block_requests
 
+  has_many :blocked_reasons
+
   def get_user_type
 
     self.user.user_type

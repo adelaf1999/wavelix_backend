@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_24_112957) do
+ActiveRecord::Schema.define(version: 2020_12_24_124939) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -46,6 +46,14 @@ ActiveRecord::Schema.define(version: 2020_12_24_112957) do
   end
 
   create_table "block_requests", force: :cascade do |t|
+    t.string "admin_name", null: false
+    t.string "reason", null: false
+    t.integer "profile_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "blocked_reasons", force: :cascade do |t|
     t.string "admin_name", null: false
     t.string "reason", null: false
     t.integer "profile_id", null: false
