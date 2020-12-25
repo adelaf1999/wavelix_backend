@@ -50,4 +50,10 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.store_profile_block_request(email, profile_id)
   end
 
+  def store_profile_status_changed
+    email = 'adelwaboufakher@gmail.com'
+    message = 'This is a test message'
+    AdminAccountMailer.store_profile_status_changed(email, message)
+  end
+
 end

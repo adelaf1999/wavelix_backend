@@ -7,6 +7,8 @@ class ProfileModerationController < ApplicationController
   before_action :authenticate_admin!
 
 
+
+
   def request_store_profile_block
 
     if is_admin_session_expired?(current_admin)
@@ -82,6 +84,112 @@ class ProfileModerationController < ApplicationController
 
 
   end
+
+
+  def toggle_store_profile_status
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin)
+
+      head :unauthorized
+
+    else
+
+      profile = Profile.find_by(id: params[:profile_id])
+
+      if profile != nil
+
+        user = profile.user
+
+        if user.store_user?
+
+          @success = true
+
+          if profile.unblocked?
+
+            profile.blocked!
+
+            admin_name = current_admin.full_name
+
+            profile.update!(blocked_by: admin_name)
+
+            ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
+                status: profile.status,
+                blocked_by: profile.blocked_by
+            }
+
+            profile.posts.destroy_all
+
+            user.comments.destroy_all
+
+            user.likes.destroy_all
+
+            # send email to all other root admins
+
+            message = "#{admin_name} has blocked the profile of a store with username #{profile.get_username}."
+
+            admins = Admin.role_root_admins.where.not(id: current_admin.id)
+
+            admins.each do |admin|
+
+              AdminAccountMailer.delay.store_profile_status_changed(admin.email, message)
+
+            end
+
+
+
+          else
+
+            profile.unblocked!
+
+            profile.update!(blocked_by: '', admins_requested_block: [])
+
+            ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
+                status: profile.status,
+                blocked_by: profile.blocked_by,
+                admins_requested_block: profile.get_admins_requested_block
+            }
+
+            # send email to all other root admins
+
+            admin_name = current_admin.full_name
+
+            message = "#{admin_name} has unblocked the profile of a store with username #{profile.get_username}."
+
+            admins = Admin.role_root_admins.where.not(id: current_admin.id)
+
+            admins.each do |admin|
+
+              AdminAccountMailer.delay.store_profile_status_changed(admin.email, message)
+
+            end
+
+
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+  end
+
 
   def block_customer_profile
 

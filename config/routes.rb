@@ -421,4 +421,6 @@ Rails.application.routes.draw do
 
   post '/request-store-profile-block' => 'profile_moderation#request_store_profile_block'
 
+  post '/toggle-store-profile-status' => 'profile_moderation#toggle_store_profile_status'
+
 end
