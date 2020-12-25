@@ -116,16 +116,21 @@ class ProfileModerationController < ApplicationController
 
             profile.update!(blocked_by: admin_name)
 
-            ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
-                status: profile.status,
-                blocked_by: profile.blocked_by
-            }
 
             profile.posts.destroy_all
 
             user.comments.destroy_all
 
             user.likes.destroy_all
+
+
+            ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
+                status: profile.status,
+                blocked_by: profile.blocked_by,
+                story_posts: [],
+                profile_posts: []
+            }
+
 
             # send email to all other root admins
 
@@ -223,17 +228,23 @@ class ProfileModerationController < ApplicationController
 
           BlockedReason.create!(admin_name: admin_name, reason: reason, profile_id: profile.id)
 
-          ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
-              status: profile.status,
-              blocked_by: profile.blocked_by,
-              blocked_reasons: profile.get_blocked_reasons
-          }
 
           profile.posts.destroy_all
 
           user.comments.destroy_all
 
           user.likes.destroy_all
+
+
+          ActionCable.server.broadcast "profile_moderation_channel_#{profile.id}", {
+              status: profile.status,
+              blocked_by: profile.blocked_by,
+              blocked_reasons: profile.get_blocked_reasons,
+              story_posts: [],
+              profile_posts: []
+          }
+
+
 
 
         else
