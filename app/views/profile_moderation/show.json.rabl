@@ -50,4 +50,12 @@ if @block_requests != nil
     node(:block_requests) { @block_requests }
 end
 
+if @customer_user_id != nil
+    node(:customer_user_id) { @customer_user_id }
+end
+
+if @store_user_id != nil
+    node(:store_user_id) { @store_user_id }
+end
+
 

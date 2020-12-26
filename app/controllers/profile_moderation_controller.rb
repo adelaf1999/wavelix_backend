@@ -307,6 +307,18 @@ class ProfileModerationController < ApplicationController
 
         @block_requests = profile.get_block_requests
 
+        user = profile.user
+
+        if user.customer_user?
+
+          @customer_user_id = CustomerUser.find_by(customer_id: user.id).id
+
+        else
+
+          @store_user_id = StoreUser.find_by(store_id: user.id).id
+
+        end
+
 
       else
 
