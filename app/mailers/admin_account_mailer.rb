@@ -45,7 +45,7 @@ class AdminAccountMailer < ApplicationMailer
 
   def store_profile_status_changed(email, message)
     @message = message
-    mail to: email, subject: 'Store Profile Block Request'
+    mail to: email, subject: 'Store Profile Status Changed'
   end
 
 end
