@@ -39,10 +39,6 @@ class CustomerAccountsController < ApplicationController
 
         @last_sign_in_ip = customer_user.get_last_sign_in_ip.blank? ? 'N/A' : customer_user.get_last_sign_in_ip
 
-        @profile_link = "#{Rails.env.development? ? ENV.fetch('DEVELOPMENT_WEBSITE_URL') : ENV.fetch('PRODUCTION_WEBSITE_URL') }/view-profile/profile_id=#{customer_user.get_profile_id}"
-
-
-
 
 
       else

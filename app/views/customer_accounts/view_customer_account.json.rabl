@@ -20,7 +20,5 @@ if @success
 
     node(:last_sign_in_ip) { @last_sign_in_ip }
 
-    node(:profile_link) { @profile_link }
-
 end
 
