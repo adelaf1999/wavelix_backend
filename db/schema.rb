@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_24_124939) do
+ActiveRecord::Schema.define(version: 2020_12_29_092019) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -296,6 +296,26 @@ ActiveRecord::Schema.define(version: 2020_12_24_124939) do
   create_table "phone_numbers", force: :cascade do |t|
     t.string "number", null: false
     t.datetime "next_request_at", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "post_cases", force: :cascade do |t|
+    t.integer "post_id", null: false
+    t.integer "review_status", default: 0
+    t.text "admins_reviewed", default: [], array: true
+    t.string "deleted_by", default: ""
+    t.text "admins_reviewing", default: [], array: true
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "post_reports", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "post_id", null: false
+    t.integer "post_case_id", null: false
+    t.string "additional_information", default: ""
+    t.integer "report_type", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end

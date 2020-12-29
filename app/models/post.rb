@@ -18,6 +18,8 @@ class Post < ApplicationRecord
 
   has_many :likes, :dependent => :delete_all
 
+  has_one :post_case
+
 
   def get_viewers_ids
 
