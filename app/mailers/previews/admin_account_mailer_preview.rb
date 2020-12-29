@@ -56,4 +56,11 @@ class AdminAccountMailerPreview < ActionMailer::Preview
     AdminAccountMailer.store_profile_status_changed(email, message)
   end
 
+  def post_case_opened_notice
+    email = 'adelwaboufakher@gmail.com'
+    message = 'This is a test message'
+    post_case_id = 1
+    AdminAccountMailer.post_case_opened_notice(email, message, post_case_id)
+  end
+
 end

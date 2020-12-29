@@ -48,4 +48,11 @@ class AdminAccountMailer < ApplicationMailer
     mail to: email, subject: 'Store Profile Status Changed'
   end
 
+
+  def post_case_opened_notice(email, message, post_case_id)
+    @message = message
+    @view_case_link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/post-cases/post_case_id=#{post_case_id}"
+    mail to: email, subject: 'New post case has been opened'
+  end
+
 end

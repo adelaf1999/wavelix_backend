@@ -21,6 +21,13 @@ class Post < ApplicationRecord
   has_one :post_case
 
 
+  def author_id
+
+    self.profile.user.id
+
+  end
+
+
   def get_viewers_ids
 
     self.viewers_ids.map(&:to_i)

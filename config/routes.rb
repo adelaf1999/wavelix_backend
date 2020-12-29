@@ -423,4 +423,8 @@ Rails.application.routes.draw do
 
   post '/toggle-store-profile-status' => 'profile_moderation#toggle_store_profile_status'
 
+  # Post Case Routes
+
+  post '/create-post-case' => 'post_case#create'
+
 end
