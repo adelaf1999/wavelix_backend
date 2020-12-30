@@ -30,6 +30,31 @@ class PostCase < ApplicationRecord
 
   end
 
+
+  def get_admins_reviewed
+
+    admins_reviewed = self.admins_reviewed.map &:to_i
+
+    admins_reviewed.each do |admin_id|
+
+      admin = Admin.find_by(id: admin_id)
+
+      if admin.nil?
+
+        admins_reviewed.delete(admin_id)
+
+      end
+
+    end
+
+
+    self.update!(admins_reviewed: admins_reviewed)
+
+    admins_reviewed
+
+
+  end
+
   def get_admins_reviewing
 
     admins_reviewing = self.admins_reviewing.map &:to_i

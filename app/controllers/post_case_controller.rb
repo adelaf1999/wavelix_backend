@@ -64,7 +64,14 @@ class PostCaseController < ApplicationController
 
                 post_case.update!(admins_reviewed: [])
 
-                # Send to view post case the review_status, updated user complaints, the admins_reviewed, and the reviewed_by list as an empty array
+
+                ActionCable.server.broadcast "view_post_case_channel_#{post_case.id}", {
+                    review_status: post_case.review_status,
+                    post_complaints: post_case.get_post_complaints,
+                    admins_reviewed: post_case.get_admins_reviewed,
+                    reviewed_by: []
+                }
+
 
                 # Send the post case item to the post cases page
 
