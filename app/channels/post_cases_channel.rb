@@ -12,7 +12,15 @@ class PostCasesChannel <  ApplicationCable::Channel
 
     if admin != nil && admin.valid_token?(access_token, client)
 
-      stream_from 'post_cases_channel'
+      if admin.has_roles?(:root_admin, :profile_manager)
+
+        stream_from 'post_cases_channel'
+
+      else
+
+        reject
+
+      end
 
     else
 
