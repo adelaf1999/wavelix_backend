@@ -2,6 +2,8 @@ class PostReport < ApplicationRecord
 
   belongs_to :post_case
 
+  belongs_to :user
+
   enum report_type: {
       copyright_violation: 0,
       sexual_content: 1,
@@ -12,5 +14,17 @@ class PostReport < ApplicationRecord
       promotes_terrorism: 6,
       spam: 7
   }
+
+  def get_user_profile
+
+    self.user.profile
+
+  end
+
+  def get_username
+
+    self.user.username
+
+  end
 
 end
