@@ -429,4 +429,6 @@ Rails.application.routes.draw do
 
   post '/get-post-cases' => 'post_case#index'
 
+  post '/search-post-cases' => 'post_case#search_post_cases'
+
 end

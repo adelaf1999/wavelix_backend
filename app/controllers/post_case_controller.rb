@@ -6,7 +6,61 @@ class PostCaseController < ApplicationController
 
   before_action :authenticate_user!, only: [:create]
 
-  before_action :authenticate_admin!, only: [:index]
+  before_action :authenticate_admin!, only: [:index, :search_post_cases]
+
+
+  def search_post_cases
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :profile_manager)
+
+      head :unauthorized
+
+    else
+
+      # search for post cases by post author username
+
+      # can also filter by review_status
+
+      @post_cases = []
+
+      search = params[:search]
+
+      limit = params[:limit]
+
+      review_status = params[:review_status]
+
+      if search != nil && is_positive_integer?(limit)
+
+        search = search.strip
+
+        post_cases = PostCase.all.where("post_author_username ILIKE ?", "%#{search}%").limit(limit)
+
+        if is_review_status_valid?(review_status)
+
+          review_status = review_status.to_i
+
+          post_cases = post_cases.where(review_status: review_status)
+
+        end
+
+        post_cases = post_cases.order(created_at: :desc)
+
+        post_cases.each do |post_case|
+
+          @post_cases.push(get_post_case_item(post_case))
+
+        end
+
+
+      end
+
+    end
+
+  end
 
   def index
 
@@ -35,6 +89,8 @@ class PostCaseController < ApplicationController
         end
 
       end
+
+      @review_status_options = { 0 => 'Unreviewed', 1 => 'Reviewed' }
 
 
     end
@@ -74,7 +130,9 @@ class PostCaseController < ApplicationController
 
               create_post_report(post, post_case, additional_info, report_type)
 
-              # Send new_post_case to post cases page to auto start search again
+              ActionCable.server.broadcast 'post_cases_channel', {
+                  new_post_case: true
+              }
 
               message = 'A new case has been opened for a post. Click the button below to view it now.'
 
@@ -108,9 +166,11 @@ class PostCaseController < ApplicationController
                     admins_reviewed: post_case.get_admins_reviewed,
                     reviewed_by: []
                 }
+                
 
-
-                # Send new_post_case to post cases page to auto start search again
+                ActionCable.server.broadcast 'post_cases_channel', {
+                    new_post_case: true
+                }
 
 
                 message = 'A new case has been opened for a post claiming copyright violation. Click the button below to view it now.'
@@ -176,6 +236,22 @@ class PostCaseController < ApplicationController
 
   private
 
+
+  def is_review_status_valid?(review_status)
+
+    if !review_status.blank?
+
+      review_status = review_status.to_i
+
+      PostCase.review_statuses.values.include?(review_status)
+
+    else
+
+      false
+
+    end
+
+  end
 
   def get_post_case_item(post_case)
 
