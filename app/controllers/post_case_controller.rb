@@ -32,7 +32,7 @@ class PostCaseController < ApplicationController
 
             if post.post_case == nil
 
-              post_case = PostCase.create!(post_id: post.id)
+              post_case = PostCase.create!(post_id: post.id, post_author_id: current_user.id)
 
               create_post_report(post, post_case, additional_info, report_type)
 

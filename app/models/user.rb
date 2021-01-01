@@ -32,6 +32,8 @@ class User < ActiveRecord::Base
 
   has_many :likes, foreign_key: 'liker_id'
 
+  has_many :post_cases, foreign_key: 'post_author_id'
+
   def accept_follow_request(other)
 
     follower_relationship = Follow.find_by(follower_id: other.id)
