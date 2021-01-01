@@ -1,13 +1,16 @@
 class StoryJob < Struct.new(:post_id, :user_id)
 
+  include PostCaseHelper
+
   def perform
 
     story_post = Post.find_by(id: post_id, is_story: true)
 
     if story_post != nil
 
+      destroy_post_case(story_post)
 
-      story_post.destroy
+      story_post.destroy!
 
       user = User.find_by(id: user_id)
 

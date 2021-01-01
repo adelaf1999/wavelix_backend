@@ -6,6 +6,8 @@ class PostController < ApplicationController
 
   include HomeHelper
 
+  include PostCaseHelper
+
   before_action :authenticate_user!
 
   def add_story_post_viewer
@@ -147,6 +149,8 @@ class PostController < ApplicationController
     post = profile.posts.find_by(id: params[:post_id])
 
     if post != nil
+
+      destroy_post_case(post)
 
       post.destroy!
 
