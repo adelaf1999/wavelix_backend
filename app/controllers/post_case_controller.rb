@@ -93,7 +93,10 @@ class PostCaseController < ApplicationController
 
                 create_post_report(post, post_case, additional_info, report_type)
 
-                # Send the updated user complaints to the view post case page
+                ActionCable.server.broadcast "view_post_case_channel_#{post_case.id}", {
+                    post_complaints: post_case.get_post_complaints
+                }
+
 
               end
 
