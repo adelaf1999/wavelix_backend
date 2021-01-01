@@ -70,12 +70,11 @@ class PostCaseController < ApplicationController
 
             if post.post_case == nil
 
-              post_case = PostCase.create!(post_id: post.id, post_author_id: post.author_id)
+              post_case = PostCase.create!(post_id: post.id, post_author_id: post.author_id, post_author_username: post.author_username)
 
               create_post_report(post, post_case, additional_info, report_type)
 
-              # Send the post case to the post cases page
-
+              # Send new_post_case to post cases page to auto start search again
 
               message = 'A new case has been opened for a post. Click the button below to view it now.'
 
@@ -111,7 +110,7 @@ class PostCaseController < ApplicationController
                 }
 
 
-                # Send the post case item to the post cases page
+                # Send new_post_case to post cases page to auto start search again
 
 
                 message = 'A new case has been opened for a post claiming copyright violation. Click the button below to view it now.'

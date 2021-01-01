@@ -34,6 +34,8 @@ class User < ActiveRecord::Base
 
   has_many :post_cases, foreign_key: 'post_author_id'
 
+  after_commit :update_post_cases, on: :update, if: proc { |object| object.previous_changes.include?('username') }
+
   def accept_follow_request(other)
 
     follower_relationship = Follow.find_by(follower_id: other.id)
@@ -139,6 +141,17 @@ class User < ActiveRecord::Base
 
 
   private
+
+  def update_post_cases
+
+    self.post_cases.each do |post_case|
+
+      post_case.update!(post_author_username: self.username)
+
+    end
+
+  end
+
 
   def create_following_relationship(other)
 
