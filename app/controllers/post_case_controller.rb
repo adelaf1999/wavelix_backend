@@ -1,8 +1,46 @@
 class PostCaseController < ApplicationController
 
-  before_action :authenticate_user!
+  include AdminHelper
 
   include ValidationsHelper
+
+  before_action :authenticate_user!, only: [:create]
+
+  before_action :authenticate_admin!, only: [:index]
+
+  def index
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :profile_manager)
+
+      head :unauthorized
+
+    else
+
+      @post_cases = []
+
+      limit = params[:limit]
+
+      if is_positive_integer?(limit)
+
+        post_cases = PostCase.all.order(created_at: :desc).limit(limit)
+
+        post_cases.each do |post_case|
+
+          @post_cases.push(get_post_case_item(post_case))
+
+        end
+
+      end
+
+
+    end
+
+  end
+
 
   def create
 
@@ -32,7 +70,7 @@ class PostCaseController < ApplicationController
 
             if post.post_case == nil
 
-              post_case = PostCase.create!(post_id: post.id, post_author_id: current_user.id)
+              post_case = PostCase.create!(post_id: post.id, post_author_id: post.author_id)
 
               create_post_report(post, post_case, additional_info, report_type)
 
@@ -138,6 +176,17 @@ class PostCaseController < ApplicationController
   end
 
   private
+
+
+  def get_post_case_item(post_case)
+
+    {
+        id: post_case.id,
+        author_username: post_case.post_author_username,
+        review_status: post_case.review_status
+    }
+
+  end
 
 
   def create_post_report(post, post_case, additional_info, report_type)

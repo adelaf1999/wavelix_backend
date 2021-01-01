@@ -427,4 +427,6 @@ Rails.application.routes.draw do
 
   post '/create-post-case' => 'post_case#create'
 
+  post '/get-post-cases' => 'post_case#index'
+
 end

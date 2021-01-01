@@ -4,6 +4,13 @@ class PostCase < ApplicationRecord
 
   enum review_status: { unreviewed: 0, reviewed: 1 }
 
+  belongs_to :user, foreign_key: 'post_author_id'
+
+  def post_author_username
+
+    self.user.username
+
+  end
 
   def get_post_complaints
 
