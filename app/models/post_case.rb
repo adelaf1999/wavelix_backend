@@ -1,6 +1,6 @@
 class PostCase < ApplicationRecord
 
-  has_many :post_reports
+  has_many :post_reports, :dependent => :delete_all
 
   enum review_status: { unreviewed: 0, reviewed: 1 }
 
