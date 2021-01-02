@@ -435,4 +435,6 @@ Rails.application.routes.draw do
 
   post '/mark-post-safe' => 'post_case#mark_as_safe'
 
+  post '/destroy-unsafe-post' => 'post_case#destroy_unsafe_post'
+
 end

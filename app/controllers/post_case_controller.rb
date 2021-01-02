@@ -6,7 +6,85 @@ class PostCaseController < ApplicationController
 
   before_action :authenticate_user!, only: [:create]
 
-  before_action :authenticate_admin!, only: [:index, :search_post_cases, :show, :mark_as_safe]
+  before_action :authenticate_admin!, only: [:index, :search_post_cases, :show, :mark_as_safe, :destroy_unsafe_post]
+
+
+  def destroy_unsafe_post
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :profile_manager)
+
+      head :unauthorized
+
+    else
+
+      post_case = PostCase.find_by(id: params[:post_case_id])
+
+      if post_case != nil
+
+        post = Post.find_by(id: post_case.post_id)
+
+        if post != nil
+
+          @success = true
+
+          post_case.reviewed!
+
+          admins_reviewed = post_case.get_admins_reviewed
+
+          if !admins_reviewed.include?(current_admin.id)
+
+            admins_reviewed.push(current_admin.id)
+
+            post_case.update!(admins_reviewed: admins_reviewed)
+
+          end
+
+          post_case.update!(
+              deleted_by: current_admin.full_name,
+              admins_reviewing: []
+          )
+
+          post.destroy!
+
+
+          ActionCable.server.broadcast "view_post_case_channel_#{post_case.id}", {
+              deleted_by:  post_case.deleted_by,
+              review_status: post_case.review_status,
+              admins_reviewed: admins_reviewed,
+              reviewed_by: post_case.get_reviewed_by,
+              post: {},
+              current_reviewers: []
+          }
+
+
+          ActionCable.server.broadcast 'post_cases_channel', {
+              post_case_item: get_post_case_item(post_case)
+          }
+
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+  end
 
 
   def mark_as_safe
