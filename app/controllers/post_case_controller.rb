@@ -6,8 +6,80 @@ class PostCaseController < ApplicationController
 
   before_action :authenticate_user!, only: [:create]
 
-  before_action :authenticate_admin!, only: [:index, :search_post_cases, :show]
+  before_action :authenticate_admin!, only: [:index, :search_post_cases, :show, :mark_as_safe]
 
+
+  def mark_as_safe
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :profile_manager)
+
+      head :unauthorized
+
+    else
+
+      post_case = PostCase.find_by(id: params[:post_case_id])
+
+      if post_case != nil
+
+        post = Post.find_by(id: post_case.post_id)
+
+        if post != nil
+
+          admins_reviewed = post_case.get_admins_reviewed
+
+          if admins_reviewed.include?(current_admin.id)
+
+            @success = false
+
+          else
+
+            @success = true
+
+            admins_reviewed.push(current_admin.id)
+
+            post_case.reviewed!
+
+            post_case.update!(
+                admins_reviewed: admins_reviewed,
+                admins_reviewing: []
+            )
+
+            ActionCable.server.broadcast "view_post_case_channel_#{post_case.id}", {
+                admins_reviewed: admins_reviewed,
+                reviewed_by: post_case.get_reviewed_by,
+                review_status: post_case.review_status,
+                current_reviewers: []
+            }
+
+
+            ActionCable.server.broadcast 'post_cases_channel', {
+               post_case_item: get_post_case_item(post_case)
+            }
+
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
 
 
   def show
@@ -223,12 +295,12 @@ class PostCaseController < ApplicationController
                     review_status: post_case.review_status,
                     post_complaints: post_case.get_post_complaints,
                     admins_reviewed: post_case.get_admins_reviewed,
-                    reviewed_by: []
+                    reviewed_by: post_case.get_reviewed_by
                 }
-                
+
 
                 ActionCable.server.broadcast 'post_cases_channel', {
-                    new_post_case: true
+                    post_case_item: get_post_case_item(post_case)
                 }
 
 

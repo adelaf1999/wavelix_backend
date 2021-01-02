@@ -433,4 +433,6 @@ Rails.application.routes.draw do
 
   post '/view-post-case' => 'post_case#show'
 
+  post '/mark-post-safe' => 'post_case#mark_as_safe'
+
 end
