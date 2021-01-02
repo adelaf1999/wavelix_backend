@@ -7,6 +7,34 @@ class PostCase < ApplicationRecord
   belongs_to :user, foreign_key: 'post_author_id'
 
 
+  def post_author_profile
+
+    self.user.profile
+
+  end
+
+  def get_reviewed_by
+
+    reviewed_by = []
+
+    admins_reviewed = self.admins_reviewed.map &:to_i
+
+    admins_reviewed.each do |admin_id|
+
+      admin = Admin.find_by(id: admin_id)
+
+      if admin != nil
+
+        reviewed_by.push(admin.full_name)
+
+      end
+
+    end
+
+    reviewed_by
+
+  end
+
   def get_post_complaints
 
     # Show copyright violation reports first

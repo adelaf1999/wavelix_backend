@@ -6,7 +6,66 @@ class PostCaseController < ApplicationController
 
   before_action :authenticate_user!, only: [:create]
 
-  before_action :authenticate_admin!, only: [:index, :search_post_cases]
+  before_action :authenticate_admin!, only: [:index, :search_post_cases, :show]
+
+
+
+  def show
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :profile_manager)
+
+      head :unauthorized
+
+    else
+
+      post_case = PostCase.find_by(id: params[:post_case_id])
+
+      if post_case != nil
+
+        @success = true
+
+        post = Post.find_by(id: post_case.post_id)
+
+        if post == nil
+
+          @post = {}
+
+        else
+
+          @post = post.get_attributes
+
+        end
+
+
+        @post_author_username = post_case.post_author_username
+
+        @post_author_profile_id = post_case.post_author_profile.id
+
+        @review_status = post_case.review_status
+
+        @deleted_by = post_case.deleted_by
+
+        @post_complaints = post_case.get_post_complaints
+
+        @admins_reviewed = post_case.get_admins_reviewed
+
+        @reviewed_by = post_case.get_reviewed_by
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+  end
 
 
   def search_post_cases

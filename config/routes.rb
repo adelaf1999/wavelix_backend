@@ -431,4 +431,6 @@ Rails.application.routes.draw do
 
   post '/search-post-cases' => 'post_case#search_post_cases'
 
+  post '/view-post-case' => 'post_case#show'
+
 end
