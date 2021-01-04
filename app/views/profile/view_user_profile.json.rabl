@@ -17,3 +17,7 @@ end
 if @profile_blocked != nil
     node(:profile_blocked) { @profile_blocked }
 end
+
+if @report_types != nil
+    node(:report_types) { @report_types }
+end
