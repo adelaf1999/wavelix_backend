@@ -422,12 +422,16 @@ class PostCaseController < ApplicationController
 
           @success = false
 
+          @message = 'Please select reason to continue.'
+
         end
 
 
       else
 
         @success = false
+
+        @message = 'Please select reason to continue.'
 
       end
 
