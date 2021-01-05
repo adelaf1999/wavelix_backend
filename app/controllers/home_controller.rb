@@ -98,6 +98,8 @@ class HomeController < ApplicationController
 
     @profile_blocked = current_user.profile.blocked?
 
+    @report_types = PostReport.report_types
+
 
   end
 
