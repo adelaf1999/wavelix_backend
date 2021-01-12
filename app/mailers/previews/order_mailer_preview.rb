@@ -54,5 +54,11 @@ class OrderMailerPreview < ActionMailer::Preview
     OrderMailer.driver_assigned_order(email, customer_name)
   end
 
+  def attach_order_receipt
+    email = 'adelwaboufakher@gmail.com'
+    customer_name = 'Adel Abou Fakher'
+    OrderMailer.attach_order_receipt(email, customer_name)
+  end
+
 
 end

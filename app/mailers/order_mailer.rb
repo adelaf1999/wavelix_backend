@@ -44,4 +44,9 @@ class OrderMailer < ApplicationMailer
     mail to: email, subject: "Driver assigned to pickup the order of your customer #{customer_name}"
   end
 
+  def attach_order_receipt(email, customer_name)
+    @customer_name = customer_name
+    mail to: email, subject: "Attach a receipt for the order of your customer #{customer_name}"
+  end
+
 end

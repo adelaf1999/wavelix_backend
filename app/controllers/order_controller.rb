@@ -911,9 +911,11 @@ class OrderController < ApplicationController
 
                 order.update!(delivery_time_limit: delivery_time_limit)
 
+
                 send_store_orders(order)
 
                 send_customer_orders(order)
+
 
                 send_customer_notification(
                     order,
@@ -925,6 +927,21 @@ class OrderController < ApplicationController
                 )
 
                 OrderMailer.delay.order_accepted(order.get_customer_email, order.get_store_name, order.get_customer_name)
+
+
+
+                send_store_notification(
+                    order,
+                    "Please upload or take a photo of the receipt of the order for your customer #{order.get_customer_name} and attach it to the order in the orders page. This might be used in case a dispute was made, to prove that your store has delivered the order to the customer",
+                    nil,
+                    {
+                        show_orders: true
+                    }
+                )
+
+
+                OrderMailer.delay.attach_order_receipt(order.get_store_email, order.get_customer_name)
+
 
 
                 Delayed::Job.enqueue(
