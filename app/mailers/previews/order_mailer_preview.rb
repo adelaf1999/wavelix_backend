@@ -41,4 +41,12 @@ class OrderMailerPreview < ActionMailer::Preview
   end
 
 
+  def order_accepted
+    email = 'adelwaboufakher@gmail.com'
+    store_name = 'ShopSmart'
+    customer_name = 'Adel Abou Fakher'
+    OrderMailer.order_accepted(email, store_name, customer_name)
+  end
+
+
 end

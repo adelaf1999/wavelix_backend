@@ -62,26 +62,10 @@
       </p>
 
       <p class="paragraph">
-           If you have successfully received your order from <%= @store_name %>, please confirm the order in the orders page.
-           Otherwise, we will contact the store to find out if any issues have occurred with your order and let you know.
+          The order you made from <%= @store_name %> was successfully accepted. Make sure that your order has arrived well when it does,
+          and to confirm the order in the orders page afterwards.
       </p>
 
-
-        <center>
-
-           <button
-            class="large success"
-            href="<%= "#{Rails.env.development?  ?  ENV.fetch('DEVELOPMENT_WEBSITE_URL') : ENV.fetch('PRODUCTION_WEBSITE_URL') }/customer-orders"  %>"
-            target="_blank"
-           >
-            Confirm Order
-           </button>
-
-        </center>
-
-
-
-      <spacer size="16"></spacer>
 
       <p id="regards-text">Cheers,<br>Wavelix Team</p>
 

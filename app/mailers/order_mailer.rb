@@ -33,4 +33,10 @@ class OrderMailer < ApplicationMailer
     mail to: email, subject: "Order from #{store_name} has expired"
   end
 
+  def order_accepted(email, store_name, customer_name)
+    @store_name = store_name
+    @customer_name = customer_name
+    mail to: email, subject: "Order Accepted by #{store_name}"
+  end
+
 end

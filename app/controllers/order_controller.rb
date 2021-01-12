@@ -924,28 +924,14 @@ class OrderController < ApplicationController
                     }
                 )
 
-
-                # After the x amount of time the store promised to do the delivery
-
-                # The customer can choose to confirm or open a dispute
-
-                # After 24 hours if the customer took no action the order will be completed
-
-                # And the store balance will be incremented
-
-                Delayed::Job.enqueue(
-                    StoreDeliveryTimeJob.new(order_id),
-                    queue: 'store_delivery_time_job_queue',
-                    priority: 0,
-                    run_at: delivery_time_limit + 24.hours
-                )
+                OrderMailer.delay.order_accepted(order.get_customer_email, order.get_store_name, order.get_customer_name)
 
 
                 Delayed::Job.enqueue(
                     ConfirmStoreDeliveryJob.new(order_id),
                     queue: 'confirm_store_delivery_job_queue',
                     priority: 0,
-                    run_at: delivery_time_limit + 3.hours
+                    run_at: delivery_time_limit
                 )
 
 
