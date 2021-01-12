@@ -6,13 +6,12 @@ class CategoryProductsChannel < ApplicationCable::Channel
 
     if !category_id.blank?
 
-
       if !current_user.blank?
 
 
         if current_user.store_user?
 
-          store_user = StoreUser.find_by(id: current_user.id)
+          store_user = StoreUser.find_by(store_id: current_user.id)
 
           category = store_user.categories.find_by(id: category_id)
 
