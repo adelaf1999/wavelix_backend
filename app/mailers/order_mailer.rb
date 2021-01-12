@@ -39,4 +39,9 @@ class OrderMailer < ApplicationMailer
     mail to: email, subject: "Order Accepted by #{store_name}"
   end
 
+  def driver_assigned_order(email, customer_name)
+    @customer_name = customer_name
+    mail to: email, subject: "Driver assigned to pickup the order of your customer #{customer_name}"
+  end
+
 end

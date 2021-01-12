@@ -61,7 +61,9 @@ class StoreUser < ApplicationRecord
     end
 
     def get_email
+
         self.store.email
+
     end
 
 

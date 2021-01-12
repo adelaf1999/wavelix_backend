@@ -543,6 +543,9 @@ class DriveController < ApplicationController
               )
 
 
+              OrderMailer.delay.driver_assigned_order(order.get_store_email, order.get_customer_name)
+
+
 
               estimated_arrival_time = estimated_arrival_time_minutes(
                   driver.latitude,

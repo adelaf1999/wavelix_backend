@@ -48,5 +48,11 @@ class OrderMailerPreview < ActionMailer::Preview
     OrderMailer.order_accepted(email, store_name, customer_name)
   end
 
+  def driver_assigned_order
+    email = 'adelwaboufakher@gmail.com'
+    customer_name = 'Adel Abou Fakher'
+    OrderMailer.driver_assigned_order(email, customer_name)
+  end
+
 
 end

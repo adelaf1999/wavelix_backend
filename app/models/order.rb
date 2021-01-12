@@ -16,6 +16,12 @@ class Order < ApplicationRecord
   belongs_to :driver, optional: true # can be nil if store handles delivery / no driver selected yet
 
 
+  def get_store_email
+
+    self.store_user.get_email
+
+  end
+
   def get_customer_email
 
     self.customer_user.customer.email
