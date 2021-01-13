@@ -777,6 +777,8 @@ module OrderHelper
 
       order[:tracking_number] = store_order.tracking_number
 
+      order[:receipt_url] = store_order.receipt.url
+
 
     else
 

@@ -197,6 +197,8 @@ Rails.application.routes.draw do
 
   post '/add-tracking-information' => 'order#add_tracking_information'
 
+  post '/attach-receipt' => 'order#attach_receipt'
+
 
   # Cart Routes
 

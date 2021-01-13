@@ -12,6 +12,199 @@ class OrderController < ApplicationController
 
   before_action :deny_to_visitors
 
+
+  def attach_receipt
+
+
+    if user_signed_in?
+
+      if current_user.store_user?
+
+        store_user = StoreUser.find_by(store_id: current_user.id)
+
+      else
+
+        head :unauthorized
+
+        return
+
+      end
+
+    else
+
+
+      employee = Employee.find_by(id: current_employee.id)
+
+      if employee.has_roles?(:order_manager) && employee.active?
+
+        store_user = employee.store_user
+
+      else
+
+        head :unauthorized
+
+        return
+
+      end
+
+
+    end
+
+
+    order = store_user.orders.find_by(id: params[:order_id])
+
+    if order != nil
+
+
+      if order.store_handles_delivery && order.ongoing?
+
+        base64 = params[:base64]
+
+        receipt = params[:receipt]
+
+        if !receipt.blank? && !base64.blank?
+
+          base64 = eval(base64)
+
+          if base64
+
+            receipt = eval(receipt)
+
+            if receipt.instance_of?(Hash) && receipt.size > 0
+
+              name = receipt[:name]
+
+              type = receipt[:type]
+
+              uri = receipt[:uri]
+
+              if name != nil && type != nil && uri != nil
+
+                base64_uri_array = uri.split(",")
+
+                base64_uri = base64_uri_array[base64_uri_array.length - 1]
+
+                temp_file = Tempfile.new(name)
+
+                temp_file.binmode
+
+                temp_file.write Base64.decode64(base64_uri)
+
+                temp_file.rewind
+
+                name_array = name.split(".")
+
+                extension = name_array[name_array.length - 1]
+
+                if receipt_extensions.include?(extension)
+
+                  receipt = ActionDispatch::Http::UploadedFile.new({
+                                                                       tempfile: temp_file,
+                                                                       type: type,
+                                                                       filename: name
+                                                                   })
+
+                else
+
+                  @success = false
+
+                  @message = 'Please upload a valid image and try again'
+
+                  return
+
+                end
+
+
+              else
+
+                @success = false
+
+                @message = 'Error attaching receipt'
+
+                return
+
+              end
+
+
+
+            else
+
+              @success = false
+
+              @message = 'Error attaching receipt'
+
+              return
+
+            end
+
+          else
+
+            if !receipt.is_a?(ActionDispatch::Http::UploadedFile) || !is_receipt_valid?(receipt)
+
+              @success = false
+
+              @message = 'Please upload a valid image and try again'
+
+              return
+
+            end
+
+
+          end
+
+
+          order.receipt = receipt
+
+          if order.save!
+
+            @success = true
+
+            @message = 'Successfully attached receipt'
+
+            send_store_orders(order)
+
+
+          else
+
+            @success = false
+
+            @message = 'Error attaching receipt'
+
+          end
+
+
+
+        else
+
+          @success = false
+
+          @message = 'Error attaching receipt'
+
+        end
+
+
+      else
+
+        @success = false
+
+        @message = 'Error attaching receipt'
+
+      end
+
+
+
+    else
+
+      @success = false
+
+      @message = 'Order was not found'
+
+    end
+
+
+
+  end
+
   def add_tracking_information
 
 
@@ -1555,7 +1748,7 @@ class OrderController < ApplicationController
 
                     rescue => e
 
-                        product_options = {}
+                      product_options = {}
 
                     end
 
@@ -1924,6 +2117,24 @@ class OrderController < ApplicationController
 
   private
 
+
+  def receipt_extensions
+
+    %w(png jpeg jpg gif)
+
+  end
+
+
+
+  def is_receipt_valid?(receipt)
+
+    filename = receipt.original_filename.split(".")
+
+    extension = filename[filename.length - 1]
+
+    receipt_extensions.include?(extension)
+
+  end
 
 
 
