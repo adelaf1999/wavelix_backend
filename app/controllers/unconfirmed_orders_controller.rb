@@ -129,7 +129,8 @@ class UnconfirmedOrdersController < ApplicationController
         customer_name: order.get_customer_name,
         country: order.get_country_name,
         ordered_at: order.created_at,
-        delivery_time_limit: order.delivery_time_limit
+        delivery_time_limit: order.delivery_time_limit,
+        store_has_sensitive_products: order.store_has_sensitive_products
     }
 
 

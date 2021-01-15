@@ -20,6 +20,12 @@ class Order < ApplicationRecord
   mount_uploader :receipt, ImageUploader
 
 
+  def store_has_sensitive_products
+
+    self.store_user.has_sensitive_products
+
+  end
+
   def get_country_name
 
     ISO3166::Country.new(self.country).name
