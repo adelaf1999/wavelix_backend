@@ -20,6 +20,13 @@ class Order < ApplicationRecord
   mount_uploader :receipt, ImageUploader
 
 
+  def get_country_name
+
+    ISO3166::Country.new(self.country).name
+
+  end
+
+
   def get_store_email
 
     self.store_user.get_email
