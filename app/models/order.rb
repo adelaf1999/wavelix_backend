@@ -42,13 +42,13 @@ class Order < ApplicationRecord
 
   def get_store_name
 
-    self.store_user.store_name
+    self.store_name
 
   end
 
   def get_customer_name
 
-    self.customer_user.full_name
+    self.customer_name
 
   end
 

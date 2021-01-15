@@ -11,7 +11,6 @@ class OrderRequest < ApplicationRecord
 
       order = Order.new
 
-
       order.stripe_payment_intent = payment_intent_id
 
       order.order_request_id = order_request.id
@@ -20,9 +19,21 @@ class OrderRequest < ApplicationRecord
 
       order.delivery_location = order_request.delivery_location
 
-      order.store_user_id = order_request.store_user_id
 
-      order.customer_user_id = order_request.customer_user_id
+      store_user_id = order_request.store_user_id
+
+      customer_user_id = order_request.customer_user_id
+
+
+      order.store_user_id = store_user_id
+
+      order.customer_user_id = customer_user_id
+
+
+      order.store_name = StoreUser.find_by(id: store_user_id).store_name
+
+      order.customer_name = CustomerUser.find_by(id: customer_user_id).full_name
+
 
       order.country = order_request.country
 

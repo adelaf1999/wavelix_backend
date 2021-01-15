@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_13_091716) do
+ActiveRecord::Schema.define(version: 2021_01_15_115415) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -280,6 +280,8 @@ ActiveRecord::Schema.define(version: 2021_01_13_091716) do
     t.string "tracking_website_url", default: ""
     t.string "tracking_number", default: ""
     t.text "receipt"
+    t.string "store_name", null: false
+    t.string "customer_name", null: false
   end
 
   create_table "payments", force: :cascade do |t|
