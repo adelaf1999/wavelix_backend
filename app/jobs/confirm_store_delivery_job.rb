@@ -8,8 +8,6 @@ class ConfirmStoreDeliveryJob < Struct.new(:order_id)
 
     if order.ongoing?
 
-      # Email the customer to confirm the order
-
       OrderMailer.delay.confirm_store_delivery(order.get_customer_email, order.get_store_name, order.get_customer_name)
 
       send_customer_notification(
@@ -20,6 +18,10 @@ class ConfirmStoreDeliveryJob < Struct.new(:order_id)
               show_orders: true
           }
       )
+
+      ActionCable.server.broadcast 'unconfirmed_orders_channel', {
+          new_unconfirmed_order: true
+      }
 
 
 
