@@ -6,7 +6,122 @@ class UnconfirmedOrdersController < ApplicationController
 
   include ValidationsHelper
 
+  include UnconfirmedOrdersHelper
+
   before_action :authenticate_admin!
+
+
+  def show
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :order_manager)
+
+      head :unauthorized
+
+    else
+
+        order = Order.find_by(id: params[:order_id])
+
+        if order != nil
+
+          if is_order_unconfirmed?(order)
+
+            @success = true
+
+            store_user = order.store_user
+
+            @store_name = store_user.store_name
+
+            @store_user_id = store_user.id
+
+            @store_owner = store_user.store_owner_full_name
+
+            @store_owner_number = store_user.store_owner_work_number
+
+            @store_number = store_user.store_number
+
+            @store_has_sensitive_products = store_user.has_sensitive_products
+
+
+            customer_user = order.customer_user
+
+            @customer_name = customer_user.full_name
+
+            @customer_user_id = customer_user.id
+
+            @customer_number = customer_user.phone_number
+
+
+            @country = order.get_country_name
+
+            @delivery_time_limit = order.delivery_time_limit
+
+            @ordered_at =  order.created_at
+
+            @total_price = order.total_price.to_f.round(2)
+
+            @total_price_currency = order.total_price_currency
+
+            receipt_url = order.receipt.url
+
+            @receipt_url = receipt_url.blank? ? '' : receipt_url
+
+
+            @products = []
+
+            order.products.each do |ordered_product|
+
+              ordered_product = eval(ordered_product)
+
+              product = Product.find_by(id: ordered_product[:id])
+
+              product_price = ordered_product[:price]
+
+              product_currency = ordered_product[:currency]
+
+              to_currency = 'USD'
+
+              product_price = convert_amount(product_price, product_currency, to_currency).to_f.round(2)
+
+              @products.push({
+                                 id: ordered_product[:id],
+                                 quantity: ordered_product[:quantity],
+                                 price: product_price,
+                                 currency: to_currency,
+                                 product_options: ordered_product[:product_options],
+                                 name: product.name,
+                                 picture: product.main_picture.url
+                             })
+
+            end
+
+
+            @delivery_location = order.delivery_location
+
+
+
+
+          else
+
+            @success = false
+
+          end
+
+
+        else
+
+          @success = false
+
+        end
+
+    end
+
+
+
+  end
 
   def search_unconfirmed_orders
 

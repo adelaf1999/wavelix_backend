@@ -445,4 +445,6 @@ Rails.application.routes.draw do
 
   post '/search-unconfirmed-orders' => 'unconfirmed_orders#search_unconfirmed_orders'
 
+  post '/view-unconfirmed-order' => 'unconfirmed_orders#show'
+
 end
