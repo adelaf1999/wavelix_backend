@@ -65,10 +65,7 @@ class UnconfirmedOrdersController < ApplicationController
 
             @total_price_currency = order.total_price_currency
 
-            receipt_url = order.receipt.url
-
-            @receipt_url = receipt_url.blank? ? '' : receipt_url
-
+            @receipt_url = order.receipt.url
 
             @products = []
 

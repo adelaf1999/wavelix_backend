@@ -58,9 +58,9 @@ if @total_price_currency != nil
     node(:total_price_currency) { @total_price_currency }
 end
 
-if @receipt_url != nil
-    node(:receipt_url) { @receipt_url }
-end
+
+node(:receipt_url) { @receipt_url }
+
 
 if @products != nil
     node(:products) { @products }
