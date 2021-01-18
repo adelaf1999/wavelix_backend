@@ -447,4 +447,6 @@ Rails.application.routes.draw do
 
   post '/view-unconfirmed-order' => 'unconfirmed_orders#show'
 
+  post '/confirm-unconfirmed-order' => 'unconfirmed_orders#confirm'
+
 end

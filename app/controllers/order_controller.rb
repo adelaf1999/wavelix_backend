@@ -514,6 +514,17 @@ class OrderController < ApplicationController
 
             notify_unavailable_products(order)
 
+
+            ActionCable.server.broadcast 'unconfirmed_orders_channel', {
+                order_confirmed: true,
+                order_id: order.id
+            }
+
+            ActionCable.server.broadcast "view_unconfirmed_order_channel_#{order.id}", {
+                order_confirmed: true
+            }
+
+
           else
 
 

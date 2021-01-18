@@ -8,8 +8,78 @@ class UnconfirmedOrdersController < ApplicationController
 
   include UnconfirmedOrdersHelper
 
+  include OrderHelper
+
+  include ProductsHelper
+
   before_action :authenticate_admin!
 
+
+  def confirm
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :order_manager)
+
+      head :unauthorized
+
+    else
+
+      order = Order.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if is_order_unconfirmed?(order)
+
+          @success = true
+
+          order.complete!
+
+          increment_store_balance(order)
+
+          order.update!(
+              admins_reviewing: [],
+              confirmed_by: current_admin.full_name
+          )
+
+
+          ActionCable.server.broadcast 'unconfirmed_orders_channel', {
+              order_confirmed: true,
+              order_id: order.id
+          }
+
+          ActionCable.server.broadcast "view_unconfirmed_order_channel_#{order.id}", {
+              order_confirmed: true
+          }
+
+
+          send_store_orders(order)
+
+          send_customer_orders(order)
+
+          notify_unavailable_products(order)
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+  end
 
   def show
 
