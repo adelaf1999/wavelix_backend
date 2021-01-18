@@ -163,6 +163,9 @@ class OrderController < ApplicationController
 
             send_store_orders(order)
 
+            ActionCable.server.broadcast "view_unconfirmed_order_channel_#{order.id}", {
+                receipt_url: order.receipt.url
+            }
 
           else
 
