@@ -12,8 +12,96 @@ class UnconfirmedOrdersController < ApplicationController
 
   include ProductsHelper
 
+  include PaymentsHelper
+
+  include NotificationsHelper
+
   before_action :authenticate_admin!
 
+
+  def cancel
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :order_manager)
+
+      head :unauthorized
+
+    else
+
+      order = Order.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if is_order_unconfirmed?(order)
+
+          @success = true
+
+          order.canceled!
+
+          refund_order(order)
+
+          order.update!(
+              admins_reviewing: [],
+              refunded_by: current_admin.full_name
+          )
+
+          ActionCable.server.broadcast 'unconfirmed_orders_channel', {
+              order_canceled: true,
+              order_id: order.id
+          }
+
+          ActionCable.server.broadcast "view_unconfirmed_order_channel_#{order.id}", {
+              order_canceled: true
+          }
+
+
+          store_name = order.get_store_name
+
+          UnconfirmedOrderMailer.delay.notify_customer_order_canceled(order.get_customer_email, order.get_customer_name, store_name)
+
+          send_customer_notification(
+              order,
+              "The order you made from #{store_name} was canceled since the store did not deliver the order to the delivery location and a refund has been issued for your order.",
+              'Order Canceled',
+              {
+                  show_orders: true
+              }
+          )
+
+          customer_name = order.get_customer_name
+
+          UnconfirmedOrderMailer.delay.notify_store_order_canceled(order.get_store_email, customer_name)
+
+          send_store_notification(
+              order,
+              "The order of your customer #{customer_name} was canceled because your customer did not receive the order they made and a refund has been issued for your customer.",
+              'Order Canceled',
+              {
+                  show_orders: true
+              }
+          )
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+
+
+  end
 
   def confirm
 
@@ -93,89 +181,82 @@ class UnconfirmedOrdersController < ApplicationController
 
     else
 
-        order = Order.find_by(id: params[:order_id])
+      order = Order.find_by(id: params[:order_id])
 
-        if order != nil
+      if order != nil
 
-          if is_order_unconfirmed?(order)
+        if is_order_unconfirmed?(order)
 
-            @success = true
+          @success = true
 
-            store_user = order.store_user
+          store_user = order.store_user
 
-            @store_name = store_user.store_name
+          @store_name = store_user.store_name
 
-            @store_user_id = store_user.id
+          @store_user_id = store_user.id
 
-            @store_owner = store_user.store_owner_full_name
+          @store_owner = store_user.store_owner_full_name
 
-            @store_owner_number = store_user.store_owner_work_number
+          @store_owner_number = store_user.store_owner_work_number
 
-            @store_number = store_user.store_number
+          @store_number = store_user.store_number
 
-            @store_has_sensitive_products = store_user.has_sensitive_products
-
-
-            customer_user = order.customer_user
-
-            @customer_name = customer_user.full_name
-
-            @customer_user_id = customer_user.id
-
-            @customer_number = customer_user.phone_number
+          @store_has_sensitive_products = store_user.has_sensitive_products
 
 
-            @country = order.get_country_name
+          customer_user = order.customer_user
 
-            @delivery_time_limit = order.delivery_time_limit
+          @customer_name = customer_user.full_name
 
-            @ordered_at =  order.created_at
+          @customer_user_id = customer_user.id
 
-            @total_price = order.total_price.to_f.round(2)
-
-            @total_price_currency = order.total_price_currency
-
-            @receipt_url = order.receipt.url
-
-            @products = []
-
-            order.products.each do |ordered_product|
-
-              ordered_product = eval(ordered_product)
-
-              product = Product.find_by(id: ordered_product[:id])
-
-              product_price = ordered_product[:price]
-
-              product_currency = ordered_product[:currency]
-
-              to_currency = 'USD'
-
-              product_price = convert_amount(product_price, product_currency, to_currency).to_f.round(2)
-
-              @products.push({
-                                 id: ordered_product[:id],
-                                 quantity: ordered_product[:quantity],
-                                 price: product_price,
-                                 currency: to_currency,
-                                 product_options: ordered_product[:product_options],
-                                 name: product.name,
-                                 picture: product.main_picture.url
-                             })
-
-            end
+          @customer_number = customer_user.phone_number
 
 
-            @delivery_location = order.delivery_location
+          @country = order.get_country_name
 
+          @delivery_time_limit = order.delivery_time_limit
 
+          @ordered_at =  order.created_at
 
+          @total_price = order.total_price.to_f.round(2)
 
-          else
+          @total_price_currency = order.total_price_currency
 
-            @success = false
+          @receipt_url = order.receipt.url
+
+          @products = []
+
+          order.products.each do |ordered_product|
+
+            ordered_product = eval(ordered_product)
+
+            product = Product.find_by(id: ordered_product[:id])
+
+            product_price = ordered_product[:price]
+
+            product_currency = ordered_product[:currency]
+
+            to_currency = 'USD'
+
+            product_price = convert_amount(product_price, product_currency, to_currency).to_f.round(2)
+
+            @products.push({
+                               id: ordered_product[:id],
+                               quantity: ordered_product[:quantity],
+                               price: product_price,
+                               currency: to_currency,
+                               product_options: ordered_product[:product_options],
+                               name: product.name,
+                               picture: product.main_picture.url
+                           })
 
           end
+
+
+          @delivery_location = order.delivery_location
+
+
 
 
         else
@@ -183,6 +264,13 @@ class UnconfirmedOrdersController < ApplicationController
           @success = false
 
         end
+
+
+      else
+
+        @success = false
+
+      end
 
     end
 

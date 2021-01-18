@@ -449,4 +449,6 @@ Rails.application.routes.draw do
 
   post '/confirm-unconfirmed-order' => 'unconfirmed_orders#confirm'
 
+  post '/cancel-unconfirmed-order' => 'unconfirmed_orders#cancel'
+
 end
