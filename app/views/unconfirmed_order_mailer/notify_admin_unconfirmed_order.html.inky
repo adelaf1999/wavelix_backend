@@ -1,0 +1,98 @@
+<style type="text/css">
+  body,
+  html,
+  .body {
+    background: #f3f3f3 !important;
+  }
+
+  #title{
+     font-size: 35px;
+     margin: 2;
+     font-family: 'Lato', Helvetica, Arial, sans-serif;
+     letter-spacing: 4px;
+     text-align: center;
+     color: #1f67ff;
+     font-weight: 'bold';
+  }
+
+  .paragraph{
+    color: #666666;
+    font-family: 'Lato', Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0px;
+    padding: 20px 30px 40px 30px;
+  }
+
+  #regards-text{
+    margin: 0;
+    padding: 0px 30px 40px 30px;
+     border-radius: 0px 0px 4px 4px;
+      color: #666666;
+      font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400;
+  }
+
+  .header-box{
+    background: #1f67ff; height: 100px; width: 100%;
+  }
+
+
+</style>
+
+
+
+
+<container>
+
+<row class="header-box">
+</row>
+
+
+  <row>
+
+    <columns>
+
+      <spacer size="16"></spacer>
+
+      <h1 id="title">WAVELIX</h1>
+
+      <spacer size="16"></spacer>
+
+      <p class="paragraph">
+        Dear <%= @admin_name %>,
+      </p>
+
+      <p class="paragraph">
+        This is to let you know that there is an unconfirmed order that should be resolved. You can view it
+        by clicking on the button below. In case you were not able to view it, that means it has been resolved.
+      </p>
+
+
+        <center>
+
+           <button
+            class="large success"
+            href="<%= @view_order_link %>"
+            target="_blank"
+           >
+              View Order
+           </button>
+
+        </center>
+
+
+
+      <spacer size="16"></spacer>
+
+      <p id="regards-text">Cheers,<br>Wavelix Team</p>
+
+
+    </columns>
+  </row>
+
+  <spacer size="16"></spacer>
+</container>
+
+
+
+

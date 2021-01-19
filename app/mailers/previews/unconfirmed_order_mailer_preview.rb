@@ -13,4 +13,11 @@ class UnconfirmedOrderMailerPreview < ActionMailer::Preview
     UnconfirmedOrderMailer.notify_store_order_canceled(email, customer_name)
   end
 
+  def notify_admin_unconfirmed_order
+    email = 'adelwaboufakher@gmail.com'
+    admin_name = 'Adel Abou Fakher'
+    order_id = 1
+    UnconfirmedOrderMailer.notify_admin_unconfirmed_order(email, admin_name, order_id)
+  end
+
 end

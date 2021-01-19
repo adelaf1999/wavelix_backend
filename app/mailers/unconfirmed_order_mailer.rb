@@ -11,4 +11,10 @@ class UnconfirmedOrderMailer < ApplicationMailer
     mail to: email, subject: "The order of your customer #{customer_name} has been canceled"
   end
 
+  def notify_admin_unconfirmed_order(email, admin_name, order_id)
+    @admin_name = admin_name
+    @view_order_link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/unconfirmed-orders/order_id=#{order_id}"
+    mail to: email, subject: 'Unconfirmed Order'
+  end
+
 end

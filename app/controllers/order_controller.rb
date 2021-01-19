@@ -1159,6 +1159,16 @@ class OrderController < ApplicationController
                 )
 
 
+                Delayed::Job.enqueue(
+                    NotifyUnconfirmedOrderJob.new(order_id),
+                    queue: 'notify_unconfirmed_order_job_queue',
+                    priority: 0,
+                    run_at: delivery_time_limit + 4.hours
+                )
+
+
+
+
               else
 
                 order.canceled!
