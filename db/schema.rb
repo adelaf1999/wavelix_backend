@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_16_092710) do
+ActiveRecord::Schema.define(version: 2021_01_19_154159) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -284,7 +284,7 @@ ActiveRecord::Schema.define(version: 2021_01_16_092710) do
     t.string "customer_name", null: false
     t.text "admins_reviewing", default: [], array: true
     t.string "confirmed_by", default: ""
-    t.string "refunded_by", default: ""
+    t.string "canceled_by", default: ""
   end
 
   create_table "payments", force: :cascade do |t|

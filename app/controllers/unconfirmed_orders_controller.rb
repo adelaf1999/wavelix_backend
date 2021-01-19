@@ -45,7 +45,7 @@ class UnconfirmedOrdersController < ApplicationController
 
           order.update!(
               admins_reviewing: [],
-              refunded_by: current_admin.full_name,
+              canceled_by: current_admin.full_name,
               order_canceled_reason: 'Customer did not receive order'
           )
 
