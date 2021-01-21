@@ -18,6 +18,8 @@ class Driver < ApplicationRecord
 
   enum review_status: { unreviewed: 0, reviewed: 1 }
 
+  enum account_status: { unblocked: 0, temporarily_blocked: 1, permanently_blocked: 2 }
+
   mount_uploader :profile_picture, ImageUploader
 
   mount_uploaders :driver_license_pictures, ImageUploader
@@ -31,6 +33,17 @@ class Driver < ApplicationRecord
   serialize :national_id_pictures, Array
 
   serialize :vehicle_registration_document_pictures, Array
+
+
+  def block_temporarily
+
+    if self.unblocked?
+
+      self.temporarily_blocked!
+
+    end
+
+  end
 
 
   def get_email

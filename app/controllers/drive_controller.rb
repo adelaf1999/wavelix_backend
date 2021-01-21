@@ -87,7 +87,7 @@ class DriveController < ApplicationController
 
     #  {0: DRIVING_OUTSIDE_REGISTERED_COUNTRY, 1: HAS_INCOMPLETE_EXCLUSIVE_ORDER, 2: HAS_UNPICKED_STANDARD_ORDERS }
 
-    # { 3: ACCOUNT_BLOCKED }
+    # { 3: TEMPORARILY_BLOCKED, 4: PERMANENTLY_BLOCKED }
 
     if current_user.customer_user?
 
@@ -148,7 +148,16 @@ class DriveController < ApplicationController
 
                   else
 
-                    if driver.account_blocked
+
+                    if driver.unblocked?
+
+                      @success = true
+
+                      driver.online!
+
+                      driver.update!(latitude: latitude, longitude: longitude)
+
+                    elsif driver.temporarily_blocked?
 
                       @success = false
 
@@ -156,11 +165,9 @@ class DriveController < ApplicationController
 
                     else
 
-                      @success = true
+                      @success = false
 
-                      driver.online!
-
-                      driver.update!(latitude: latitude, longitude: longitude)
+                      @error_code = 4
 
                     end
 
@@ -494,7 +501,7 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && !driver.account_blocked
+          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && driver.unblocked?
 
             payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
 

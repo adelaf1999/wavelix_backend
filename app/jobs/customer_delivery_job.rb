@@ -23,28 +23,15 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
     else
 
-      order.canceled!
-
-      order.update!(order_canceled_reason: 'Driver did not fulfill order')
-
-      send_store_orders(order)
-
-      send_customer_orders(order)
+      # Block the driver account temporarily if and only if account is unblocked to investigate what happened with the order
 
       driver = Driver.find_by(id: order.driver_id)
 
-      send_driver_orders(driver)
+      driver.block_temporarily
 
-      # Block the driver account temporarily to investigate what happened with the order
+      # Send flag to unsuccessful orders page to refresh page
 
-      driver.update!(account_blocked: true)
-      
-      refund_order(order)
-
-
-
-
-
+      # Send the order to view driver unsuccessful orders page
 
     end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_19_154159) do
+ActiveRecord::Schema.define(version: 2021_01_21_093234) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -151,11 +151,13 @@ ActiveRecord::Schema.define(version: 2021_01_19_154159) do
     t.text "national_id_pictures", null: false
     t.text "profile_picture", null: false
     t.text "vehicle_registration_document_pictures", null: false
-    t.boolean "account_blocked", default: false
     t.integer "review_status", default: 0
     t.string "verified_by", default: ""
     t.text "admins_reviewing", default: [], array: true
     t.text "admins_declined", default: [], array: true
+    t.integer "account_status", default: 0
+    t.string "stripe_customer_token", null: false
+    t.text "admins_resolving", default: [], array: true
     t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
   end
 
