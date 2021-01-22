@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_21_093234) do
+ActiveRecord::Schema.define(version: 2021_01_22_174031) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -156,8 +156,8 @@ ActiveRecord::Schema.define(version: 2021_01_21_093234) do
     t.text "admins_reviewing", default: [], array: true
     t.text "admins_declined", default: [], array: true
     t.integer "account_status", default: 0
-    t.string "stripe_customer_token", null: false
     t.text "admins_resolving", default: [], array: true
+    t.string "stripe_customer_token"
     t.index ["latitude", "longitude"], name: "index_drivers_on_latitude_and_longitude"
   end
 

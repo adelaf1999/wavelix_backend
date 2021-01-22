@@ -43,7 +43,7 @@ module PaymentsHelper
 
     refund_amount = refund_amount.round.to_i
 
-    
+
     Stripe::Refund.create({
                               payment_intent: order.stripe_payment_intent,
                               amount: refund_amount
@@ -85,7 +85,7 @@ module PaymentsHelper
 
   def delete_existing_card(customer_token)
 
-   payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
+    payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
 
     if payment_methods.length > 0
 
@@ -123,11 +123,11 @@ module PaymentsHelper
 
     # Commented Code Below is used when testing for 3D secure implmentation
 
-   # Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {
-   #     card: {
-   #         request_three_d_secure: 'any'
-   #     }
-   # }})
+    # Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {
+    #     card: {
+    #         request_three_d_secure: 'any'
+    #     }
+    # }})
 
   end
 
@@ -138,20 +138,40 @@ module PaymentsHelper
     payment_methods.length > 0
 
   end
+  
 
-  def create_stripe_customer(name, email, customer_user_id)
 
-    customer = Stripe::Customer.create({
-                                            name: name,
-                                            email: email,
-                                            metadata: {
-                                                customer_user_id: customer_user_id
-                                            }
-                                       })
+  def create_stripe_token_customer(name, customer_user_id)
 
-    customer['id']
+    user = Stripe::Customer.create({
+                                       name: name,
+                                       description: 'Customer Account',
+                                       metadata: {
+                                           customer_user_id: customer_user_id
+                                       }
+                                   })
+
+    user['id']
+
 
   end
+
+
+  def create_stripe_token_driver(name, driver_id)
+
+   user = Stripe::Customer.create({
+                                name: name,
+                                description: 'Driver Account',
+                                metadata: {
+                                    driver_id: driver_id
+                                }
+                            })
+
+    user['id']
+
+
+  end
+
 
   def destroy_stripe_customer(customer_token)
 

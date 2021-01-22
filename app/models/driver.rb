@@ -34,6 +34,8 @@ class Driver < ApplicationRecord
 
   serialize :vehicle_registration_document_pictures, Array
 
+  after_create :save_stripe_driver_token
+
 
   def block_temporarily
 
@@ -145,5 +147,19 @@ class Driver < ApplicationRecord
 
   end
 
+  private
+
+
+  def save_stripe_driver_token
+
+    name = self.name
+
+    driver_id = self.id
+
+    self.stripe_customer_token = create_stripe_token_driver(name, driver_id)
+
+    self.save!
+
+  end
 
 end

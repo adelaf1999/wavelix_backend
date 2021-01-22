@@ -118,11 +118,9 @@ class CustomerUser < ApplicationRecord
 
         name = self.full_name
 
-        email = self.customer.email
-
         customer_user_id = self.id
 
-        self.stripe_customer_token = create_stripe_customer(name, email, customer_user_id)
+        self.stripe_customer_token = create_stripe_token_customer(name, customer_user_id)
 
         self.save!
 
