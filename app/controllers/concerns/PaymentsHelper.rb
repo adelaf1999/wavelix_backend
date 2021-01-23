@@ -98,6 +98,28 @@ module PaymentsHelper
   end
 
 
+  def delete_other_existing_cards(customer_token, payment_method_id)
+
+    saved_payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
+
+    if saved_payment_methods.length > 1
+
+      saved_payment_methods.each do |saved_payment_method|
+
+        if saved_payment_method.id != payment_method_id
+
+          Stripe::PaymentMethod.detach(saved_payment_method.id)
+
+        end
+
+      end
+
+    end
+
+
+  end
+
+
   def is_payment_method?(token)
 
     begin

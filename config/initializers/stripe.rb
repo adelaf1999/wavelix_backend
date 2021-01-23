@@ -110,9 +110,13 @@ StripeEvent.configure do |events|
 
     metadata = event.data.object.metadata.to_h
 
+    stripe_customer_token =  event.data.object.customer
+
     if !metadata.blank?
 
       saving_customer_card = metadata[:saving_customer_card]
+
+      saving_driver_card = metadata[:saving_driver_card]
 
       if saving_customer_card && !metadata[:customer_user_id].blank?
 
@@ -129,6 +133,37 @@ StripeEvent.configure do |events|
                 last4: card.last4
             }
         }
+
+      elsif saving_driver_card && !metadata[:driver_id].blank?
+
+
+        # Delete other existing cards if present
+
+        saved_payment_methods =  Stripe::PaymentMethod.list({customer: stripe_customer_token, type: 'card'}).data
+
+        if saved_payment_methods.length > 1
+
+          saved_payment_methods.each do |saved_payment_method|
+
+            if saved_payment_method.id != payment_method.id
+
+              Stripe::PaymentMethod.detach(saved_payment_method.id)
+
+            end
+
+          end
+
+        end
+
+        driver_id = metadata[:driver_id]
+
+        driver = Driver.find_by(id: driver_id)
+
+        ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+            finished_registration: true
+        }
+
+
 
       end
 
@@ -147,6 +182,8 @@ StripeEvent.configure do |events|
 
       saving_customer_card = metadata[:saving_customer_card]
 
+      saving_driver_card = metadata[:saving_driver_card]
+
       if saving_customer_card && !metadata[:customer_user_id].blank?
 
         customer_user_id = metadata[:customer_user_id]
@@ -156,6 +193,16 @@ StripeEvent.configure do |events|
         ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: false}
 
         ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {setup_intent_success: false}
+
+      elsif saving_driver_card && !metadata[:driver_id].blank?
+
+        driver_id = metadata[:driver_id]
+
+        driver = Driver.find_by(id: driver_id)
+
+        ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+            finished_registration: false
+        }
 
       end
 

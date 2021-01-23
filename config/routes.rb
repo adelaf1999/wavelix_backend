@@ -256,6 +256,8 @@ Rails.application.routes.draw do
 
   get '/driver-profile-picture' => 'driver#profile_picture'
 
+  post '/add-driver-card' => 'driver#add_card'
+
   # Drive Routes
 
   post '/cancel-order' => 'drive#cancel_order'

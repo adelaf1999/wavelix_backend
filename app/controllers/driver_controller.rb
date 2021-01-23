@@ -4,8 +4,130 @@ class DriverController < ApplicationController
 
   include MoneyHelper
 
+  include PaymentsHelper
+
   before_action :authenticate_user!
 
+
+  def add_card
+
+    # error_codes {0 : AUTHENTICATION_REQUIRED }
+
+    if current_user.customer_user?
+
+      current_driver = CustomerUser.find_by(customer_id: current_user.id).driver
+
+      if current_driver == nil
+
+        @success = false
+
+        @message = 'Error adding card'
+
+      elsif !current_driver.unblocked?
+
+        @success = false
+
+        @message = 'Cannot replace existing card while account is blocked'
+
+      else
+
+        stripe_customer_token = current_driver.stripe_customer_token
+
+        token_id = params[:token_id]
+
+        if !token_id.blank?
+
+          begin
+
+            payment_method  = Stripe::PaymentMethod.create({type: 'card', card: {token: token_id}})
+
+            card = payment_method.card
+
+            setup_intent_id = create_setup_intent(stripe_customer_token, {
+                saving_driver_card: true,
+                driver_id: current_driver.id
+            }).id
+
+
+            result = Stripe::SetupIntent.confirm(
+                setup_intent_id,
+                {
+                    payment_method: payment_method.id,
+                    return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL')
+                }
+            )
+
+
+            status = result.status
+
+            if status == 'succeeded'
+
+              delete_other_existing_cards(stripe_customer_token, payment_method.id)
+
+              @success = true
+
+              @card_info = {
+                  brand: card.brand,
+                  last4: card.last4
+              }
+
+
+            elsif status == 'requires_action' || result.next_action != nil
+
+              @success = false
+
+              @error_code = 0
+
+              next_action = result.next_action
+
+              @redirect_url = next_action.redirect_to_url.url
+
+            elsif status == 'requires_payment_method'
+
+              @success = false
+
+              @message = 'Error adding card'
+
+            end
+
+
+          rescue Stripe::CardError => e
+
+            @success = false
+
+            @message =  e.error.message.blank? ? 'Error adding card' :  e.error.message
+
+
+          rescue => e
+
+            @success = false
+
+            @message = 'Error adding card'
+
+          end
+
+
+        else
+
+          @success = false
+
+          @message = 'Error adding card'
+
+        end
+
+      end
+
+
+    else
+
+      @success = false
+
+      @message = 'Error adding card'
+
+    end
+
+
+  end
 
   def register
 
@@ -292,21 +414,21 @@ class DriverController < ApplicationController
   private
 
 
- def send_registered_notification(driver_id)
+  def send_registered_notification(driver_id)
 
-   # Send email to all account managers and root admins when a new driver signs up
+    # Send email to all account managers and root admins when a new driver signs up
 
-   admins = Admin.role_root_admins + Admin.role_account_managers
+    admins = Admin.role_root_admins + Admin.role_account_managers
 
-   admins = admins.uniq
+    admins = admins.uniq
 
-   admins.each do |admin|
+    admins.each do |admin|
 
-     AdminAccountMailer.delay.driver_registered_notice(admin.email, driver_id)
+      AdminAccountMailer.delay.driver_registered_notice(admin.email, driver_id)
 
-   end
+    end
 
- end
+  end
 
   def is_picture_valid?(picture)
 
