@@ -73,7 +73,9 @@ class DriverController < ApplicationController
           if !is_currency_valid?(currency)
 
             @success = false
-            @message = 'Invalid currency'
+
+            @message = 'The currency selected is not available'
+
             return
 
           else
@@ -82,10 +84,12 @@ class DriverController < ApplicationController
 
           end
 
-          if name.empty?
+          if name.blank?
 
             @success = false
-            @message = 'Name cannot be empty'
+
+            @message = 'Name cannot be blank'
+
             return
 
           else
@@ -116,7 +120,9 @@ class DriverController < ApplicationController
             else
 
               @success = false
-              @message = 'Invalid location'
+
+              @message = 'Error determining your location'
+
               return
 
             end
@@ -126,7 +132,9 @@ class DriverController < ApplicationController
           else
 
             @success = false
-            @message = 'Invalid location'
+
+            @message = 'Error determining your location'
+
             return
 
           end
@@ -138,7 +146,9 @@ class DriverController < ApplicationController
 
 
             @success = false
-            @message = 'Some uploaded pictures were invalid'
+
+            @message = 'Some uploaded pictures are invalid'
+
             return
 
           else
@@ -153,7 +163,9 @@ class DriverController < ApplicationController
           if !profile_picture.is_a?(ActionDispatch::Http::UploadedFile)  || !is_picture_valid?(profile_picture)
 
             @success = false
-            @message = 'Invalid profile picture'
+
+            @message = 'The uploaded profile picture is invalid'
+
             return
 
           else
@@ -173,7 +185,8 @@ class DriverController < ApplicationController
                 is_registered: true,
                 driver_verified: driver.driver_verified,
                 name: driver.name,
-                profile_picture_url: driver.profile_picture.url
+                profile_picture_url: driver.profile_picture.url,
+                has_saved_card: driver.payment_source_setup?
             }
 
 
@@ -187,7 +200,8 @@ class DriverController < ApplicationController
           else
 
             @success = false
-            @message = 'Error registering driver'
+
+            @message = 'Error creating account'
 
           end
 
@@ -196,7 +210,8 @@ class DriverController < ApplicationController
         else
 
           @success = false
-          @message = 'Missing required params'
+
+          @message = 'Error creating account'
 
         end
 
@@ -207,10 +222,15 @@ class DriverController < ApplicationController
 
         @success = false
 
-        @message = 'Already Registered'
+        @message = 'A driver account was already registered'
 
       end
 
+    else
+
+      @success = false
+
+      @message = 'Error creating account'
 
     end
 
@@ -260,6 +280,8 @@ class DriverController < ApplicationController
         @name = current_driver.name
 
         @profile_picture_url = current_driver.profile_picture.url
+
+        @has_saved_card = current_driver.payment_source_setup?
 
       end
 

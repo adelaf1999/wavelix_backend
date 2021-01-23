@@ -85,7 +85,9 @@ class CustomerUser < ApplicationRecord
     end
 
     def phone_number_verified?
+
         self.phone_number_verified
+
     end
 
     def payment_source_setup?

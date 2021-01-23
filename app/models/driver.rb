@@ -1,5 +1,7 @@
 class Driver < ApplicationRecord
 
+  include PaymentsHelper
+
   acts_as_mappable :distance_field_name => :distance,
                    :lat_column_name => :latitude,
                    :lng_column_name => :longitude
@@ -35,6 +37,13 @@ class Driver < ApplicationRecord
   serialize :vehicle_registration_document_pictures, Array
 
   after_create :save_stripe_driver_token
+
+
+  def payment_source_setup?
+
+    has_saved_card?(self.stripe_customer_token)
+
+  end
 
 
   def block_temporarily
