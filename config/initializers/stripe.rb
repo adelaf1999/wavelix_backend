@@ -104,29 +104,33 @@ StripeEvent.configure do |events|
 
   events.subscribe 'setup_intent.succeeded' do |event|
 
-    stripe_customer_token = event.data.object.customer
-
     payment_method = Stripe::PaymentMethod.retrieve(event.data.object.payment_method)
 
     card = payment_method.card
 
-    customer_user = CustomerUser.find_by(stripe_customer_token: stripe_customer_token)
+    metadata = event.data.object.metadata.to_h
 
-    if customer_user != nil
+    if !metadata.blank?
 
-      # sanity check
+      saving_customer_card = metadata[:saving_customer_card]
 
-      ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: true}
+      if saving_customer_card && !metadata[:customer_user_id].blank?
 
+        customer_user_id = metadata[:customer_user_id]
 
-      ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {
-          setup_intent_success: true,
-          card_info: {
-              brand: card.brand,
-              last4: card.last4
-          }
-      }
+        customer_user = CustomerUser.find_by(id: customer_user_id)
 
+        ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: true}
+
+        ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {
+            setup_intent_success: true,
+            card_info: {
+                brand: card.brand,
+                last4: card.last4
+            }
+        }
+
+      end
 
     end
 
@@ -136,19 +140,27 @@ StripeEvent.configure do |events|
 
   events.subscribe 'setup_intent.setup_failed' do |event|
 
-    customer_user = CustomerUser.find_by(stripe_customer_token: event.data.object.customer)
 
-    if customer_user != nil
+    metadata = event.data.object.metadata.to_h
 
-      # sanity check
+    if !metadata.blank?
 
-      ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: false}
+      saving_customer_card = metadata[:saving_customer_card]
 
-      ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {setup_intent_success: false}
+      if saving_customer_card && !metadata[:customer_user_id].blank?
+
+        customer_user_id = metadata[:customer_user_id]
+
+        customer_user = CustomerUser.find_by(id: customer_user_id)
+
+        ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {setup_intent_success: false}
+
+        ActionCable.server.broadcast "customer_settings_#{customer_user.id}_channel", {setup_intent_success: false}
+
+      end
 
 
     end
-
 
   end
 

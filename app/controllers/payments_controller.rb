@@ -84,7 +84,10 @@ class PaymentsController < ApplicationController
           end
 
 
-          setup_intent_id = create_setup_intent(stripe_customer_token).id
+          setup_intent_id = create_setup_intent(stripe_customer_token, {
+            saving_customer_card: true,
+            customer_user_id: customer_user.id
+          }).id
 
           result = Stripe::SetupIntent.confirm(
               setup_intent_id,

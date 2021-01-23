@@ -115,19 +115,15 @@ module PaymentsHelper
   end
 
 
-  def create_setup_intent(customer_token)
+  def create_setup_intent(customer_token, metadata)
 
-
-    Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session'})
-
-
-    # Commented Code Below is used when testing for 3D secure implmentation
-
-    # Stripe::SetupIntent.create({customer: customer_token, usage: 'on_session', payment_method_options: {
-    #     card: {
-    #         request_three_d_secure: 'any'
-    #     }
-    # }})
+    Stripe::SetupIntent.create(
+        {
+            customer: customer_token,
+            usage: 'on_session',
+            metadata: metadata
+        }
+    )
 
   end
 
@@ -138,7 +134,7 @@ module PaymentsHelper
     payment_methods.length > 0
 
   end
-  
+
 
 
   def create_stripe_token_customer(name, customer_user_id)
@@ -159,13 +155,13 @@ module PaymentsHelper
 
   def create_stripe_token_driver(name, driver_id)
 
-   user = Stripe::Customer.create({
-                                name: name,
-                                description: 'Driver Account',
-                                metadata: {
-                                    driver_id: driver_id
-                                }
-                            })
+    user = Stripe::Customer.create({
+                                       name: name,
+                                       description: 'Driver Account',
+                                       metadata: {
+                                           driver_id: driver_id
+                                       }
+                                   })
 
     user['id']
 

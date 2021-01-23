@@ -96,11 +96,6 @@ class CustomerUser < ApplicationRecord
 
     end
 
-    def setup_payment_source
-
-        create_setup_intent(self.stripe_customer_token)
-
-    end
 
 
     private
