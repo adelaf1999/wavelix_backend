@@ -182,7 +182,7 @@ class DriverAccountsController < ApplicationController
 
         @driver_verified = driver.driver_verified
 
-        @account_blocked = driver.account_blocked
+        @account_status = driver.account_status
 
         @review_status = driver.review_status
 
@@ -253,7 +253,7 @@ class DriverAccountsController < ApplicationController
 
       # search for driver accounts by driver name
 
-      # can also filter accounts by driver_verified, country, account_blocked, and review status
+      # can also filter accounts by driver_verified, country, account_status, and review status
 
       @driver_accounts = []
 
@@ -297,7 +297,7 @@ class DriverAccountsController < ApplicationController
 
         end
 
-        
+
         if is_account_status_valid?(account_status)
 
           account_status = account_status.to_i

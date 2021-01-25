@@ -22,8 +22,8 @@ if @driver_verified != nil
     node(:driver_verified) { @driver_verified }
 end
 
-if @account_blocked != nil
-    node(:account_blocked) { @account_blocked }
+if @account_status != nil
+    node(:account_status) { @account_status }
 end
 
 if @review_status != nil
