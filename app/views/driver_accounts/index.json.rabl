@@ -9,3 +9,7 @@ end
 if @countries != nil
     node(:countries) { @countries }
 end
+
+if @account_status_options != nil
+    node(:account_status_options) { @account_status_options }
+end

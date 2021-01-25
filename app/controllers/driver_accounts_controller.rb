@@ -265,7 +265,7 @@ class DriverAccountsController < ApplicationController
 
       country = params[:country]
 
-      account_blocked = params[:account_blocked]
+      account_status = params[:account_status]
 
       review_status = params[:review_status]
 
@@ -297,19 +297,14 @@ class DriverAccountsController < ApplicationController
 
         end
 
+        
+        if is_account_status_valid?(account_status)
 
-        if !account_blocked.blank?
+          account_status = account_status.to_i
 
-          account_blocked = eval(account_blocked)
-
-          if is_boolean?(account_blocked)
-
-            drivers = drivers.where(account_blocked: account_blocked)
-
-          end
+          drivers = drivers.where(account_status: account_status)
 
         end
-
 
         if is_review_status_valid?(review_status)
 
@@ -359,9 +354,12 @@ class DriverAccountsController < ApplicationController
 
       end
 
-      @review_status_options = { 0 => 'Unreviewed', 1 => 'Reviewed' }
+      @review_status_options = Driver.review_statuses
 
       @countries = get_countries
+
+      @account_status_options = Driver.account_statuses
+
 
 
 
@@ -371,6 +369,23 @@ class DriverAccountsController < ApplicationController
 
 
   private
+
+
+  def is_account_status_valid?(account_status)
+
+    if !account_status.blank?
+
+      account_status = account_status.to_i
+
+      Driver.account_statuses.values.include?(account_status)
+
+    else
+
+      false
+
+    end
+
+  end
 
 
   def is_review_status_valid?(review_status)
@@ -405,7 +420,7 @@ class DriverAccountsController < ApplicationController
         name: driver.name,
         country: driver.get_country_name,
         driver_verified: driver.driver_verified,
-        account_blocked: driver.account_blocked,
+        account_status: driver.account_status,
         review_status: driver.review_status,
         registered_at: driver.registered_at_utc
     }
