@@ -163,6 +163,13 @@ StripeEvent.configure do |events|
             finished_registration: true
         }
 
+        ActionCable.server.broadcast "drive_settings_channel_#{driver.customer_user_id}", {
+            setup_intent_success: true,
+            card_info: {
+                brand: card.brand,
+                last4: card.last4
+            }
+        }
 
 
       end
@@ -202,6 +209,10 @@ StripeEvent.configure do |events|
 
         ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
             finished_registration: false
+        }
+
+        ActionCable.server.broadcast "drive_settings_channel_#{driver.customer_user_id}", {
+            setup_intent_success: false
         }
 
       end
