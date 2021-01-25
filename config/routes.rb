@@ -453,4 +453,8 @@ Rails.application.routes.draw do
 
   post '/cancel-unconfirmed-order' => 'unconfirmed_orders#cancel'
 
+  # Drive Settings Routes
+
+  get '/drive-settings-index' => 'drive_settings#index'
+
 end
