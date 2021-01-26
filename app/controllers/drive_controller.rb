@@ -515,7 +515,7 @@ class DriveController < ApplicationController
 
           drivers_rejected = order.drivers_rejected.map(&:to_i)
 
-          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && driver.unblocked?
+          if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && driver.unblocked? && driver.payment_source_setup?
 
             payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
 
