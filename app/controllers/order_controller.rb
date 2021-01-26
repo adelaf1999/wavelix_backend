@@ -956,7 +956,7 @@ class OrderController < ApplicationController
 
                   else
 
-                    delivery_time_limit = (DateTime.now.utc + 36.hours).to_datetime
+                    delivery_time_limit = (DateTime.now.utc + 12.hours).to_datetime
 
                     order.update!(delivery_time_limit: delivery_time_limit)
 
