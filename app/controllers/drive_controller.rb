@@ -93,7 +93,7 @@ class DriveController < ApplicationController
 
       customer_user = CustomerUser.find_by(customer_id: current_user.id)
 
-      driver = Driver.find_by(customer_user_id: customer_user.id)
+      driver = customer_user.driver
 
       if driver != nil
 
@@ -151,11 +151,21 @@ class DriveController < ApplicationController
 
                     if driver.unblocked?
 
-                      @success = true
 
-                      driver.online!
+                      if driver.payment_source_setup?
 
-                      driver.update!(latitude: latitude, longitude: longitude)
+                        @success = true
+
+                        driver.online!
+
+                        driver.update!(latitude: latitude, longitude: longitude)
+
+                      else
+
+                        @success = false
+
+                      end
+
 
                     elsif driver.temporarily_blocked?
 
@@ -220,6 +230,10 @@ class DriveController < ApplicationController
         @success = false
 
       end
+
+    else
+
+      @success = false
 
 
     end
