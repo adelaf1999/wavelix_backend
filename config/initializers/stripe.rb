@@ -104,6 +104,8 @@ StripeEvent.configure do |events|
 
   events.subscribe 'setup_intent.succeeded' do |event|
 
+    include PaymentsHelper
+
     payment_method = Stripe::PaymentMethod.retrieve(event.data.object.payment_method)
 
     card = payment_method.card
@@ -136,24 +138,7 @@ StripeEvent.configure do |events|
 
       elsif saving_driver_card && !metadata[:driver_id].blank?
 
-
-        # Delete other existing cards if present
-
-        saved_payment_methods =  Stripe::PaymentMethod.list({customer: stripe_customer_token, type: 'card'}).data
-
-        if saved_payment_methods.length > 1
-
-          saved_payment_methods.each do |saved_payment_method|
-
-            if saved_payment_method.id != payment_method.id
-
-              Stripe::PaymentMethod.detach(saved_payment_method.id)
-
-            end
-
-          end
-
-        end
+        delete_other_existing_cards(stripe_customer_token, payment_method.id)
 
         driver_id = metadata[:driver_id]
 
