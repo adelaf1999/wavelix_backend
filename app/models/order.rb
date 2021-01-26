@@ -20,6 +20,12 @@ class Order < ApplicationRecord
   mount_uploader :receipt, ImageUploader
 
 
+  def get_drivers_rejected
+
+    self.drivers_rejected.map(&:to_i)
+
+  end
+
   def get_admins_reviewing
 
     admins_reviewing = self.admins_reviewing.map &:to_i

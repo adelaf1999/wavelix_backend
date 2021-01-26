@@ -34,52 +34,6 @@ class DriveController < ApplicationController
   end
 
 
-  def driver_go_offline
-
-    if current_user.customer_user?
-
-      customer_user = CustomerUser.find_by(customer_id: current_user.id)
-
-      driver = Driver.find_by(customer_user_id: customer_user.id)
-
-      if driver != nil
-
-        driver_verified = driver.driver_verified
-
-        if driver_verified && driver.online?
-
-          driver.offline!
-
-          # If driver has a pending order request add him to drivers rejected and find a new driver
-
-          order = Order.find_by(driver_id: nil, status: 1, prospective_driver_id: driver.id)
-
-          if order != nil
-
-            drivers_rejected = order.drivers_rejected.map(&:to_i)
-
-            if !drivers_rejected.include?(driver.id)
-
-              drivers_rejected.push(driver.id)
-
-              order.update!(drivers_rejected: drivers_rejected)
-
-              FindNewDriverJob.perform_later(order.id)
-
-            end
-
-          end
-
-
-
-        end
-
-      end
-
-    end
-
-  end
-
 
   def can_pickup_order
 
