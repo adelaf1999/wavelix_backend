@@ -15,11 +15,11 @@ class PaymentsController < ApplicationController
 
       if has_saved_card?(customer_token)
 
-          @has_saved_card = true
+        @has_saved_card = true
 
       else
 
-          @has_saved_card = false
+        @has_saved_card = false
 
       end
 
@@ -80,22 +80,22 @@ class PaymentsController < ApplicationController
 
 
           payment_method = Stripe::PaymentMethod.create({
-                                           type: 'card',
-                                           card: {
-                                               number: number,
-                                               exp_month: exp_month,
-                                               exp_year: exp_year,
-                                               cvc: cvc,
-                                           },
-                                       })
+                                                            type: 'card',
+                                                            card: {
+                                                                number: number,
+                                                                exp_month: exp_month,
+                                                                exp_year: exp_year,
+                                                                cvc: cvc,
+                                                            },
+                                                        })
 
-            card = payment_method.card
+          card = payment_method.card
 
 
 
           setup_intent_id = create_setup_intent(stripe_customer_token, {
-            saving_customer_card: true,
-            customer_user_id: customer_user.id
+              saving_customer_card: true,
+              customer_user_id: customer_user.id
           }).id
 
           result = Stripe::SetupIntent.confirm(
@@ -151,11 +151,8 @@ class PaymentsController < ApplicationController
 
           @error_code = 1
 
-          if e.error.message
+          @error_message = e.error.message.blank? ? 'Error adding card' :  e.error.message
 
-            @error_message =  e.error.message
-
-          end
 
         rescue => e
 
