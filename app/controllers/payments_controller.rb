@@ -56,32 +56,41 @@ class PaymentsController < ApplicationController
 
       stripe_customer_token = customer_user.stripe_customer_token
 
-      token_id = params[:token_id]
 
-      if token_id != nil && !token_id.empty?
+      number = params[:number]
+
+      exp_month = params[:exp_month]
+
+      exp_year = params[:exp_year]
+
+      cvc = params[:cvc]
+
+
+
+
+      if !number.blank? && !exp_month.blank? && !exp_year.blank? && !cvc.blank?
 
         begin
+
+
 
           # If the customer already has a payment method, delete it to create a new one
 
           delete_existing_card(stripe_customer_token)
 
-          if is_payment_method?(token_id)
 
-            payment_method = Stripe::PaymentMethod.attach(token_id, {customer: stripe_customer_token})
+          payment_method = Stripe::PaymentMethod.create({
+                                           type: 'card',
+                                           card: {
+                                               number: number,
+                                               exp_month: exp_month,
+                                               exp_year: exp_year,
+                                               cvc: cvc,
+                                           },
+                                       })
 
             card = payment_method.card
 
-
-          else
-
-
-            payment_method  = Stripe::PaymentMethod.create({type: 'card', card: {token: token_id}})
-
-            card = payment_method.card
-
-
-          end
 
 
           setup_intent_id = create_setup_intent(stripe_customer_token, {
