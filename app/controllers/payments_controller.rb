@@ -66,12 +66,9 @@ class PaymentsController < ApplicationController
       cvc = params[:cvc]
 
 
-
-
-      if !number.blank? && !exp_month.blank? && !exp_year.blank? && !cvc.blank?
+      if number != nil && exp_month != nil &&  exp_year != nil && cvc != nil
 
         begin
-
 
 
           # If the customer already has a payment method, delete it to create a new one
@@ -134,6 +131,10 @@ class PaymentsController < ApplicationController
 
             @success = false
 
+            @error_code = 1
+
+            @error_message = 'Error adding card. Please try again.'
+
           end
 
         rescue Stripe::CardError => e
@@ -151,12 +152,16 @@ class PaymentsController < ApplicationController
 
           @error_code = 1
 
-          @error_message = e.error.message.blank? ? 'Error adding card' :  e.error.message
+          @error_message = e.error.message.blank? ? 'Error adding card. Please try again.' :  e.error.message
 
 
         rescue => e
 
           @success = false
+
+          @error_code = 1
+
+          @error_message = 'Error adding card. Please try again.'
 
         end
 
@@ -166,6 +171,10 @@ class PaymentsController < ApplicationController
       else
 
         @success = false
+
+        @error_code = 1
+
+        @error_message = 'Error adding card. Please try again.'
 
       end
 
