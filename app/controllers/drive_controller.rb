@@ -617,6 +617,8 @@ class DriveController < ApplicationController
 
               @success = false
 
+              order.canceled!
+
               order.update!(order_canceled_reason: 'Order has expired')
 
               send_store_orders(order)
