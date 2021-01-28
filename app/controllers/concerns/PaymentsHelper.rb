@@ -12,6 +12,23 @@ module PaymentsHelper
   end
 
 
+  def authorize_amount_usd(amount_cents, customer_token, payment_method_id, metadata)
+
+    Stripe::PaymentIntent.create(
+        {
+            amount: amount_cents,
+            currency: 'usd',
+            customer: customer_token,
+            payment_method: payment_method_id,
+            setup_future_usage: 'on_session',
+            metadata: metadata,
+            capture_method: 'manual'
+        }
+    )
+
+  end
+
+
   def cancel_payment(order)
 
     Stripe::PaymentIntent.cancel(order.stripe_payment_intent)

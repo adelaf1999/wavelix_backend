@@ -1088,21 +1088,19 @@ class CartController < ApplicationController
 
       total_price_cents = total_price_cents.round.to_i
 
-      stripe_customer_id = customer_user.stripe_customer_token
+      stripe_customer_token = customer_user.stripe_customer_token
 
-      customer_card_id = get_customer_card(stripe_customer_id)
+      payment_method_id = get_customer_card(stripe_customer_token)
 
-      payment_intent = Stripe::PaymentIntent.create(
+
+      payment_intent = authorize_amount_usd(
+          total_price_cents,
+          stripe_customer_token,
+          payment_method_id,
           {
-              amount: total_price_cents,
-              currency: 'usd',
-              customer: stripe_customer_id,
-              payment_method: customer_card_id,
-              setup_future_usage: 'on_session',
-              metadata: {
-                  order_request_ids: order_request_ids.to_s
-              },
-              capture_method: 'manual'
+              charging_customer_card: true,
+              customer_user_id: customer_user.id,
+              order_request_ids: order_request_ids.to_s
           }
       )
 

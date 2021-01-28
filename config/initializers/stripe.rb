@@ -6,91 +6,129 @@ StripeEvent.configure do |events|
 
   events.subscribe 'payment_intent.payment_failed' do |event|
 
-    customer_user = CustomerUser.find_by(stripe_customer_token: event.data.object.customer)
 
-    if customer_user != nil
+    metadata = event.data.object.metadata.to_h
 
-      # sanity check
+    if !metadata.blank?
 
-      ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: false}
+      charging_customer_card = metadata[:charging_customer_card]
+
+      if charging_customer_card && !metadata[:customer_user_id].blank?
+
+        customer_user_id = metadata[:customer_user_id]
+
+        customer_user = CustomerUser.find_by(id: customer_user_id)
+
+        if !metadata[:order_request_id].blank?
+
+          order_request_id = metadata[:order_request_id]
+
+          order_request = OrderRequest.find_by(id: order_request_id)
+
+          order_request.destroy!
+
+          ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: false}
+
+        elsif !metadata[:order_request_ids].blank?
+
+          order_request_ids = metadata[:order_request_ids]
+
+          order_request_ids = eval(order_request_ids)
+
+          order_request_ids.each do |id|
+
+            order_request = OrderRequest.find_by(id: id)
+
+            order_request.destroy!
+
+          end
+
+
+        end
+
+
+
+      end
 
 
     end
+
 
 
   end
 
 
 
-  events.subscribe 'payment_intent.succeeded' do |event|
+  events.subscribe 'payment_intent.amount_capturable_updated' do |event|
 
-    metadata = event.data.object.metadata.to_hash
-
-    order_request_id = metadata[:order_request_id]
-
-    customer_user = CustomerUser.find_by(stripe_customer_token: event.data.object.customer)
+    metadata = event.data.object.metadata.to_h
 
     payment_intent_id = event.data.object.id
 
-    if order_request_id == nil
+    if !metadata.blank?
 
+      charging_customer_card = metadata[:charging_customer_card]
 
-      order_request_ids = metadata[:order_request_ids]
+      if charging_customer_card && !metadata[:customer_user_id].blank?
 
-      if order_request_ids != nil && customer_user != nil
+        customer_user_id = metadata[:customer_user_id]
 
+        customer_user = CustomerUser.find_by(id: customer_user_id)
 
-        order_request_ids = eval(order_request_ids)
+        if !metadata[:order_request_id].blank?
 
-        payment_intent_success = false
+          order_request_id = metadata[:order_request_id]
 
-
-        order_request_ids.each do |id|
-
-          order_request = OrderRequest.find_by(id: id)
+          order_request = OrderRequest.find_by(id: order_request_id)
 
           if OrderRequest.create_order(order_request, payment_intent_id)
 
-            payment_intent_success = true
+            ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: true}
 
           end
 
+
+        elsif !metadata[:order_request_ids].blank?
+
+          order_request_ids = metadata[:order_request_ids]
+
+          order_request_ids = eval(order_request_ids)
+
+          payment_intent_success = false
+
+
+          order_request_ids.each do |id|
+
+            order_request = OrderRequest.find_by(id: id)
+
+            if OrderRequest.create_order(order_request, payment_intent_id)
+
+              payment_intent_success = true
+
+            end
+
+          end
+
+
+          if payment_intent_success
+
+            cart = customer_user.cart
+
+            ActionCable.server.broadcast "cart_#{cart.id}_user_#{customer_user.customer_id}_channel", {payment_intent_success: true}
+
+
+          end
+
+
         end
-
-
-        if payment_intent_success
-
-          cart = customer_user.cart
-
-          ActionCable.server.broadcast "cart_#{cart.id}_user_#{customer_user.customer_id}_channel", {payment_intent_success: true}
-
-
-        end
-
-
-      end
-
-
-
-    else
-
-      order_request = OrderRequest.find_by(id: order_request_id)
-
-
-      if order_request != nil && customer_user != nil
-
-        if OrderRequest.create_order(order_request, payment_intent_id)
-
-          ActionCable.server.broadcast "view_product_#{customer_user.id}_channel", {payment_intent_success: true}
-
-        end
-
 
 
       end
 
 
     end
+
+
 
 
 
