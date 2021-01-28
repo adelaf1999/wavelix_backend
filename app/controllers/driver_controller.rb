@@ -33,15 +33,32 @@ class DriverController < ApplicationController
 
         stripe_customer_token = current_driver.stripe_customer_token
 
-        token_id = params[:token_id]
+        number = params[:number]
 
-        if !token_id.blank?
+        exp_month = params[:exp_month]
+
+        exp_year = params[:exp_year]
+
+        cvc = params[:cvc]
+
+        if number != nil && exp_month != nil &&  exp_year != nil && cvc != nil
 
           begin
 
-            payment_method  = Stripe::PaymentMethod.create({type: 'card', card: {token: token_id}})
+
+            payment_method = Stripe::PaymentMethod.create({
+                                                              type: 'card',
+                                                              card: {
+                                                                  number: number,
+                                                                  exp_month: exp_month,
+                                                                  exp_year: exp_year,
+                                                                  cvc: cvc,
+                                                              },
+                                                          })
 
             card = payment_method.card
+
+
 
             setup_intent_id = create_setup_intent(stripe_customer_token, {
                 saving_driver_card: true,
