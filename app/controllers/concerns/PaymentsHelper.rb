@@ -29,9 +29,21 @@ module PaymentsHelper
   end
 
 
-  def cancel_payment(order)
+  def cancel_payment_intent(order)
 
-    Stripe::PaymentIntent.cancel(order.stripe_payment_intent)
+    # Before canceling a payment intent, get all other orders with the same stripe payment intent
+
+    # As the order passed that are pending. If the are no other pending orders, then cancel the payment intent.
+
+    stripe_payment_intent = order.stripe_payment_intent
+
+    other_pending_orders = Order.where(stripe_payment_intent: stripe_payment_intent, status: 1).where.not(id: order.id)
+
+    if other_pending_orders.length == 0
+
+      Stripe::PaymentIntent.cancel(order.stripe_payment_intent)
+
+    end
 
   end
 

@@ -682,7 +682,7 @@ module OrderHelper
 
     if payment_intent.status == 'requires_capture'
 
-      cancel_payment(order)
+      cancel_payment_intent(order)
 
     else
 

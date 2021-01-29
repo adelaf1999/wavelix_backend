@@ -57,7 +57,7 @@
       <spacer size="16"></spacer>
 
       <p id="paragraph">
-           <%= @store_name %> rejected the order you made and a full refund has been issued for your order.
+           <%= @store_name %> rejected the order you made and a refund has been issued for your order.
       </p>
       <spacer size="16"></spacer>
 

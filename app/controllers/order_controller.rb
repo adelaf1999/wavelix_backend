@@ -601,12 +601,21 @@ class OrderController < ApplicationController
 
           order.update!(order_canceled_reason: 'Customer canceled order', customer_canceled_order: true)
 
+          payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+          if payment_intent.status == 'requires_capture'
+
+            cancel_payment_intent(order)
+
+          else
+
+            refund_order(order)
+
+          end
+
           send_store_orders(order)
 
           send_customer_orders(order)
-
-          cancel_payment(order)
-
 
           send_store_notification(
               order,
@@ -620,7 +629,7 @@ class OrderController < ApplicationController
 
           send_customer_notification(
               order,
-              "A full refund has been issued for the order you made from #{order.get_store_name} ",
+              "A refund has been issued for the order you made from #{order.get_store_name} ",
               'Order canceled successfully',
               {
                   show_orders: true
@@ -1359,15 +1368,28 @@ class OrderController < ApplicationController
 
         order.update!(order_canceled_reason: 'Store canceled order')
 
+
+        payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+        if payment_intent.status == 'requires_capture'
+
+          cancel_payment_intent(order)
+
+        else
+
+          refund_order(order)
+
+        end
+
+
         send_store_orders(order)
 
         send_customer_orders(order)
 
-        cancel_payment(order)
 
         send_customer_notification(
             order,
-            "A full refund has been issued for the order you made from #{order.get_store_name}",
+            "A refund has been issued for the order you made from #{order.get_store_name}",
             "Order rejected by #{order.get_store_name}",
             {
                 show_orders: true

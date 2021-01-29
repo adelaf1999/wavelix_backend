@@ -57,7 +57,7 @@
       <spacer size="16"></spacer>
 
       <p id="paragraph">
-        The order you made from <%= @store_name %> was successfully canceled and a full refund has been issued for your order.
+        The order you made from <%= @store_name %> was successfully canceled and a refund has been issued for your order.
       </p>
       <spacer size="16"></spacer>
 
