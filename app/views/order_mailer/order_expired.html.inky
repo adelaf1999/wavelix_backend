@@ -58,7 +58,7 @@
       <spacer size="16"></spacer>
 
       <p class="paragraph">
-          Your order from <%= @store_name %> has expired and a full refund has been issued for your order.
+          Your order from <%= @store_name %> has expired and a refund has been issued for your order.
       </p>
 
 

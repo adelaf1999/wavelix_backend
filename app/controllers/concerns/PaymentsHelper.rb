@@ -29,6 +29,35 @@ module PaymentsHelper
   end
 
 
+  def capture_order_payment_intent(payment_intent_id)
+
+
+    pending_orders = Order.where(stripe_payment_intent: payment_intent_id, status: 1)
+
+    amount_to_capture = 0
+
+    pending_orders.each do |order|
+
+      order_price_cents = order.total_price * 100
+
+      order_price_cents = order_price_cents.round.to_i
+
+      amount_to_capture += order_price_cents
+
+    end
+
+    payment_intent = Stripe::PaymentIntent.capture(
+        payment_intent_id,
+        amount_to_capture: amount_to_capture
+    )
+
+
+    payment_intent.status == 'succeeded'
+
+
+  end
+
+
   def cancel_payment_intent(order)
 
     # Before canceling a payment intent, get all other orders with the same stripe payment intent

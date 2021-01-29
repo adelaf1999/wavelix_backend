@@ -471,175 +471,41 @@ class DriveController < ApplicationController
 
           if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && driver.unblocked? && driver.payment_source_setup?
 
-            payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
+            payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
-            if payment_intent.status == 'succeeded'
+            if payment_intent.status == 'requires_capture'
 
-              @success = true
+              if capture_order_payment_intent(payment_intent.id)
 
-              driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
+                @success = true
 
-              driver_location = {latitude: driver.latitude, longitude: driver.longitude}
-
-              store_user = StoreUser.find_by(id: order.store_user_id)
-
-              has_sensitive_products = store_user.has_sensitive_products
-
-              store_location = store_user.store_address
-
-              store_latitude = store_location[:latitude]
-
-              store_longitude = store_location[:longitude]
-
-              distance = calculate_distance_meters(driver_location, store_location)
-
-              order.update!(driver_id: driver.id)
-
-              order.ongoing!
-
-
-              send_driver_notification(
-                  order,
-                  'Make sure to get the QR code of the order scanned on your phone in the store before you leave',
-                  nil,
-                  {
-                      show_driver_orders: true
-                  }
-              )
-
-
-              send_store_notification(
-                  order,
-                  "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves",
-                  nil,
-                  {
-                      show_orders: true
-                  }
-              )
-
-
-              OrderMailer.delay.driver_assigned_order(order.get_store_email, order.get_customer_name)
-
-
-
-              estimated_arrival_time = estimated_arrival_time_minutes(
-                  driver.latitude,
-                  driver.longitude,
-                  store_latitude,
-                  store_longitude
-              )
-
-
-              if distance <= 100
-
-                order.update!(driver_arrived_to_store: true)
-
-                if distance >= 20
-
-                  send_customer_notification(
-                      order,
-                      "Driver is about to arrive to #{order.get_store_name} to pickup your order"
-                  )
-
-                  send_store_notification(
-                      order,
-                      "Make sure the order for your customer #{order.get_customer_name} is ready",
-                      'Driver is about to arrive',
-                      {
-                          show_orders: true
-                      }
-                  )
-
-
-
-
-                end
-
-              end
-
-
-
-              if has_sensitive_products
-
-
-                if estimated_arrival_time > 5
-
-                  store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
-
-                else
-
-                  store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 30.minutes).to_datetime
-
-                end
-
-
-                order.update!(store_arrival_time_limit: store_arrival_time_limit)
-
-                send_store_orders(order)
-
-                send_customer_orders(order)
-
-                send_driver_orders(driver)
-
-                Delayed::Job.enqueue(
-                    StoreArrivalJob.new(order.id),
-                    queue: 'store_arrival_job_queue',
-                    priority: 0,
-                    run_at: store_arrival_time_limit
-                )
+                driver_accept_order_success(driver, order)
 
               else
 
-                store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
+                @success = false
 
-                order.update!(store_arrival_time_limit: store_arrival_time_limit)
-
-                send_store_orders(order)
-
-                send_customer_orders(order)
-
-                send_driver_orders(driver)
-
-                Delayed::Job.enqueue(
-                    StoreArrivalJob.new(order.id),
-                    queue: 'store_arrival_job_queue',
-                    priority: 0,
-                    run_at: store_arrival_time_limit
-                )
+                driver_accept_order_failure(order)
 
               end
 
-
-
-
-
             else
 
-              @success = false
+              if payment_intent.status == 'succeeded'
 
-              order.canceled!
+                @success = true
 
-              order.update!(order_canceled_reason: 'Order has expired')
+                driver_accept_order_success(driver, order)
 
-              send_store_orders(order)
+              else
 
-              send_customer_orders(order)
+                @success = false
 
-              send_customer_notification(
-                  order,
-                  "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
-                  'Order has expired',
-                  {
-                      show_orders: true
-                  }
-              )
+                driver_accept_order_failure(order)
 
-
-              OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
+              end
 
             end
-
-
 
 
           else
@@ -717,6 +583,163 @@ class DriveController < ApplicationController
         @success = false
 
       end
+
+    end
+
+  end
+
+
+  private
+
+
+  def driver_accept_order_failure(order)
+
+    order.canceled!
+
+    order.update!(order_canceled_reason: 'Order has expired')
+
+    send_store_orders(order)
+
+    send_customer_orders(order)
+
+    send_customer_notification(
+        order,
+        "Your order from #{order.get_store_name} has expired and a refund has been issued for your order",
+        'Order has expired',
+        {
+            show_orders: true
+        }
+    )
+
+
+    OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
+
+  end
+
+  def driver_accept_order_success(driver, order)
+
+    driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
+
+    driver_location = {latitude: driver.latitude, longitude: driver.longitude}
+
+    store_user = StoreUser.find_by(id: order.store_user_id)
+
+    has_sensitive_products = store_user.has_sensitive_products
+
+    store_location = store_user.store_address
+
+    store_latitude = store_location[:latitude]
+
+    store_longitude = store_location[:longitude]
+
+    distance = calculate_distance_meters(driver_location, store_location)
+
+    order.update!(driver_id: driver.id)
+
+    order.ongoing!
+
+    send_driver_notification(
+        order,
+        'Make sure to get the QR code of the order scanned on your phone in the store before you leave',
+        nil,
+        {
+            show_driver_orders: true
+        }
+    )
+
+
+    send_store_notification(
+        order,
+        "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves",
+        nil,
+        {
+            show_orders: true
+        }
+    )
+
+
+    OrderMailer.delay.driver_assigned_order(order.get_store_email, order.get_customer_name)
+
+
+    estimated_arrival_time = estimated_arrival_time_minutes(
+        driver.latitude,
+        driver.longitude,
+        store_latitude,
+        store_longitude
+    )
+
+
+    if distance <= 100
+
+      order.update!(driver_arrived_to_store: true)
+
+      if distance >= 20
+
+        send_customer_notification(
+            order,
+            "Driver is about to arrive to #{order.get_store_name} to pickup your order"
+        )
+
+        send_store_notification(
+            order,
+            "Make sure the order for your customer #{order.get_customer_name} is ready",
+            'Driver is about to arrive',
+            {
+                show_orders: true
+            }
+        )
+
+
+      end
+
+    end
+
+
+    if has_sensitive_products
+
+      if estimated_arrival_time > 5
+
+        store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
+
+      else
+
+        store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 30.minutes).to_datetime
+
+      end
+
+      order.update!(store_arrival_time_limit: store_arrival_time_limit)
+
+      send_store_orders(order)
+
+      send_customer_orders(order)
+
+      send_driver_orders(driver)
+
+      Delayed::Job.enqueue(
+          StoreArrivalJob.new(order.id),
+          queue: 'store_arrival_job_queue',
+          priority: 0,
+          run_at: store_arrival_time_limit
+      )
+
+    else
+
+      store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
+
+      order.update!(store_arrival_time_limit: store_arrival_time_limit)
+
+      send_store_orders(order)
+
+      send_customer_orders(order)
+
+      send_driver_orders(driver)
+
+      Delayed::Job.enqueue(
+          StoreArrivalJob.new(order.id),
+          queue: 'store_arrival_job_queue',
+          priority: 0,
+          run_at: store_arrival_time_limit
+      )
 
     end
 

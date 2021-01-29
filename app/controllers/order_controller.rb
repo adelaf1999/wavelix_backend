@@ -1118,88 +1118,31 @@ class OrderController < ApplicationController
 
               order.store_accepted!
 
+              payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
-              payment_intent = Stripe::PaymentIntent.capture(order.stripe_payment_intent)
+              if payment_intent.status == 'requires_capture'
 
-              if payment_intent.status == 'succeeded'
+                 if capture_order_payment_intent(payment_intent.id)
 
-                order.ongoing!
+                   store_accept_order_success(order, delivery_time_limit)
 
-                order.update!(delivery_time_limit: delivery_time_limit)
+                 else
 
+                   store_accept_order_failure(order)
 
-                send_store_orders(order)
-
-                send_customer_orders(order)
-
-
-                send_customer_notification(
-                    order,
-                    'Make sure that your order has arrived well when it does, and to confirm the order in the orders page afterwards',
-                    "Order Accepted by #{order.get_store_name}",
-                    {
-                        show_orders: true
-                    }
-                )
-
-                OrderMailer.delay.order_accepted(order.get_customer_email, order.get_store_name, order.get_customer_name)
-
-
-
-                send_store_notification(
-                    order,
-                    "Please upload or take a photo of the receipt of the order for your customer #{order.get_customer_name} and attach it to the order in the orders page. This might be used in case a dispute was made, to prove that your store has delivered the order to the customer",
-                    nil,
-                    {
-                        show_orders: true
-                    }
-                )
-
-
-                OrderMailer.delay.attach_order_receipt(order.get_store_email, order.get_customer_name)
-
-
-
-                Delayed::Job.enqueue(
-                    ConfirmStoreDeliveryJob.new(order_id),
-                    queue: 'confirm_store_delivery_job_queue',
-                    priority: 0,
-                    run_at: delivery_time_limit
-                )
-
-
-                Delayed::Job.enqueue(
-                    NotifyUnconfirmedOrderJob.new(order_id),
-                    queue: 'notify_unconfirmed_order_job_queue',
-                    priority: 0,
-                    run_at: delivery_time_limit + 4.hours
-                )
-
-
-
+                 end
 
               else
 
-                order.canceled!
+                if payment_intent.status == 'succeeded'
 
-                order.update!(order_canceled_reason: 'Order has expired')
+                  store_accept_order_success(order, delivery_time_limit)
 
-                send_store_orders(order)
+                else
 
-                send_customer_orders(order)
+                  store_accept_order_failure(order)
 
-
-                send_customer_notification(
-                    order,
-                    "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
-                    'Order has expired',
-                    {
-                        show_orders: true
-                    }
-                )
-
-                OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
-
+                end
 
 
               end
@@ -2162,6 +2105,89 @@ class OrderController < ApplicationController
 
 
   private
+
+
+  def store_accept_order_failure(order)
+
+      order.canceled!
+
+      order.update!(order_canceled_reason: 'Order has expired')
+
+      send_store_orders(order)
+
+      send_customer_orders(order)
+
+
+      send_customer_notification(
+          order,
+          "Your order from #{order.get_store_name} has expired and a refund has been issued for your order",
+          'Order has expired',
+          {
+              show_orders: true
+          }
+      )
+
+      OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
+
+  end
+
+
+  def store_accept_order_success(order, delivery_time_limit)
+
+      order.ongoing!
+
+      order.update!(delivery_time_limit: delivery_time_limit)
+
+
+      send_store_orders(order)
+
+      send_customer_orders(order)
+
+
+      send_customer_notification(
+          order,
+          'Make sure that your order has arrived well when it does, and to confirm the order in the orders page afterwards',
+          "Order Accepted by #{order.get_store_name}",
+          {
+              show_orders: true
+          }
+      )
+
+      OrderMailer.delay.order_accepted(order.get_customer_email, order.get_store_name, order.get_customer_name)
+
+
+      send_store_notification(
+          order,
+          "Please upload or take a photo of the receipt of the order for your customer #{order.get_customer_name} and attach it to the order in the orders page. This might be used in case a dispute was made, to prove that your store has delivered the order to the customer",
+          nil,
+          {
+              show_orders: true
+          }
+      )
+
+
+      OrderMailer.delay.attach_order_receipt(order.get_store_email, order.get_customer_name)
+
+
+      Delayed::Job.enqueue(
+          ConfirmStoreDeliveryJob.new(order.id),
+          queue: 'confirm_store_delivery_job_queue',
+          priority: 0,
+          run_at: delivery_time_limit
+      )
+
+
+      Delayed::Job.enqueue(
+          NotifyUnconfirmedOrderJob.new(order.id),
+          queue: 'notify_unconfirmed_order_job_queue',
+          priority: 0,
+          run_at: delivery_time_limit + 4.hours
+      )
+
+
+
+  end
+
 
 
   def receipt_extensions
