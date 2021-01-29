@@ -373,7 +373,7 @@ module OrderHelper
 
             send_customer_notification(
                 order,
-                "Your order from #{order.get_store_name} has expired and a full refund has been issued for your order",
+                "Your order from #{order.get_store_name} has expired and a refund has been issued for your order",
                 'Order has expired',
                 {
                     show_orders: true
