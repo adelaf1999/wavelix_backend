@@ -3,14 +3,6 @@ module PaymentsHelper
   Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
 
 
-  def get_drivers_commission_fee
-    5
-  end
-
-  def get_products_commission_fee
-    5.9
-  end
-
 
   def authorize_amount_usd(amount_cents, customer_token, payment_method_id, metadata)
 
@@ -83,28 +75,27 @@ module PaymentsHelper
     balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
 
 
-    # Net and total amount in USD
+    total_payment = balance_transaction.amount.to_f / 100.to_f
 
-    total_amount = balance_transaction.amount.to_f / 100.to_f
-
-    net_amount = balance_transaction.net / 100.to_f
+    fee_payment = balance_transaction.fee.to_f / 100.to_f
 
 
     order_total = order.total_price.to_f.round(2)
 
-    refund_amount = (order_total / total_amount)  * net_amount
+    order_fee = ( order_total / total_payment  ) * fee_payment
+
+    order_net = order_total - order_fee
 
 
-    # Convert refund amount to cents
 
-    refund_amount = refund_amount * 100
+    order_net = order_net * 100
 
-    refund_amount = refund_amount.round.to_i
+    order_net = order_net.round.to_i
 
 
     Stripe::Refund.create({
                               payment_intent: order.stripe_payment_intent,
-                              amount: refund_amount
+                              amount: order_net
                           })
 
 
