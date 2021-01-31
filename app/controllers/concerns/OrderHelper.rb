@@ -163,7 +163,7 @@ module OrderHelper
 
 
 
-    our_earning = net_driver * ( 10 / 100 )
+    our_earning = net_driver * 0.1
 
     our_earning = our_earning.round(2)
 
@@ -232,7 +232,7 @@ module OrderHelper
 
     if store_handles_delivery
 
-      our_earning = order_net * ( 10 / 100 )
+      our_earning = order_net * 0.1
 
       our_earning = our_earning.round(2)
 
@@ -250,7 +250,7 @@ module OrderHelper
       Payment.create!(
           amount: order_total_store_currency,
           fee: order_total_store_currency - net_store,
-          net_store: net_store,
+          net: net_store,
           currency: store_user.currency,
           store_user_id: store_user.id,
           timezone: timezone
@@ -266,7 +266,7 @@ module OrderHelper
       net_store = ( products_price / order_total ) * order_net
 
 
-      our_earning = net_store * ( 10 / 100 )
+      our_earning = net_store *  0.1
 
       our_earning = our_earning.round(2)
 
@@ -285,7 +285,7 @@ module OrderHelper
       Payment.create!(
           amount: order_total_store_currency,
           fee: order_total_store_currency - net_store,
-          net_store: net_store,
+          net: net_store,
           currency: store_user.currency,
           store_user_id: store_user.id,
           timezone: timezone
