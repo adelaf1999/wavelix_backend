@@ -279,12 +279,13 @@ module OrderHelper
 
       net_store = convert_amount(net_store, 'USD', store_user.currency).round(2)
 
-      order_total_store_currency = convert_amount(order_total, 'USD', store_user.currency).round(2)
+
+      products_price_store_currency = convert_amount(products_price, 'USD', store_user.currency).round(2)
 
 
       Payment.create!(
-          amount: order_total_store_currency,
-          fee: order_total_store_currency - net_store,
+          amount: products_price_store_currency,
+          fee: products_price_store_currency - net_store,
           net: net_store,
           currency: store_user.currency,
           store_user_id: store_user.id,
