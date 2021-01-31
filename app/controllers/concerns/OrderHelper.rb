@@ -144,10 +144,19 @@ module OrderHelper
 
     balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
 
-
-    total_payment = balance_transaction.amount.to_f / 100.to_f
+    total_payment = payment_intent.charges.data.first.amount_captured.to_f / 100.to_f
 
     fee_payment = balance_transaction.fee.to_f / 100.to_f
+
+    refunds = payment_intent.charges.data.first.refunds.data
+
+    refunds.each do |refund|
+
+      refund_balance_transaction = Stripe::BalanceTransaction.retrieve(refund.balance_transaction)
+
+      fee_payment += ( refund_balance_transaction.fee.to_f / 100.to_f )
+
+    end
 
 
     order_total = order.total_price.to_f.round(2)
@@ -217,10 +226,19 @@ module OrderHelper
 
     balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)
 
-
-    total_payment = balance_transaction.amount.to_f / 100.to_f
+    total_payment = payment_intent.charges.data.first.amount_captured.to_f / 100.to_f
 
     fee_payment = balance_transaction.fee.to_f / 100.to_f
+
+    refunds = payment_intent.charges.data.first.refunds.data
+
+    refunds.each do |refund|
+
+      refund_balance_transaction = Stripe::BalanceTransaction.retrieve(refund.balance_transaction)
+
+      fee_payment += ( refund_balance_transaction.fee.to_f / 100.to_f )
+
+    end
 
 
     order_total = order.total_price.to_f.round(2)
