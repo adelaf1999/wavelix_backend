@@ -423,7 +423,7 @@ module OrderHelper
                 OrderJob.new(order.id, driver.id),
                 queue: 'order_job_queue',
                 priority: 0,
-                run_at: 30.seconds.from_now
+                run_at: 3.minutes.from_now
             )
 
             driver_found = true
