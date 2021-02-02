@@ -70,6 +70,10 @@ module PaymentsHelper
 
   def refund_order(order)
 
+    # The customer's card is being charged in usd and also the total and delivery fee are being saved in usd
+
+    # Therefore the currencies of the charge, total price and delivery fee are all the same
+
     payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
     balance_transaction = Stripe::BalanceTransaction.retrieve(payment_intent.charges.data.first.balance_transaction)

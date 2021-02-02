@@ -135,6 +135,10 @@ module OrderHelper
 
   def increment_driver_balance(order, driver)
 
+    # The customer's card is being charged in usd and also the total and delivery fee are being saved in usd
+
+    # Therefore the currencies of the charge, total price and delivery fee are all the same
+
     store_user = StoreUser.find_by(id: order.store_user_id)
 
     timezone = get_store_timezone_name(store_user)
@@ -214,6 +218,11 @@ module OrderHelper
 
 
   def increment_store_balance(order)
+
+    # The customer's card is being charged in usd and also the total and delivery fee are being saved in usd
+
+    # Therefore the currencies of the charge, total price and delivery fee are all the same
+
 
     store_user = StoreUser.find_by(id: order.store_user_id)
 
