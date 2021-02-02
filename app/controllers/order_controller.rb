@@ -536,6 +536,8 @@ class OrderController < ApplicationController
 
               order.complete!
 
+              order.release_driver_funds
+
               send_store_orders(order)
 
               send_customer_orders(order)
@@ -696,6 +698,8 @@ class OrderController < ApplicationController
                 order.update!(driver_fulfilled_order: true)
 
                 order.complete!
+
+                order.release_driver_funds
 
                 send_store_orders(order)
 
@@ -2346,7 +2350,7 @@ class OrderController < ApplicationController
 
       stripe_customer_token = customer_user.stripe_customer_token
 
-      payment_method_id = get_customer_card(stripe_customer_token)
+      payment_method_id = get_payment_method_id(stripe_customer_token)
 
       payment_intent = authorize_amount_usd(
           total_price_cents,

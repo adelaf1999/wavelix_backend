@@ -6,12 +6,14 @@ StripeEvent.configure do |events|
 
   events.subscribe 'payment_intent.payment_failed' do |event|
 
-
     metadata = event.data.object.metadata.to_h
+
 
     if !metadata.blank?
 
       charging_customer_card = metadata[:charging_customer_card]
+
+      charging_driver_card = metadata[:charging_driver_card]
 
       if charging_customer_card && !metadata[:customer_user_id].blank?
 
@@ -46,6 +48,34 @@ StripeEvent.configure do |events|
 
         end
 
+      elsif charging_driver_card && !metadata[:driver_id].blank? && !metadata[:order_id].blank?
+
+        driver_id = metadata[:driver_id]
+
+        order_id = metadata[:order_id]
+
+        order = Order.find_by(id: order_id)
+
+        driver = Driver.find_by(id: driver_id)
+
+        drivers_rejected = order.get_drivers_rejected
+
+
+        if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id)
+
+          drivers_rejected.push(driver.id)
+
+          order.update!(drivers_rejected: drivers_rejected)
+
+          FindNewDriverJob.perform_later(order.id)
+
+        end
+
+
+        ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+            accept_order_request_success: false,
+            message: 'Error authorizing amount from card. Please try again or change the card in the settings.'
+        }
 
 
       end
@@ -61,6 +91,10 @@ StripeEvent.configure do |events|
 
   events.subscribe 'payment_intent.amount_capturable_updated' do |event|
 
+    include DriveHelper
+
+    include PaymentsHelper
+
     metadata = event.data.object.metadata.to_h
 
     payment_intent_id = event.data.object.id
@@ -68,6 +102,8 @@ StripeEvent.configure do |events|
     if !metadata.blank?
 
       charging_customer_card = metadata[:charging_customer_card]
+
+      charging_driver_card = metadata[:charging_driver_card]
 
       if charging_customer_card && !metadata[:customer_user_id].blank?
 
@@ -123,16 +159,117 @@ StripeEvent.configure do |events|
         end
 
 
+      elsif charging_driver_card && !metadata[:driver_id].blank? && !metadata[:order_id].blank?
+
+
+        driver_id = metadata[:driver_id]
+
+        order_id = metadata[:order_id]
+
+
+        order = Order.find_by(id: order_id)
+
+        driver = Driver.find_by(id: driver_id)
+
+        drivers_rejected = order.get_drivers_rejected
+
+        driver_payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
+
+
+        if order.canceled? || drivers_rejected.include?(driver.id) || !driver.unblocked?
+
+          if driver_payment_intent.status == 'requires_capture'
+
+            Stripe::PaymentIntent.cancel(driver_payment_intent.id)
+
+          end
+
+          ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+              accept_order_request_success: false,
+              message: 'Order has been canceled.'
+          }
+
+        else
+
+
+          order_payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+
+          if order_payment_intent.status == 'requires_capture'
+
+
+            if capture_order_payment_intent(order_payment_intent.id)
+
+              ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+                  accept_order_request_success: true
+              }
+
+              driver_accept_order_success(driver, order, driver_payment_intent.id)
+
+
+            else
+
+              ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+                  accept_order_request_success: false,
+                  message: 'Order has been canceled.'
+              }
+
+
+              if driver_payment_intent.status == 'requires_capture'
+
+                Stripe::PaymentIntent.cancel(driver_payment_intent.id)
+
+              end
+
+
+              driver_accept_order_failure(order)
+
+            end
+
+
+
+          else
+
+
+            if order_payment_intent.status == 'succeeded'
+
+
+              ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+                  accept_order_request_success: true
+              }
+
+              driver_accept_order_success(driver, order, driver_payment_intent.id)
+
+
+            else
+
+              ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
+                  accept_order_request_success: false,
+                  message: 'Order has been canceled.'
+              }
+
+
+              if driver_payment_intent.status == 'requires_capture'
+
+                Stripe::PaymentIntent.cancel(driver_payment_intent.id)
+
+              end
+
+              driver_accept_order_failure(order)
+
+
+            end
+
+
+
+          end
+
+        end
+
       end
 
 
     end
-
-
-
-
-
-
 
   end
 

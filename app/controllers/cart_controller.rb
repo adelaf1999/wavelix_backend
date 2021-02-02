@@ -1090,7 +1090,7 @@ class CartController < ApplicationController
 
       stripe_customer_token = customer_user.stripe_customer_token
 
-      payment_method_id = get_customer_card(stripe_customer_token)
+      payment_method_id = get_payment_method_id(stripe_customer_token)
 
 
       payment_intent = authorize_amount_usd(

@@ -20,6 +20,29 @@ class Order < ApplicationRecord
   mount_uploader :receipt, ImageUploader
 
 
+  def get_drivers_canceled_order
+
+    self.drivers_canceled_order.map(&:to_i)
+
+  end
+
+  def release_driver_funds
+
+    if !self.driver_payment_intent.blank?
+
+      driver_payment_intent = Stripe::PaymentIntent.retrieve(self.driver_payment_intent)
+
+      if driver_payment_intent.status == 'requires_capture'
+
+        Stripe::PaymentIntent.cancel(driver_payment_intent.id)
+
+      end
+
+    end
+
+  end
+
+
   def get_drivers_rejected
 
     self.drivers_rejected.map(&:to_i)

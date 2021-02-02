@@ -134,7 +134,7 @@ module PaymentsHelper
   end
 
 
-  def get_customer_card(customer_token)
+  def get_payment_method_id(customer_token)
 
     payment_methods =  Stripe::PaymentMethod.list({customer: customer_token, type: 'card'}).data
 

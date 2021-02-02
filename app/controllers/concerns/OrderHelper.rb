@@ -69,16 +69,19 @@ module OrderHelper
 
     order.pending!
 
+    order.release_driver_funds
+
     order.update!(
         driver_arrived_to_store: false,
         driver_id: nil,
         prospective_driver_id: nil,
         drivers_rejected: [],
         store_arrival_time_limit: nil,
-        driver_fulfilled_order_code: SecureRandom.hex
+        driver_fulfilled_order_code: SecureRandom.hex,
+        driver_payment_intent: nil
     )
 
-    drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
+    drivers_canceled_order = order.get_drivers_canceled_order
 
     drivers_canceled_order.push(previous_driver_id)
 

@@ -8,6 +8,8 @@ class DriveController < ApplicationController
 
   include PaymentsHelper
 
+  include DriveHelper
+
   before_action :authenticate_user!
 
 
@@ -213,6 +215,39 @@ class DriveController < ApplicationController
 
           if order.ongoing? && !order.store_fulfilled_order
 
+            @success = true
+
+            order.pending!
+
+            order.release_driver_funds
+
+            order.update!(
+                driver_arrived_to_store: false,
+                driver_id: nil,
+                prospective_driver_id: nil,
+                drivers_rejected: [],
+                store_arrival_time_limit: nil,
+                driver_fulfilled_order_code: SecureRandom.hex,
+                driver_payment_intent: nil
+            )
+
+            drivers_canceled_order = order.get_drivers_canceled_order
+
+            drivers_canceled_order.push(driver.id)
+
+            order.update!(drivers_canceled_order: drivers_canceled_order)
+
+
+            send_store_orders(order)
+
+            send_customer_orders(order)
+
+            send_driver_orders(driver)
+
+
+            FindNewDriverJob.perform_later(order.id)
+
+
             send_customer_notification(
                 order,
                 'A new driver will be contacted to pickup your order',
@@ -230,35 +265,6 @@ class DriveController < ApplicationController
                     show_orders: true
                 }
             )
-
-
-
-            @success = true
-
-            order.pending!
-
-            order.update!(
-                driver_arrived_to_store: false,
-                driver_id: nil,
-                prospective_driver_id: nil,
-                drivers_rejected: [],
-                store_arrival_time_limit: nil,
-                driver_fulfilled_order_code: SecureRandom.hex
-            )
-
-            drivers_canceled_order = order.drivers_canceled_order.map(&:to_i)
-
-            drivers_canceled_order.push(driver.id)
-
-            order.update!(drivers_canceled_order: drivers_canceled_order)
-
-            send_store_orders(order)
-
-            send_customer_orders(order)
-
-            send_driver_orders(driver)
-
-            FindNewDriverJob.perform_later(order.id)
 
 
 
@@ -454,6 +460,9 @@ class DriveController < ApplicationController
 
   def accept_order_request
 
+    # error_codes
+
+    # { 0: ACCEPT_ORDER_REQUEST_ERROR, 1: AUTHENTICATION_REQUIRED, 2: CARD_ERROR, 3: CAPTURE_ORDER_AMOUNT_ERROR }
 
     if current_user.customer_user?
 
@@ -467,50 +476,160 @@ class DriveController < ApplicationController
 
         if order != nil
 
-          drivers_rejected = order.drivers_rejected.map(&:to_i)
+          drivers_rejected = order.get_drivers_rejected
 
           if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id) && driver.unblocked? && driver.payment_source_setup?
 
-            payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
 
-            if payment_intent.status == 'requires_capture'
+            begin
 
-              if capture_order_payment_intent(payment_intent.id)
 
-                @success = true
+              order_total = order.total_price.to_f.round(2)
 
-                driver_accept_order_success(driver, order)
+              delivery_fee = order.delivery_fee.to_f.round(2)
+
+              products_price = order_total - delivery_fee
+
+
+              products_price = products_price * 100
+
+              products_price = products_price.round.to_i
+
+
+              stripe_customer_token = driver.stripe_customer_token
+
+              payment_method_id = get_payment_method_id(stripe_customer_token)
+
+
+              driver_payment_intent = authorize_amount_usd(
+                  products_price,
+                  stripe_customer_token,
+                  payment_method_id,
+                  {
+                      charging_driver_card: true,
+                      driver_id: driver.id,
+                      order_id: order.id
+                  }
+              )
+
+
+              result = Stripe::PaymentIntent.confirm(
+                  driver_payment_intent.id,
+                  {
+                      return_url: Rails.env.production? ? ENV.fetch('CARD_AUTH_PRODUCTION_REDIRECT_URL') : ENV.fetch('CARD_AUTH_DEVELOPMENT_REDIRECT_URL'),
+                      off_session: false
+                  }
+              )
+
+
+              status = result.status
+
+              if status == 'requires_capture'
+
+
+                order_payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
+
+
+                if order_payment_intent.status == 'requires_capture'
+
+                  if capture_order_payment_intent(order_payment_intent.id)
+
+                    @success = true
+
+                    driver_accept_order_success(driver, order, driver_payment_intent.id)
+
+                  else
+
+                    @success = false
+
+                    @error_code = 3
+
+                    @message = 'Order has been canceled.'
+
+                    Stripe::PaymentIntent.cancel(driver_payment_intent.id)
+
+                    driver_accept_order_failure(order)
+
+
+                  end
+
+                else
+
+                  if order_payment_intent.status == 'succeeded'
+
+                    @success = true
+
+                    driver_accept_order_success(driver, order, driver_payment_intent.id)
+
+                  else
+
+                    @success = false
+
+                    @error_code = 3
+
+                    @message = 'Order has been canceled.'
+
+                    Stripe::PaymentIntent.cancel(driver_payment_intent.id)
+
+                    driver_accept_order_failure(order)
+
+                  end
+
+                end
+
+
+
+              elsif status == 'requires_action' || result.next_action != nil
+
+                @success = false
+
+                @error_code = 1
+
+                next_action = result.next_action
+
+                @redirect_url = next_action.redirect_to_url.url
+
 
               else
 
                 @success = false
 
-                driver_accept_order_failure(order)
+                @message =  'Error authorizing amount from card. Please try again or change the card in the settings.'
+
+                @error_code = 2
 
               end
 
-            else
 
-              if payment_intent.status == 'succeeded'
+            rescue Stripe::CardError => e
 
-                @success = true
+              @success = false
 
-                driver_accept_order_success(driver, order)
+              @message =  e.error.message.blank? ? 'Error authorizing amount from card. Please try again or change the card in the settings.' :  e.error.message
 
-              else
+              @error_code = 2
 
-                @success = false
 
-                driver_accept_order_failure(order)
+            rescue => e
 
-              end
+              @success = false
+
+              @message =  'Error authorizing amount from card. Please try again or change the card in the settings.'
+
+              @error_code = 2
 
             end
+
+
 
 
           else
 
             @success = false
+
+            @message = 'Error accepting order. Please try again later.'
+
+            @error_code = 0
 
           end
 
@@ -520,15 +639,29 @@ class DriveController < ApplicationController
 
           @success = false
 
+          @message = 'Error accepting order. Please try again later.'
+
+          @error_code = 0
+
         end
 
       else
 
         @success = false
 
+        @message = 'Error accepting order. Please try again later.'
+
+        @error_code = 0
+
       end
 
+    else
 
+      @success = false
+
+      @message = 'Error accepting order. Please try again later.'
+
+      @error_code = 0
 
     end
 
@@ -548,7 +681,7 @@ class DriveController < ApplicationController
 
         if order != nil
 
-          drivers_rejected = order.drivers_rejected.map(&:to_i)
+          drivers_rejected = order.get_drivers_rejected
 
           if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id)
 
@@ -583,163 +716,6 @@ class DriveController < ApplicationController
         @success = false
 
       end
-
-    end
-
-  end
-
-
-  private
-
-
-  def driver_accept_order_failure(order)
-
-    order.canceled!
-
-    order.update!(order_canceled_reason: 'Order has expired')
-
-    send_store_orders(order)
-
-    send_customer_orders(order)
-
-    send_customer_notification(
-        order,
-        "Your order from #{order.get_store_name} has expired and a refund has been issued for your order",
-        'Order has expired',
-        {
-            show_orders: true
-        }
-    )
-
-
-    OrderMailer.delay.order_expired(order.get_customer_email, order.get_store_name)
-
-  end
-
-  def driver_accept_order_success(driver, order)
-
-    driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
-
-    driver_location = {latitude: driver.latitude, longitude: driver.longitude}
-
-    store_user = StoreUser.find_by(id: order.store_user_id)
-
-    has_sensitive_products = store_user.has_sensitive_products
-
-    store_location = store_user.store_address
-
-    store_latitude = store_location[:latitude]
-
-    store_longitude = store_location[:longitude]
-
-    distance = calculate_distance_meters(driver_location, store_location)
-
-    order.update!(driver_id: driver.id)
-
-    order.ongoing!
-
-    send_driver_notification(
-        order,
-        'Make sure to get the QR code of the order scanned on your phone in the store before you leave',
-        nil,
-        {
-            show_driver_orders: true
-        }
-    )
-
-
-    send_store_notification(
-        order,
-        "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves",
-        nil,
-        {
-            show_orders: true
-        }
-    )
-
-
-    OrderMailer.delay.driver_assigned_order(order.get_store_email, order.get_customer_name)
-
-
-    estimated_arrival_time = estimated_arrival_time_minutes(
-        driver.latitude,
-        driver.longitude,
-        store_latitude,
-        store_longitude
-    )
-
-
-    if distance <= 100
-
-      order.update!(driver_arrived_to_store: true)
-
-      if distance >= 20
-
-        send_customer_notification(
-            order,
-            "Driver is about to arrive to #{order.get_store_name} to pickup your order"
-        )
-
-        send_store_notification(
-            order,
-            "Make sure the order for your customer #{order.get_customer_name} is ready",
-            'Driver is about to arrive',
-            {
-                show_orders: true
-            }
-        )
-
-
-      end
-
-    end
-
-
-    if has_sensitive_products
-
-      if estimated_arrival_time > 5
-
-        store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 20.minutes).to_datetime
-
-      else
-
-        store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 30.minutes).to_datetime
-
-      end
-
-      order.update!(store_arrival_time_limit: store_arrival_time_limit)
-
-      send_store_orders(order)
-
-      send_customer_orders(order)
-
-      send_driver_orders(driver)
-
-      Delayed::Job.enqueue(
-          StoreArrivalJob.new(order.id),
-          queue: 'store_arrival_job_queue',
-          priority: 0,
-          run_at: store_arrival_time_limit
-      )
-
-    else
-
-      store_arrival_time_limit = (DateTime.now.utc + estimated_arrival_time.minutes + 40.minutes).to_datetime
-
-      order.update!(store_arrival_time_limit: store_arrival_time_limit)
-
-      send_store_orders(order)
-
-      send_customer_orders(order)
-
-      send_driver_orders(driver)
-
-      Delayed::Job.enqueue(
-          StoreArrivalJob.new(order.id),
-          queue: 'store_arrival_job_queue',
-          priority: 0,
-          run_at: store_arrival_time_limit
-      )
 
     end
 
