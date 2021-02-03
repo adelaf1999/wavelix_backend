@@ -78,7 +78,8 @@ module OrderHelper
         drivers_rejected: [],
         store_arrival_time_limit: nil,
         driver_fulfilled_order_code: SecureRandom.hex,
-        driver_payment_intent: nil
+        driver_payment_intent: nil,
+        resolve_time_limit: nil
     )
 
     drivers_canceled_order = order.get_drivers_canceled_order

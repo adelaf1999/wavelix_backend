@@ -33,7 +33,7 @@ module DriveHelper
 
   def driver_accept_order_success(driver, order, payment_intent_id)
 
-    order.update!(driver_payment_intent: payment_intent_id)
+    order.update!(driver_payment_intent: payment_intent_id, resolve_time_limit: DateTime.now.utc + 7.days)
 
     driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
 
