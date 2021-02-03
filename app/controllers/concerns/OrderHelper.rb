@@ -379,8 +379,6 @@ module OrderHelper
 
             # If payment_intent is canceled then cancel the order and dont contact the new driver
 
-            # This is an optimization and this is already being handled when driver accepts order request as well
-
             order.canceled!
 
             order.update!(order_canceled_reason: 'Order has expired')
