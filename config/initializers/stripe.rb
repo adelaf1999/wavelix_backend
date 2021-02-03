@@ -180,6 +180,7 @@ StripeEvent.configure do |events|
 
           Stripe::PaymentIntent.cancel(driver_payment_intent.id)
 
+
           ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
               accept_order_request_success: false,
               message: 'Order has been canceled.'
@@ -209,7 +210,6 @@ StripeEvent.configure do |events|
                   accept_order_request_success: false,
                   message: 'Order has been canceled.'
               }
-
 
               Stripe::PaymentIntent.cancel(driver_payment_intent.id)
 
@@ -241,7 +241,6 @@ StripeEvent.configure do |events|
 
 
               Stripe::PaymentIntent.cancel(driver_payment_intent.id)
-
 
               driver_accept_order_failure(order)
 

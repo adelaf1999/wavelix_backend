@@ -463,7 +463,7 @@ class DriveController < ApplicationController
 
     # error_codes
 
-    # { 0: ACCEPT_ORDER_REQUEST_ERROR, 1: CAPTURE_ORDER_AMOUNT_ERROR , 2: CARD_ERROR, 3: AUTHENTICATION_REQUIRED }
+    # { 0: ACCEPT_ORDER_REQUEST_ERROR, 1: CARD_ERROR, 2: AUTHENTICATION_REQUIRED }
 
     if current_user.customer_user?
 
@@ -525,80 +525,15 @@ class DriveController < ApplicationController
 
               status = result.status
 
-              if status == 'requires_capture'
-
-
-                order_payment_intent = Stripe::PaymentIntent.retrieve(order.stripe_payment_intent)
-
-
-                if order_payment_intent.status == 'requires_capture'
-
-                  if capture_order_payment_intent(order_payment_intent.id)
-
-                    @success = true
-
-                    driver_accept_order_success(driver, order, driver_payment_intent.id)
-
-                  else
-
-                    @success = false
-
-                    @error_code = 1
-
-                    @message = 'Order has been canceled.'
-
-                    Stripe::PaymentIntent.cancel(driver_payment_intent.id)
-
-                    driver_accept_order_failure(order)
-
-
-                  end
-
-                else
-
-                  if order_payment_intent.status == 'succeeded'
-
-                    @success = true
-
-                    driver_accept_order_success(driver, order, driver_payment_intent.id)
-
-                  else
-
-                    @success = false
-
-                    @error_code = 1
-
-                    @message = 'Order has been canceled.'
-
-                    Stripe::PaymentIntent.cancel(driver_payment_intent.id)
-
-                    driver_accept_order_failure(order)
-
-                  end
-
-                end
-
-
-              elsif status == 'requires_action' || result.next_action != nil
+              if status == 'requires_action'
 
                 @success = false
 
-                @error_code = 3
+                @error_code = 2
 
                 next_action = result.next_action
 
                 @redirect_url = next_action.redirect_to_url.url
-
-
-              else
-
-                find_new_driver_valid_card(order, driver)
-
-                @success = false
-
-                @message =  'Error authorizing amount from card. Please try again or change the card in the settings.'
-
-                @error_code = 2
 
               end
 
@@ -611,18 +546,16 @@ class DriveController < ApplicationController
 
               @message =  e.error.message.blank? ? 'Error authorizing amount from card. Please try again or change the card in the settings.' :  e.error.message
 
-              @error_code = 2
+              @error_code = 1
 
 
             rescue => e
 
-              find_new_driver_valid_card(order, driver)
-
               @success = false
 
-              @message =  'Error authorizing amount from card. Please try again or change the card in the settings.'
+              @message = 'Error accepting order. Please try again later.'
 
-              @error_code = 2
+              @error_code = 0
 
             end
 
