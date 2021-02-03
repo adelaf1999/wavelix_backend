@@ -525,7 +525,11 @@ class DriveController < ApplicationController
 
               status = result.status
 
-              if status == 'requires_action'
+              if status == 'requires_capture'
+
+                @success = true
+
+              elsif status == 'requires_action'
 
                 @success = false
 
@@ -535,7 +539,13 @@ class DriveController < ApplicationController
 
                 @redirect_url = next_action.redirect_to_url.url
 
+              else
+
+                @success = false
+
               end
+
+
 
 
             rescue Stripe::CardError => e
