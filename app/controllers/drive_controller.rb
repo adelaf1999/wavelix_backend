@@ -463,7 +463,7 @@ class DriveController < ApplicationController
 
     # error_codes
 
-    # { 0: ACCEPT_ORDER_REQUEST_ERROR, 1: AUTHENTICATION_REQUIRED, 2: CARD_ERROR, 3: CAPTURE_ORDER_AMOUNT_ERROR }
+    # { 0: ACCEPT_ORDER_REQUEST_ERROR, 1: CAPTURE_ORDER_AMOUNT_ERROR , 2: CARD_ERROR, 3: AUTHENTICATION_REQUIRED }
 
     if current_user.customer_user?
 
@@ -543,7 +543,7 @@ class DriveController < ApplicationController
 
                     @success = false
 
-                    @error_code = 3
+                    @error_code = 1
 
                     @message = 'Order has been canceled.'
 
@@ -566,7 +566,7 @@ class DriveController < ApplicationController
 
                     @success = false
 
-                    @error_code = 3
+                    @error_code = 1
 
                     @message = 'Order has been canceled.'
 
@@ -579,12 +579,11 @@ class DriveController < ApplicationController
                 end
 
 
-
               elsif status == 'requires_action' || result.next_action != nil
 
                 @success = false
 
-                @error_code = 1
+                @error_code = 3
 
                 next_action = result.next_action
 
@@ -592,6 +591,8 @@ class DriveController < ApplicationController
 
 
               else
+
+                find_new_driver_valid_card(order, driver)
 
                 @success = false
 
@@ -604,6 +605,8 @@ class DriveController < ApplicationController
 
             rescue Stripe::CardError => e
 
+              find_new_driver_valid_card(order, driver)
+
               @success = false
 
               @message =  e.error.message.blank? ? 'Error authorizing amount from card. Please try again or change the card in the settings.' :  e.error.message
@@ -612,6 +615,8 @@ class DriveController < ApplicationController
 
 
             rescue => e
+
+              find_new_driver_valid_card(order, driver)
 
               @success = false
 
@@ -717,6 +722,25 @@ class DriveController < ApplicationController
         @success = false
 
       end
+
+    end
+
+  end
+
+
+  private
+
+  def find_new_driver_valid_card(order, driver)
+
+    drivers_rejected = order.get_drivers_rejected
+
+    if order.pending? && order.driver_id == nil && order.prospective_driver_id == driver.id && !drivers_rejected.include?(driver.id)
+
+      drivers_rejected.push(driver.id)
+
+      order.update!(drivers_rejected: drivers_rejected)
+
+      FindNewDriverJob.perform_later(order.id)
 
     end
 
