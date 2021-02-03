@@ -178,11 +178,7 @@ StripeEvent.configure do |events|
 
         if order.canceled? || drivers_rejected.include?(driver.id) || !driver.unblocked?
 
-          if driver_payment_intent.status == 'requires_capture'
-
-            Stripe::PaymentIntent.cancel(driver_payment_intent.id)
-
-          end
+          Stripe::PaymentIntent.cancel(driver_payment_intent.id)
 
           ActionCable.server.broadcast "driver_channel_#{driver.customer_user_id}", {
               accept_order_request_success: false,
@@ -215,12 +211,7 @@ StripeEvent.configure do |events|
               }
 
 
-              if driver_payment_intent.status == 'requires_capture'
-
-                Stripe::PaymentIntent.cancel(driver_payment_intent.id)
-
-              end
-
+              Stripe::PaymentIntent.cancel(driver_payment_intent.id)
 
               driver_accept_order_failure(order)
 
@@ -249,11 +240,8 @@ StripeEvent.configure do |events|
               }
 
 
-              if driver_payment_intent.status == 'requires_capture'
+              Stripe::PaymentIntent.cancel(driver_payment_intent.id)
 
-                Stripe::PaymentIntent.cancel(driver_payment_intent.id)
-
-              end
 
               driver_accept_order_failure(order)
 
