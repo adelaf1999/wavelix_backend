@@ -136,10 +136,24 @@ class StoreUser < ApplicationRecord
 
     end
 
+
+    def get_maximum_product_price
+
+        max_product_price = convert_amount(1000, 'USD', self.currency)
+
+        max_product_price.to_f.round(2)
+
+
+    end
+
+
     def get_minimum_product_price
 
+
         minimum_product_price = convert_amount(0.5, 'USD', self.currency)
+
         minimum_product_price.to_f.round(2)
+
 
     end
 

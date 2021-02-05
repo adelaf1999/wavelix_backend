@@ -485,9 +485,9 @@ class ProductsController < ApplicationController
 
 
 
-                if is_valid_price?(price.to_s, store_user)
+                if is_valid_price?(price, store_user)
 
-                    product.price = price.to_d
+                    product.price = price.to_f.round(2)
 
 
                 else
@@ -1207,7 +1207,7 @@ class ProductsController < ApplicationController
 
                     if price != nil
 
-                        if !is_valid_price?(price.to_s, store_user)
+                        if !is_valid_price?(price, store_user)
 
 
                             @success = false
@@ -1216,7 +1216,7 @@ class ProductsController < ApplicationController
 
                         else
 
-                            product.price = price.to_d
+                            product.price = price.to_f.round(2)
 
                         end
 
@@ -1535,10 +1535,14 @@ class ProductsController < ApplicationController
                     description = ''
                 end
 
-                if can_save &&   ( price == nil || !is_valid_price?(price.to_s, store_user) )
+                if can_save &&   ( price == nil || !is_valid_price?(price, store_user) )
+
                     can_save = false
+
                 else
-                    price = price.to_d
+
+                    price = price.to_f.round(2)
+
                 end
 
 
@@ -2041,9 +2045,7 @@ class ProductsController < ApplicationController
 
     def is_valid_price?(price, store_user)
 
-        # price must be a number greater than or equal to the minimum product price
-
-        if /^\d+([.]\d+)?$/.match(price) == nil
+        if /^\d+([.]\d+)?$/.match(price.to_s) == nil
 
             false
 
@@ -2053,10 +2055,13 @@ class ProductsController < ApplicationController
 
             minimum_product_price = store_user.get_minimum_product_price
 
-            price >= minimum_product_price
+            maximum_product_price = store_user.get_maximum_product_price
 
+            ( price >= minimum_product_price )  &&  ( price <= maximum_product_price )
 
         end
+
+
     end
 
     def is_picture_valid?(picture)
