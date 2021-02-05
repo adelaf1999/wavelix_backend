@@ -357,6 +357,8 @@ class CategoriesController < ApplicationController
 
             @minimum_product_price = store_user.get_minimum_product_price
 
+            @maximum_product_price = store_user.get_maximum_product_price
+
         else
 
             @success = false
