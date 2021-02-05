@@ -6,6 +6,8 @@ module OrderHelper
 
   include NotificationsHelper
 
+  include CommissionHelper
+
   require 'faraday'
   require 'faraday_middleware'
   require 'net/http'
@@ -179,8 +181,7 @@ module OrderHelper
     net_driver = ( delivery_fee / order_total ) * order_net
 
 
-
-    our_earning = net_driver * 0.1
+    our_earning = calculate_our_earning_driver(net_driver)
 
     our_earning = our_earning.round(2)
 
@@ -263,7 +264,7 @@ module OrderHelper
 
     if store_handles_delivery
 
-      our_earning = order_net * 0.1
+      our_earning = calculate_our_earning_store(order_net)
 
       our_earning = our_earning.round(2)
 
@@ -297,7 +298,7 @@ module OrderHelper
       net_store = ( products_price / order_total ) * order_net
 
 
-      our_earning = net_store *  0.1
+      our_earning = calculate_our_earning_store(net_store)
 
       our_earning = our_earning.round(2)
 
