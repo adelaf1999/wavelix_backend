@@ -60,6 +60,16 @@ class CartController < ApplicationController
 
                   if stores_cart_items.size > 0
 
+
+                    if @invalid_stores.size > 0
+
+                      ActionCable.server.broadcast "cart_#{cart.id}_user_#{customer_user.customer_id}_channel", {
+                          invalid_stores: @invalid_stores
+                      }
+
+                    end
+
+
                     stores_cart_items = validate_cart_items(stores_cart_items, cart)
 
                     if stores_cart_items.size > 0
