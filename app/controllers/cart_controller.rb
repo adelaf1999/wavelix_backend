@@ -269,7 +269,6 @@ class CartController < ApplicationController
 
       end
 
-
     end
 
 
@@ -1118,15 +1117,6 @@ class CartController < ApplicationController
       if status == 'requires_capture'
 
         @success = true
-
-        order_request_ids.each do |order_request_id|
-
-          order_request = OrderRequest.find_by(id: order_request_id)
-
-          OrderRequest.create_order(order_request, payment_intent.id)
-
-
-        end
 
 
       elsif status == 'requires_action' || result.next_action != nil

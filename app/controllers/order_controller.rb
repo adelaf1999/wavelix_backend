@@ -2378,8 +2378,6 @@ class OrderController < ApplicationController
 
         @success = true
 
-        OrderRequest.create_order(order_request, payment_intent.id)
-
 
       elsif status == 'requires_action' || result.next_action != nil
 
