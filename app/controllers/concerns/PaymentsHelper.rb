@@ -23,7 +23,6 @@ module PaymentsHelper
 
   def capture_order_payment_intent(payment_intent_id)
 
-
     pending_orders = Order.where(stripe_payment_intent: payment_intent_id, status: 1)
 
     amount_to_capture = 0
@@ -38,13 +37,19 @@ module PaymentsHelper
 
     end
 
-    payment_intent = Stripe::PaymentIntent.capture(
-        payment_intent_id,
-        amount_to_capture: amount_to_capture
+
+    payment_intent = Stripe::PaymentIntent.retrieve(payment_intent_id)
+
+    amount_capturable = payment_intent.amount_capturable
+
+
+    result = Stripe::PaymentIntent.capture(
+        payment_intent.id,
+        amount_to_capture: amount_to_capture > amount_capturable ? amount_capturable : amount_to_capture
     )
 
 
-    payment_intent.status == 'succeeded'
+    result.status == 'succeeded'
 
 
   end
