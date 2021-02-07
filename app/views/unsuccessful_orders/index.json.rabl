@@ -1,5 +1,5 @@
-if @drivers_unsuccessful_orders != nil
-    node(:drivers_unsuccessful_orders) { @drivers_unsuccessful_orders }
+if @drivers != nil
+    node(:drivers) { @drivers }
 end
 
 if @countries != nil
