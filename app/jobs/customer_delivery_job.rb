@@ -29,6 +29,8 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
       driver.block_temporarily
 
+      # Send driver orders
+
       # Send flag to unsuccessful orders page to refresh page
 
       # Send the order to view driver unsuccessful orders page
