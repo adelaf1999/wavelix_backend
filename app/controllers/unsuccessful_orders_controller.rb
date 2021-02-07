@@ -52,7 +52,7 @@ class UnsuccessfulOrdersController < ApplicationController
 
           next_order_resolve_time_limit = driver.next_order_resolve_time_limit
 
-          if !next_order_resolve_time_limit.blank?
+          if !next_order_resolve_time_limit.nil?
 
             @drivers.push(get_driver_item(driver, next_order_resolve_time_limit))
 
@@ -95,7 +95,7 @@ class UnsuccessfulOrdersController < ApplicationController
 
         next_order_resolve_time_limit = driver.next_order_resolve_time_limit
 
-        if !next_order_resolve_time_limit.blank?
+        if !next_order_resolve_time_limit.nil?
 
           @drivers.push(get_driver_item(driver, next_order_resolve_time_limit))
 
