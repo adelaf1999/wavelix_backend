@@ -39,6 +39,31 @@ class Driver < ApplicationRecord
   after_create :save_stripe_driver_token
 
 
+  def next_order_resolve_time_limit
+
+    unsuccessful_orders = self.orders.where(
+        status: 2,
+        store_confirmation_status: 2,
+        store_handles_delivery: false,
+        store_fulfilled_order: true,
+        driver_fulfilled_order: false
+    ).where('delivery_time_limit <= ?', DateTime.now.utc)
+
+    if unsuccessful_orders.size > 0
+
+      unsuccessful_orders = unsuccessful_orders.order(resolve_time_limit: :asc)
+
+      unsuccessful_orders.first.resolve_time_limit
+
+    else
+
+      nil
+
+    end
+
+
+  end
+
   def payment_source_setup?
 
     has_saved_card?(self.stripe_customer_token)

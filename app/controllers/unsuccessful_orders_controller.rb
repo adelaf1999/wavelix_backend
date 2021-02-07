@@ -47,16 +47,24 @@ class UnsuccessfulOrdersController < ApplicationController
         end
 
 
+
         drivers.each do |driver|
 
-          @drivers.push(get_driver_item(driver))
+          next_order_resolve_time_limit = driver.next_order_resolve_time_limit
+
+          if !next_order_resolve_time_limit.blank?
+
+            @drivers.push(get_driver_item(driver, next_order_resolve_time_limit))
+
+          end
 
         end
 
 
+        @drivers = @drivers.sort_by { |hsh| hsh[:next_order_resolve_time_limit] }
+
+
       end
-
-
 
 
     end
@@ -82,13 +90,23 @@ class UnsuccessfulOrdersController < ApplicationController
 
       drivers = get_drivers
 
+
       drivers.each do |driver|
 
-        @drivers.push(get_driver_item(driver))
+        next_order_resolve_time_limit = driver.next_order_resolve_time_limit
+
+        if !next_order_resolve_time_limit.blank?
+
+          @drivers.push(get_driver_item(driver, next_order_resolve_time_limit))
+
+        end
 
       end
 
+      @drivers = @drivers.sort_by { |hsh| hsh[:next_order_resolve_time_limit] }
 
+
+      
       @countries = get_countries
 
 
@@ -101,12 +119,13 @@ class UnsuccessfulOrdersController < ApplicationController
   private
 
 
-  def get_driver_item(driver)
+  def get_driver_item(driver, next_order_resolve_time_limit)
 
     {
         id: driver.id,
         name: driver.name,
-        country: driver.get_country_name
+        country: driver.get_country_name,
+        next_order_resolve_time_limit: next_order_resolve_time_limit
     }
 
 
