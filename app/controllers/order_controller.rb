@@ -542,15 +542,34 @@ class OrderController < ApplicationController
 
               send_customer_orders(order)
 
+
               driver = Driver.find_by(id: order.driver_id)
 
               send_driver_orders(driver)
+
 
               increment_store_balance(order)
 
               increment_driver_balance(order, driver)
 
               notify_unavailable_products(order)
+
+
+              ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                  unsuccessful_orders: driver.get_unsuccessful_orders
+              }
+
+
+              if !driver.has_unsuccessful_orders?
+
+                ActionCable.server.broadcast 'unsuccessful_orders_channel', {
+                    delete_driver: true,
+                    driver_id: driver.id
+                }
+
+                driver.update!(admins_resolving: [])
+
+              end
 
 
             else
@@ -701,19 +720,39 @@ class OrderController < ApplicationController
 
                 order.release_driver_funds
 
+
                 send_store_orders(order)
 
                 send_customer_orders(order)
 
+
                 driver = Driver.find_by(id: order.driver_id)
 
                 send_driver_orders(driver)
+
 
                 increment_store_balance(order)
 
                 increment_driver_balance(order, driver)
 
                 notify_unavailable_products(order)
+
+
+                ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                    unsuccessful_orders: driver.get_unsuccessful_orders
+                }
+
+
+                if !driver.has_unsuccessful_orders?
+
+                  ActionCable.server.broadcast 'unsuccessful_orders_channel', {
+                      delete_driver: true,
+                      driver_id: driver.id
+                  }
+
+                  driver.update!(admins_resolving: [])
+
+                end
 
 
               else
