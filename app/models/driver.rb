@@ -53,7 +53,19 @@ class Driver < ApplicationRecord
 
       unsuccessful_orders = unsuccessful_orders.order(resolve_time_limit: :asc)
 
-      unsuccessful_orders.first.resolve_time_limit
+      resolvable_orders = unsuccessful_orders.where('resolve_time_limit > ?', DateTime.now.utc)
+
+      if resolvable_orders.size > 0
+
+        resolvable_orders.first.resolve_time_limit
+
+      else
+
+        unsuccessful_orders.first.resolve_time_limit
+
+      end
+
+
 
     else
 
