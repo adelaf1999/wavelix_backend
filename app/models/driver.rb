@@ -41,6 +41,47 @@ class Driver < ApplicationRecord
   after_create :save_stripe_driver_token
 
 
+  def get_admins_resolving
+
+    admins_resolving = self.admins_resolving.map &:to_i
+
+    admins_resolving.each do |admin_id|
+
+      admin = Admin.find_by(id: admin_id)
+
+      if admin.nil?
+
+        admins_resolving.delete(admin_id)
+
+      end
+
+    end
+
+    self.update!(admins_resolving: admins_resolving)
+
+    admins_resolving
+
+  end
+
+
+  def has_unsuccessful_orders?
+
+    self.orders.where(
+        status: 2,
+        store_confirmation_status: 2,
+        store_handles_delivery: false,
+        store_fulfilled_order: true,
+        driver_fulfilled_order: false
+    ).where(
+        'delivery_time_limit <= ?',
+        DateTime.now.utc
+    ).size > 0
+
+  end
+
+
+
+
   def get_unsuccessful_orders
 
     unsuccessful_orders = []
@@ -248,6 +289,10 @@ class Driver < ApplicationRecord
     admins_declined
 
   end
+
+
+
+
 
 
   def get_admins_reviewing
