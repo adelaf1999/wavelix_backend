@@ -29,11 +29,16 @@ class CustomerDeliveryJob < Struct.new(:order_id)
 
       driver.block_temporarily
 
-      # Send driver orders
+      send_driver_orders(driver)
 
-      # Send flag to unsuccessful orders page to refresh page
+      ActionCable.server.broadcast 'unsuccessful_orders_channel', {
+          new_driver: true
+      }
 
-      # Send the order to view driver unsuccessful orders page
+      ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+          unsuccessful_orders: driver.get_unsuccessful_orders
+      }
+
 
     end
 
