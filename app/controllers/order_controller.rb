@@ -567,6 +567,10 @@ class OrderController < ApplicationController
                     driver_id: driver.id
                 }
 
+                ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                    current_resolvers: []
+                }
+
                 driver.update!(admins_resolving: [])
 
               end
@@ -748,6 +752,10 @@ class OrderController < ApplicationController
                   ActionCable.server.broadcast 'unsuccessful_orders_channel', {
                       delete_driver: true,
                       driver_id: driver.id
+                  }
+
+                  ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                      current_resolvers: []
                   }
 
                   driver.update!(admins_resolving: [])
