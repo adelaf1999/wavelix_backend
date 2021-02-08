@@ -8,6 +8,68 @@ class UnsuccessfulOrdersController < ApplicationController
   before_action :authenticate_admin!
 
 
+  def show
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :order_manager)
+
+      head :unauthorized
+
+    else
+
+      driver = Driver.find_by(id: params[:driver_id])
+
+      if driver != nil
+
+        unsuccessful_orders = driver.get_unsuccessful_orders
+
+        if unsuccessful_orders.size == 0
+
+          @success = false
+
+        else
+
+          @success = true
+
+          @unsuccessful_orders = unsuccessful_orders
+
+          @driver_name = driver.name
+
+          @driver_phone_number = driver.get_phone_number
+
+          @driver_country = driver.get_country_name
+
+          @driver_account_status = driver.account_status
+
+          @driver_balance_usd = driver.get_balance_usd
+
+          @driver_latitude = driver.latitude
+
+          @driver_longitude = driver.longitude
+
+
+
+
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+  end
+
+
   def search_drivers
 
     if is_admin_session_expired?(current_admin)

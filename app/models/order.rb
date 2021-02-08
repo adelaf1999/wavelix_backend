@@ -85,22 +85,41 @@ class Order < ApplicationRecord
   end
 
 
+  def get_store_number
+
+    self.store_user.store_number
+
+  end
+
+  def get_store_owner_number
+
+    self.store_user.store_owner_work_number
+
+  end
+
+  def get_store_owner
+
+    self.store_user.store_owner_full_name
+
+  end
+
+
   def get_store_email
 
     self.store_user.get_email
 
   end
 
-  def get_customer_email
+  def get_store_name
 
-    self.customer_user.customer.email
+    self.store_name
 
   end
 
 
-  def get_store_name
+  def get_customer_email
 
-    self.store_name
+    self.customer_user.customer.email
 
   end
 
@@ -110,6 +129,12 @@ class Order < ApplicationRecord
 
   end
 
+
+  def get_customer_number
+
+    self.customer_user.phone_number
+
+  end
 
 
   private

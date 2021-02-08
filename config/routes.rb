@@ -461,6 +461,8 @@ Rails.application.routes.draw do
 
   post '/search-drivers-unsuccessful-orders' => 'unsuccessful_orders#search_drivers'
 
+  post '/view-driver-unsuccessful-orders' => 'unsuccessful_orders#show'
+
 
 
 end

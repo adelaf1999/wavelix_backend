@@ -2,6 +2,8 @@ class Driver < ApplicationRecord
 
   include PaymentsHelper
 
+  include OrderHelper
+
   acts_as_mappable :distance_field_name => :distance,
                    :lat_column_name => :latitude,
                    :lng_column_name => :longitude
@@ -37,6 +39,92 @@ class Driver < ApplicationRecord
   serialize :vehicle_registration_document_pictures, Array
 
   after_create :save_stripe_driver_token
+
+
+  def get_unsuccessful_orders
+
+    unsuccessful_orders = []
+
+
+    self.orders.where(
+        status: 2,
+        store_confirmation_status: 2,
+        store_handles_delivery: false,
+        store_fulfilled_order: true,
+        driver_fulfilled_order: false
+    ).where('delivery_time_limit <= ?', DateTime.now.utc).each do |order|
+
+
+      products = []
+
+
+      order.products.each do |ordered_product|
+
+        ordered_product = eval(ordered_product)
+
+        product = Product.find_by(id: ordered_product[:id])
+
+        product_price = ordered_product[:price]
+
+        product_currency = ordered_product[:currency]
+
+        to_currency = 'USD'
+
+        product_price = convert_amount(product_price, product_currency, to_currency).to_f.round(2)
+
+        products.push({
+                          id: ordered_product[:id],
+                          quantity: ordered_product[:quantity],
+                          price: product_price,
+                          currency: to_currency,
+                          product_options: ordered_product[:product_options],
+                          name: product.name,
+                          picture: product.main_picture.url
+                      })
+
+
+      end
+
+
+
+
+
+      unsuccessful_orders.push({
+                                   resolve_time_limit: order.resolve_time_limit,
+                                   delivery_fee: order.delivery_fee,
+                                   delivery_fee_currency: order.delivery_fee_currency,
+                                   order_type: order.order_type,
+                                   driver_arrived_to_delivery_location: order.driver_arrived_to_delivery_location,
+                                   total_price: order.total_price,
+                                   total_price_currency: order.total_price_currency,
+                                   ordered_at: order.created_at,
+                                   delivery_time_limit: order.delivery_time_limit,
+                                   store_user_id: order.store_user_id,
+                                   store_name: order.get_store_name,
+                                   store_owner: order.get_store_owner,
+                                   store_owner_number: order.get_store_owner_number,
+                                   store_number: order.get_store_number,
+                                   customer_user_id: order.customer_user_id,
+                                   customer_name: order.get_customer_name,
+                                   customer_number: order.get_customer_number,
+                                   products: products,
+                                   delivery_location: order.delivery_location
+                               })
+
+    end
+
+
+    unsuccessful_orders
+
+
+  end
+
+
+  def get_balance_usd
+
+    convert_amount(self.balance, self.currency, 'USD')
+
+  end
 
 
   def next_order_resolve_time_limit
