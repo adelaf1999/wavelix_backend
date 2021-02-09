@@ -67,7 +67,7 @@ module DriveHelper
 
     send_store_notification(
         order,
-        "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the drive's phone before the driver leaves",
+        "Driver was assigned to pickup the order for your customer #{order.get_customer_name}. Make sure to scan the order QR code on the driver's phone before the driver leaves",
         nil,
         {
             show_orders: true
