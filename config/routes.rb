@@ -463,6 +463,7 @@ Rails.application.routes.draw do
 
   post '/view-driver-unsuccessful-orders' => 'unsuccessful_orders#show'
 
+  post '/confirm-unsuccessful-order' => 'unsuccessful_orders#confirm_order'
 
 
 end

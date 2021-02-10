@@ -4,8 +4,104 @@ class UnsuccessfulOrdersController < ApplicationController
 
   include CountriesHelper
 
+  include OrderHelper
+
+  include ProductsHelper
 
   before_action :authenticate_admin!
+
+
+  def confirm_order
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :order_manager)
+
+      head :unauthorized
+
+    else
+
+
+      order = Order.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if is_order_unsuccessful?(order)
+
+          @success = true
+
+          driver = Driver.find_by(id: order.driver_id)
+
+
+          order.complete!
+
+          order.update!(driver_fulfilled_order: true, confirmed_by: current_admin.full_name)
+
+          driver.remove_temporary_block
+
+
+          order.release_driver_funds
+
+          increment_store_balance(order)
+
+          increment_driver_balance(order, driver)
+
+
+          send_store_orders(order)
+
+          send_customer_orders(order)
+
+          send_driver_orders(driver)
+
+          notify_unavailable_products(order)
+
+
+          ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+              unsuccessful_orders: driver.get_unsuccessful_orders
+          }
+
+
+          if !driver.has_unsuccessful_orders?
+
+            ActionCable.server.broadcast 'unsuccessful_orders_channel', {
+                delete_driver: true,
+                driver_id: driver.id
+            }
+
+            ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                current_resolvers: []
+            }
+
+            driver.update!(admins_resolving: [])
+
+          end
+
+
+
+
+
+        else
+
+          @success = false
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+
+
+    end
+
+
+
+  end
 
 
   def show
@@ -49,10 +145,6 @@ class UnsuccessfulOrdersController < ApplicationController
           @driver_latitude = driver.latitude
 
           @driver_longitude = driver.longitude
-
-
-
-
 
         end
 
@@ -168,7 +260,7 @@ class UnsuccessfulOrdersController < ApplicationController
       @drivers = @drivers.sort_by { |hsh| hsh[:next_order_resolve_time_limit] }
 
 
-      
+
       @countries = get_countries
 
 
@@ -190,6 +282,18 @@ class UnsuccessfulOrdersController < ApplicationController
         next_order_resolve_time_limit: next_order_resolve_time_limit
     }
 
+
+  end
+
+
+  def is_order_unsuccessful?(order)
+
+    order.ongoing? &&
+        order.store_accepted? &&
+        !order.store_handles_delivery &&
+        order.store_fulfilled_order &&
+        !order.driver_fulfilled_order &&
+        ( order.delivery_time_limit <= DateTime.now.utc )
 
   end
 

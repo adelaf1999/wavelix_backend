@@ -41,6 +41,22 @@ class Driver < ApplicationRecord
   after_create :save_stripe_driver_token
 
 
+  def remove_temporary_block
+
+    if self.temporarily_blocked?
+
+      if !self.has_unsuccessful_orders?
+
+        self.unblocked!
+
+      end
+
+    end
+
+  end
+
+
+
   def get_admins_resolving
 
     admins_resolving = self.admins_resolving.map &:to_i
