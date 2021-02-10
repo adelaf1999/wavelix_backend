@@ -61,11 +61,10 @@ class UnsuccessfulOrdersController < ApplicationController
           end
 
 
+          timezone = get_store_timezone_name(store_user)
+
 
           if driver_payment_intent.status == 'succeeded'
-
-
-            timezone = get_store_timezone_name(store_user)
 
             balance_transaction = Stripe::BalanceTransaction.retrieve(driver_payment_intent.charges.data.first.balance_transaction)
 
@@ -123,6 +122,132 @@ class UnsuccessfulOrdersController < ApplicationController
 
 
           else
+
+            order_total = order.total_price.to_f.round(2)
+
+            delivery_fee = order.delivery_fee.to_f.round(2)
+
+            products_price = order_total - delivery_fee
+
+            products_price_driver_currency = convert_amount(products_price, 'USD', driver.currency).round(2)
+
+
+            if driver.balance > 0
+
+
+              driver_balance = driver.balance.to_f.round(2)
+
+
+              if driver_balance <= products_price_driver_currency
+
+                driver_decrement = driver_balance
+
+              else
+
+                driver_decrement = driver_balance - products_price_driver_currency
+
+              end
+
+
+
+              driver.decrement!(:balance, driver_decrement)
+
+
+              store_increment = convert_amount(driver_decrement, driver.currency, store_user.currency).round(2)
+
+
+
+              Payment.create!(
+                  amount: store_increment,
+                  fee: 0,
+                  net: store_increment,
+                  currency: store_user.currency,
+                  store_user_id: store_user.id,
+                  timezone: timezone
+              )
+
+
+              store_user.increment!(:balance, store_increment)
+
+
+
+
+              store_user.send_notification(
+                  "#{store_increment} #{store_user.currency} have been deposited to your balance",
+                  'Payment Received',
+                  {
+                      show_orders: true
+                  }
+              )
+
+
+              store_increment_usd = convert_amount(store_increment, store_user.currency, 'USD').round(2)
+
+
+              if store_increment_usd == products_price
+
+                # Full Recovery
+
+                send_driver_notification(
+                    order,
+                    "The order of the customer #{order.get_customer_name} ordered from #{order.get_store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) ).",
+                    'Order Canceled'
+                )
+
+
+                send_store_notification(
+                    order,
+                    "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
+                    'Order Canceled',
+                    {
+                        show_orders: true
+                    }
+                )
+
+
+              else
+
+                # Partial Recovery
+
+                send_store_notification(
+                    order,
+                    "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. We were able to recover #{store_increment} #{store_user.currency} from the driver's balance and sent them as a payment to your balance. You may consider reporting the driver to the local police to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
+                    'Order Canceled',
+                    {
+                        show_orders: true
+                    }
+                )
+
+
+
+              end
+
+
+
+
+              ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                  driver_balance_usd: driver.get_balance_usd
+              }
+
+
+            else
+
+
+              # No Recovery
+
+              send_store_notification(
+                  order,
+                  "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. You may consider reporting the driver to the local police to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
+                  'Order Canceled',
+                  {
+                      show_orders: true
+                  }
+              )
+
+
+            end
+
+
 
 
           end
