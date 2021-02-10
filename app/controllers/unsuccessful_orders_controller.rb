@@ -104,14 +104,14 @@ class UnsuccessfulOrdersController < ApplicationController
 
             send_driver_notification(
                 order,
-                "The order of the customer #{order.get_customer_name} ordered from #{order.get_store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your card back from the store ( which is equivalent to the cost of the ordered product(s) ).",
+                "The order of the customer #{order.get_customer_name} ordered from #{order.get_store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) ).",
                 'Order Canceled'
             )
 
 
             send_store_notification(
                 order,
-                "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's card balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
+                "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
                 'Order Canceled',
                 {
                     show_orders: true
