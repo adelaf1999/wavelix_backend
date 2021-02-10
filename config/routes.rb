@@ -465,5 +465,7 @@ Rails.application.routes.draw do
 
   post '/confirm-unsuccessful-order' => 'unsuccessful_orders#confirm_order'
 
+  post '/cancel-unsuccessful-order' => 'unsuccessful_orders#cancel_order'
+
 
 end

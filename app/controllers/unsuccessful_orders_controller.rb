@@ -8,7 +8,186 @@ class UnsuccessfulOrdersController < ApplicationController
 
   include ProductsHelper
 
+  include PaymentsHelper
+
+  include NotificationsHelper
+
+
   before_action :authenticate_admin!
+
+
+  def cancel_order
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin, :order_manager)
+
+      head :unauthorized
+
+    else
+
+      order = Order.find_by(id: params[:order_id])
+
+      if order != nil
+
+        if is_order_unsuccessful?(order)
+
+          @success = true
+
+          driver = Driver.find_by(id: order.driver_id)
+
+          store_user = StoreUser.find_by(id: order.store_user_id)
+
+
+          order.canceled!
+
+          order.update!(canceled_by: current_admin.full_name)
+
+
+          refund_order(order)
+
+
+          driver.permanently_blocked!
+
+
+          driver_payment_intent =  Stripe::PaymentIntent.retrieve(order.driver_payment_intent)
+
+          if driver_payment_intent.status == 'requires_capture'
+
+            driver_payment_intent =  Stripe::PaymentIntent.capture(driver_payment_intent.id)
+
+          end
+
+
+
+          if driver_payment_intent.status == 'succeeded'
+
+
+            timezone = get_store_timezone_name(store_user)
+
+            balance_transaction = Stripe::BalanceTransaction.retrieve(driver_payment_intent.charges.data.first.balance_transaction)
+
+            total_payment = driver_payment_intent.charges.data.first.amount_captured.to_f / 100.to_f
+
+            fee_payment = balance_transaction.fee.to_f / 100.to_f
+
+
+            net_store = total_payment - fee_payment
+
+            net_store = convert_amount(net_store, 'USD', store_user.currency).round(2)
+
+            total_payment_store_currency = convert_amount(total_payment, 'USD', store_user.currency).round(2)
+
+
+            Payment.create!(
+                amount: total_payment_store_currency,
+                fee: total_payment_store_currency - net_store,
+                net: net_store,
+                currency: store_user.currency,
+                store_user_id: store_user.id,
+                timezone: timezone
+            )
+
+
+            store_user.increment!(:balance, net_store)
+
+
+            store_user.send_notification(
+                "#{net_store} #{store_user.currency} have been deposited to your balance",
+                'Payment Received',
+                {
+                    show_orders: true
+                }
+            )
+
+
+            send_driver_notification(
+                order,
+                "The order of the customer #{order.get_customer_name} ordered from #{order.get_store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your card back from the store ( which is equivalent to the cost of the ordered product(s) ).",
+                'Order Canceled'
+            )
+
+
+            send_store_notification(
+                order,
+                "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's card balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
+                'Order Canceled',
+                {
+                    show_orders: true
+                }
+            )
+
+
+
+
+          else
+
+
+          end
+
+
+          send_customer_notification(
+              order,
+              "The order you made from #{order.get_store_name} has been canceled since the driver failed to do the delivery and a refund has been issued for your order.",
+              'Order Canceled'
+          )
+
+
+          order.update!(order_canceled_reason: 'Driver did not fulfill order')
+
+
+          send_store_orders(order)
+
+          send_customer_orders(order)
+
+          send_driver_orders(driver)
+
+
+
+          ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+              unsuccessful_orders: driver.get_unsuccessful_orders,
+              driver_account_status: driver.account_status
+          }
+
+
+          if !driver.has_unsuccessful_orders?
+
+            ActionCable.server.broadcast 'unsuccessful_orders_channel', {
+                delete_driver: true,
+                driver_id: driver.id
+            }
+
+            ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
+                current_resolvers: []
+            }
+
+            driver.update!(admins_resolving: [])
+
+          end
+
+
+
+
+        else
+
+          @success = false
+
+        end
+
+      else
+
+        @success = false
+
+      end
+
+
+    end
+
+
+  end
+
 
 
   def confirm_order
@@ -59,7 +238,8 @@ class UnsuccessfulOrdersController < ApplicationController
 
 
           ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
-              unsuccessful_orders: driver.get_unsuccessful_orders
+              unsuccessful_orders: driver.get_unsuccessful_orders,
+              driver_account_status: driver.account_status
           }
 
 
