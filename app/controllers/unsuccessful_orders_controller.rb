@@ -102,22 +102,7 @@ class UnsuccessfulOrdersController < ApplicationController
             )
 
 
-            send_driver_notification(
-                order,
-                "The order of the customer #{order.get_customer_name} ordered from #{order.get_store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) ).",
-                'Order Canceled'
-            )
-
-
-            send_store_notification(
-                order,
-                "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
-                'Order Canceled',
-                {
-                    show_orders: true
-                }
-            )
-
+            notify_full_recovery(driver, order)
 
 
 
@@ -188,37 +173,28 @@ class UnsuccessfulOrdersController < ApplicationController
 
                 # Full Recovery
 
-                send_driver_notification(
-                    order,
-                    "The order of the customer #{order.get_customer_name} ordered from #{order.get_store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) ).",
-                    'Order Canceled'
-                )
-
-
-                send_store_notification(
-                    order,
-                    "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
-                    'Order Canceled',
-                    {
-                        show_orders: true
-                    }
-                )
-
+                notify_full_recovery(driver, order)
 
               else
 
                 # Partial Recovery
 
+                driver_name = driver.name
+
+                customer_name = order.get_customer_name
+
+                store_email = order.get_store_email
+
                 send_store_notification(
                     order,
-                    "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. We were able to recover #{store_increment} #{store_user.currency} from the driver's balance and sent them as a payment to your balance. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
+                    "The order of your customer #{customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver_name} ) failed to do the delivery. We were able to recover #{store_increment} #{store_user.currency} from the driver's balance and sent them as a payment to your balance. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
                     'Order Canceled',
                     {
                         show_orders: true
                     }
                 )
 
-
+                UnsuccessfulOrdersMailer.delay.partial_recover_driver_balance(store_email, customer_name, driver_name, store_increment, store_user.currency)
 
               end
 
@@ -235,14 +211,23 @@ class UnsuccessfulOrdersController < ApplicationController
 
               # No Recovery
 
+              driver_name = driver.name
+
+              customer_name = order.get_customer_name
+
+              store_email = order.get_store_email
+
               send_store_notification(
                   order,
-                  "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
+                  "The order of your customer #{customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver_name} ) failed to do the delivery. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
                   'Order Canceled',
                   {
                       show_orders: true
                   }
               )
+
+
+              UnsuccessfulOrdersMailer.delay.no_recovery_driver_balance(store_email, customer_name, driver_name)
 
 
             end
@@ -253,11 +238,23 @@ class UnsuccessfulOrdersController < ApplicationController
           end
 
 
+
+          customer_name = order.get_customer_name
+
+          store_name = order.get_store_name
+
+          customer_email = order.get_customer_email
+
           send_customer_notification(
               order,
-              "The order you made from #{order.get_store_name} has been canceled since the driver failed to do the delivery and a refund has been issued for your order.",
+              "The order you made from #{store_name} has been canceled since the driver failed to do the delivery and a refund has been issued for your order.",
               'Order Canceled'
           )
+
+
+          UnsuccessfulOrdersMailer.delay.refund_issued_customer(customer_email, store_name, customer_name)
+
+
 
 
           order.update!(order_canceled_reason: 'Driver did not fulfill order')
@@ -576,6 +573,46 @@ class UnsuccessfulOrdersController < ApplicationController
 
 
   private
+
+
+  def notify_full_recovery(driver, order)
+
+
+    driver_name = driver.name
+
+    customer_name = order.get_customer_name
+
+    store_name = order.get_store_name
+
+    driver_email = driver.get_email
+
+    store_email = order.get_store_email
+
+
+    send_driver_notification(
+        order,
+        "The order of the customer #{customer_name} ordered from #{store_name} was canceled, and a refund has been issued to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) ).",
+        'Order Canceled'
+    )
+
+
+
+    send_store_notification(
+        order,
+        "The order of your customer #{customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver_name} ) failed to do the delivery. A payment was sent to the store balance for the cost of the ordered products(s) from the driver's balance. If the driver returns to your store back with the ordered product(s) you may choose to return the money back to the driver to get your product(s) back.",
+        'Order Canceled',
+        {
+            show_orders: true
+        }
+    )
+
+    UnsuccessfulOrdersMailer.delay.captured_cost_driver_balance(driver_email, driver_name, customer_name, store_name)
+
+
+    UnsuccessfulOrdersMailer.delay.recovered_cost_driver_balance(store_email, customer_name, driver_name)
+
+
+  end
 
 
   def get_driver_item(driver, next_order_resolve_time_limit)
