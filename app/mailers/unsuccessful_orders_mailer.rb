@@ -25,5 +25,11 @@ class UnsuccessfulOrdersMailer < ApplicationMailer
   end
 
 
+  def no_recovery_driver_balance(email, customer_name, driver_name)
+    @customer_name = customer_name
+    @driver_name = driver_name
+    mail to: email, subject: 'Order Canceled'
+  end
+
 
 end
