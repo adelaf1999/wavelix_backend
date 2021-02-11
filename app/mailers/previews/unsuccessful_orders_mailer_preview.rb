@@ -15,4 +15,13 @@ class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
     UnsuccessfulOrdersMailer.recovered_cost_driver_balance(email, customer_name, driver_name)
   end
 
+  def partial_recover_driver_balance
+    email = 'adelwaboufakher@gmail.com'
+    customer_name = 'Adel Abou Fakher'
+    driver_name = 'Wajih Abou Fakher'
+    amount = '25'
+    currency = 'USD'
+    UnsuccessfulOrdersMailer.partial_recover_driver_balance(email, customer_name, driver_name, amount, currency)
+  end
+
 end

@@ -16,4 +16,14 @@ class UnsuccessfulOrdersMailer < ApplicationMailer
   end
 
 
+  def partial_recover_driver_balance(email, customer_name, driver_name, amount, currency)
+    @customer_name = customer_name
+    @driver_name = driver_name
+    @amount = amount
+    @currency = currency
+    mail to: email, subject: 'Order Canceled'
+  end
+
+
+
 end

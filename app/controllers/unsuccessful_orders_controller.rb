@@ -211,7 +211,7 @@ class UnsuccessfulOrdersController < ApplicationController
 
                 send_store_notification(
                     order,
-                    "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. We were able to recover #{store_increment} #{store_user.currency} from the driver's balance and sent them as a payment to your balance. You may consider reporting the driver to the local police to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
+                    "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. We were able to recover #{store_increment} #{store_user.currency} from the driver's balance and sent them as a payment to your balance. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
                     'Order Canceled',
                     {
                         show_orders: true
@@ -237,7 +237,7 @@ class UnsuccessfulOrdersController < ApplicationController
 
               send_store_notification(
                   order,
-                  "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. You may consider reporting the driver to the local police to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
+                  "The order of your customer #{order.get_customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver.name} ) failed to do the delivery. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
                   'Order Canceled',
                   {
                       show_orders: true
