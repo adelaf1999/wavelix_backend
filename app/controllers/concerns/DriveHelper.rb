@@ -33,7 +33,35 @@ module DriveHelper
 
   def driver_accept_order_success(driver, order, payment_intent_id)
 
-    order.update!(driver_payment_intent: payment_intent_id, resolve_time_limit: DateTime.now.utc + 7.days)
+    resolve_time_limit = DateTime.now.utc + 7.days
+
+    order.update!(driver_payment_intent: payment_intent_id, resolve_time_limit: resolve_time_limit)
+
+
+    Delayed::Job.enqueue(
+        UnresolvedUnsuccessfulOrderJob.new(order.id),
+        queue: 'unresolved_unsuccessful_order_job_queue',
+        priority: 0,
+        run_at: resolve_time_limit - 5.days
+    )
+
+
+    Delayed::Job.enqueue(
+        UnresolvedUnsuccessfulOrderJob.new(order.id),
+        queue: 'unresolved_unsuccessful_order_job_queue',
+        priority: 0,
+        run_at: resolve_time_limit - 3.days
+    )
+
+
+    Delayed::Job.enqueue(
+        UnresolvedUnsuccessfulOrderJob.new(order.id),
+        queue: 'unresolved_unsuccessful_order_job_queue',
+        priority: 0,
+        run_at: resolve_time_limit - 1.day
+    )
+
+
 
     driver.offline! # Can receive new order requests when he completes/picks up the products for the current order he has
 
