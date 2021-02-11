@@ -38,4 +38,11 @@ class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
     UnsuccessfulOrdersMailer.refund_issued_customer(email, store_name, customer_name)
   end
 
+  def new_unsuccessful_order
+    email = 'adelwaboufakher'
+    admin_name = 'Adel Abou Fakher'
+    driver_id = 3
+    UnsuccessfulOrdersMailer.new_unsuccessful_order(email, admin_name, driver_id)
+  end
+
 end

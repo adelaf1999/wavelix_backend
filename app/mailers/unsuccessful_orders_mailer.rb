@@ -39,4 +39,11 @@ class UnsuccessfulOrdersMailer < ApplicationMailer
   end
 
 
+  def new_unsuccessful_order(email, admin_name, driver_id)
+    @admin_name = admin_name
+    @link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/unsuccessful-orders/driver_id=#{driver_id}"
+    mail to: email, subject: 'Unsuccessful Order'
+  end
+
+
 end
