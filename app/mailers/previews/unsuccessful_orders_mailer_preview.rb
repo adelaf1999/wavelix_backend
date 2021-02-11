@@ -1,0 +1,11 @@
+class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
+
+  def captured_amount_driver_balance
+    email = 'adelwaboufakher@gmail.com'
+    driver_name = 'Wajih Abou Fakher'
+    customer_name = 'Adel Abou Fakher'
+    store_name = 'ShopSmart'
+    UnsuccessfulOrdersMailer.captured_amount_driver_balance(email, driver_name, customer_name, store_name)
+  end
+
+end
