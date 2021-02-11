@@ -144,7 +144,7 @@ class UnsuccessfulOrdersController < ApplicationController
 
               else
 
-                driver_decrement = driver_balance - products_price_driver_currency
+                driver_decrement = products_price_driver_currency
 
               end
 
