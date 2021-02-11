@@ -39,10 +39,18 @@ class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
   end
 
   def new_unsuccessful_order
-    email = 'adelwaboufakher'
+    email = 'adelwaboufakher@gmail.com'
     admin_name = 'Adel Abou Fakher'
     driver_id = 3
     UnsuccessfulOrdersMailer.new_unsuccessful_order(email, admin_name, driver_id)
+  end
+
+  def unresolved_order
+    email = 'adelwaboufakher@gmail.com'
+    admin_name = 'Adel Abou Fakher'
+    driver_id = 3
+    days_left = 5
+    UnsuccessfulOrdersMailer.unresolved_order(email, admin_name, driver_id, days_left)
   end
 
 end

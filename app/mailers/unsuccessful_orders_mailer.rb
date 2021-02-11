@@ -45,5 +45,12 @@ class UnsuccessfulOrdersMailer < ApplicationMailer
     mail to: email, subject: 'Unsuccessful Order'
   end
 
+  def unresolved_order(email, admin_name, driver_id, days_left)
+    @admin_name = admin_name
+    @link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/unsuccessful-orders/driver_id=#{driver_id}"
+    @days_left = days_left
+    mail to: email, subject: 'Unresolved Order'
+  end
+
 
 end
