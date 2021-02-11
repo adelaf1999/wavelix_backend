@@ -64,7 +64,7 @@
       <p class="paragraph">
             The order of the customer <%= @customer_name %> ordered from <%= @store_name %> was canceled, and a refund has been issued
             to the customer for their order. We kindly request that you return the order back to the store to be able to get the captured
-            amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) )."
+            amount from your balance back from the store ( which is equivalent to the cost of the ordered product(s) ).
       </p>
 
 
