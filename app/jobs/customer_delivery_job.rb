@@ -40,6 +40,13 @@ class CustomerDeliveryJob < Struct.new(:order_id)
       }
 
 
+      Delayed::Job.enqueue(
+          NotifyUnsuccessfulOrderJob.new(order.id),
+          queue: 'notify_unsuccessful_order_job_queue',
+          priority: 0,
+          run_at: 1.hour.from_now
+      )
+
     end
 
 
