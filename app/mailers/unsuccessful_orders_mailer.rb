@@ -32,4 +32,11 @@ class UnsuccessfulOrdersMailer < ApplicationMailer
   end
 
 
+  def refund_issued_customer(email, store_name, customer_name)
+    @store_name = store_name
+    @customer_name = customer_name
+    mail to: email, subject: 'Order Canceled'
+  end
+
+
 end

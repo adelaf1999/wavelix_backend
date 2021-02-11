@@ -31,4 +31,11 @@ class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
     UnsuccessfulOrdersMailer.no_recovery_driver_balance(email, customer_name, driver_name)
   end
 
+  def refund_issued_customer
+    email = 'adelwaboufakher@gmail.com'
+    store_name = 'ShopSmart'
+    customer_name = 'Adel Abou Fakher'
+    UnsuccessfulOrdersMailer.refund_issued_customer(email, store_name, customer_name)
+  end
+
 end
