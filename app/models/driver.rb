@@ -147,6 +147,7 @@ class Driver < ApplicationRecord
 
 
       unsuccessful_orders.push({
+                                   id: order.id,
                                    resolve_time_limit: order.resolve_time_limit,
                                    delivery_fee: order.delivery_fee,
                                    delivery_fee_currency: order.delivery_fee_currency,
