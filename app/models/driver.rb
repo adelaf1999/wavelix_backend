@@ -152,7 +152,6 @@ class Driver < ApplicationRecord
                                    delivery_fee: order.delivery_fee,
                                    delivery_fee_currency: order.delivery_fee_currency,
                                    order_type: order.order_type,
-                                   driver_arrived_to_delivery_location: order.driver_arrived_to_delivery_location,
                                    total_price: order.total_price,
                                    total_price_currency: order.total_price_currency,
                                    ordered_at: order.created_at,
