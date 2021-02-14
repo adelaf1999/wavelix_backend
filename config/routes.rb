@@ -468,4 +468,9 @@ Rails.application.routes.draw do
   post '/cancel-unsuccessful-order' => 'unsuccessful_orders#cancel_order'
 
 
+  # Orders Route
+
+  post '/orders-index' => 'orders#index'
+
+
 end
