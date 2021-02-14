@@ -17,6 +17,8 @@ class Order < ApplicationRecord
   belongs_to :customer_user
   belongs_to :driver, optional: true # can be nil if store handles delivery / no driver selected yet
 
+  has_many :payments # payments include payments to store or driver
+
   mount_uploader :receipt, ImageUploader
 
 

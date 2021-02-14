@@ -4,4 +4,6 @@ class Payment < ApplicationRecord
 
   belongs_to :driver, optional: true
 
+  belongs_to :order
+
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_03_085245) do
+ActiveRecord::Schema.define(version: 2021_02_14_124449) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -301,6 +301,7 @@ ActiveRecord::Schema.define(version: 2021_02_03_085245) do
     t.integer "store_user_id"
     t.integer "driver_id"
     t.string "timezone", null: false
+    t.integer "order_id", null: false
   end
 
   create_table "phone_numbers", force: :cascade do |t|
