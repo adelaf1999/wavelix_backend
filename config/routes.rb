@@ -474,5 +474,7 @@ Rails.application.routes.draw do
 
   post '/search-orders' => 'orders#search'
 
+  post '/view-order' => 'orders#show'
+
 
 end

@@ -6,7 +6,187 @@ class OrdersController < ApplicationController
 
   include ValidationsHelper
 
+  include OrderHelper
+
   before_action :authenticate_admin!
+
+
+  def show
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin)
+
+      head :unauthorized
+
+    else
+
+      order = Order.find_by(id: params[:order_id])
+
+      if order != nil
+
+        @success = true
+
+        @products = get_order_products(order)
+
+
+        driver = Driver.find_by(id: order.driver_id)
+
+
+        if driver != nil
+
+          @driver_id = driver.id
+
+          @driver_name = driver.name
+
+        end
+
+
+        @status = order.status
+
+        @delivery_location = order.delivery_location
+
+        @ordered_at = order.created_at
+
+
+        @store_user_id = order.store_user_id
+
+        @store_name = order.get_store_name
+
+
+        @customer_user_id = order.customer_user_id
+
+        @customer_name = order.get_customer_name
+
+
+        @country = order.get_country_name
+
+
+        if order.delivery_fee != nil
+
+          @delivery_fee = order.delivery_fee.to_f.round(2)
+
+          @delivery_fee_currency = order.delivery_fee_currency
+
+        end
+
+
+        if order.order_type != nil
+
+          @order_type = order.order_type
+
+        end
+
+
+        @store_confirmation_status = order.store_confirmation_status
+
+        @store_handles_delivery = order.store_handles_delivery
+
+        @customer_canceled_order = order.customer_canceled_order
+
+
+        if !order.order_canceled_reason.blank?
+
+          @order_canceled_reason = order.order_canceled_reason
+
+        end
+
+
+        if order.store_fulfilled_order != nil
+
+          @store_fulfilled_order = order.store_fulfilled_order
+
+        end
+
+
+        if order.driver_fulfilled_order != nil
+
+          @driver_fulfilled_order = order.driver_fulfilled_order
+
+        end
+
+
+        @total_price = order.total_price.to_f.round(2)
+
+        @total_price_currency = order.total_price_currency
+
+
+        if order.delivery_time_limit != nil
+
+          @delivery_time_limit = order.delivery_time_limit
+
+        end
+
+
+
+        if order.store_arrival_time_limit != nil
+
+          @store_arrival_time_limit = order.store_arrival_time_limit
+
+        end
+
+
+        if order.receipt.url != nil
+
+          @receipt_url = order.receipt.url
+
+        end
+
+
+        if !order.confirmed_by.blank?
+
+          @confirmed_by = order.confirmed_by
+
+        end
+
+
+        if !order.canceled_by.blank?
+
+          @canceled_by = order.canceled_by
+
+        end
+
+
+        if order.resolve_time_limit != nil
+
+          @resolve_time_limit = order.resolve_time_limit
+
+        end
+
+
+        @store_payments = []
+
+
+        order.payments.where.not(store_user_id: nil).each do |payment|
+
+          @store_payments.push( get_payment_item(payment))
+
+        end
+
+
+
+        @driver_payments = []
+
+
+        order.payments.where.not(driver_id: nil).each do |payment|
+
+          @driver_payments.push(get_payment_item(payment))
+
+        end
+
+
+      else
+
+        @success = false
+
+      end
+
+    end
+
+
+  end
 
 
   def search
@@ -167,6 +347,73 @@ class OrdersController < ApplicationController
 
 
   private
+
+
+  def get_payment_item(payment)
+
+    amount = payment.amount
+
+    fee = payment.fee
+
+    net = payment.net
+
+
+    from_currency = payment.currency
+
+    to_currency = 'USD'
+
+
+    amount = convert_amount(amount, from_currency, to_currency).to_f.round(2)
+
+    fee = convert_amount(fee, from_currency, to_currency).to_f.round(2)
+
+    net = convert_amount(net, from_currency, to_currency).to_f.round(2)
+
+
+    {
+        amount: amount,
+        fee: fee,
+        net: net
+    }
+
+  end
+
+
+  def get_order_products(order)
+
+    products = []
+
+
+    order.products.each do |ordered_product|
+
+      ordered_product = eval(ordered_product)
+
+      product = Product.find_by(id: ordered_product[:id])
+
+      product_price = ordered_product[:price]
+
+      product_currency = ordered_product[:currency]
+
+      to_currency = 'USD'
+
+      product_price = convert_amount(product_price, product_currency, to_currency).to_f.round(2)
+
+      products.push({
+                        id: ordered_product[:id],
+                        quantity: ordered_product[:quantity],
+                        price: product_price,
+                        currency: to_currency,
+                        product_options: ordered_product[:product_options],
+                        name: product.name,
+                        picture: product.main_picture.url
+                    })
+
+    end
+
+
+    products
+
+  end
 
   def is_boolean?(arg)
 
