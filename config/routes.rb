@@ -472,5 +472,7 @@ Rails.application.routes.draw do
 
   post '/orders-index' => 'orders#index'
 
+  post '/search-orders' => 'orders#search'
+
 
 end
