@@ -294,6 +294,7 @@ class UnsuccessfulOrdersController < ApplicationController
 
 
 
+          notify_admins_order_canceled(customer_name, store_name, order)
 
         else
 
@@ -577,6 +578,25 @@ class UnsuccessfulOrdersController < ApplicationController
 
   private
 
+
+  def notify_admins_order_canceled(customer_name, store_name, order)
+
+    admins = Admin.role_root_admins.where.not(id: current_admin.id)
+
+    admins.each do |admin|
+
+      UnsuccessfulOrdersMailer.delay.notify_admin_order_canceled(
+          admin.email,
+          current_admin.full_name,
+          customer_name,
+          store_name,
+          order.id
+      )
+
+    end
+
+
+  end
 
   def notify_full_recovery(driver, order)
 

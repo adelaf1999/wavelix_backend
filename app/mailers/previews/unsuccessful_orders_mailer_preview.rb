@@ -53,4 +53,14 @@ class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
     UnsuccessfulOrdersMailer.unresolved_order(email, admin_name, driver_id, days_left)
   end
 
+  def notify_admin_order_canceled
+    email = 'adelwaboufakher@gmail.com'
+    admin_name = 'Wajih Abou Fakher'
+    customer_name = 'Adel Abou Fakher'
+    store_name = 'ShopSmart'
+    order_id = 1
+    UnsuccessfulOrdersMailer.notify_admin_order_canceled(email, admin_name, customer_name, store_name, order_id)
+  end
+
+
 end
