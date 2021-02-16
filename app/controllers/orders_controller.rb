@@ -355,8 +355,6 @@ class OrdersController < ApplicationController
 
     fee = payment.fee
 
-    net = payment.net
-
 
     from_currency = payment.currency
 
@@ -367,13 +365,15 @@ class OrdersController < ApplicationController
 
     fee = convert_amount(fee, from_currency, to_currency).to_f.round(2)
 
-    net = convert_amount(net, from_currency, to_currency).to_f.round(2)
+    net = amount - fee
 
 
     {
+        id: payment.id,
         amount: amount,
         fee: fee,
-        net: net
+        net: net,
+        currency: to_currency
     }
 
   end
