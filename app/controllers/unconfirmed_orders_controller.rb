@@ -86,6 +86,21 @@ class UnconfirmedOrdersController < ApplicationController
           )
 
 
+          admins = Admin.role_root_admins.where.not(id: current_admin.id)
+
+          admins.each do |admin|
+
+            UnconfirmedOrderMailer.delay.notify_admin_order_canceled(
+                admin.email,
+                current_admin.full_name,
+                customer_name,
+                store_name,
+                order.id
+            )
+
+          end
+
+
         else
 
           @success = false
