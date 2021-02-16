@@ -62,4 +62,13 @@ class UnsuccessfulOrdersMailer < ApplicationMailer
   end
 
 
+  def incomplete_order_recovery(email, admin_name, customer_name, store_name, order_id)
+    @admin_name = admin_name
+    @customer_name = customer_name
+    @store_name = store_name
+    @link = "#{Rails.env.development?  ? ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL') : ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL') }/orders/order_id=#{order_id}"
+    mail to: email, subject: 'Unsuccessful Order Incomplete Recovery'
+  end
+
+
 end

@@ -188,6 +188,8 @@ class UnsuccessfulOrdersController < ApplicationController
 
                 store_email = order.get_store_email
 
+                store_name = order.get_store_name
+
                 send_store_notification(
                     order,
                     "The order of your customer #{customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver_name} ) failed to do the delivery. We were able to recover #{store_increment} #{store_user.currency} from the driver's balance and sent them as a payment to your balance. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
@@ -199,6 +201,8 @@ class UnsuccessfulOrdersController < ApplicationController
 
                 UnsuccessfulOrdersMailer.delay.partial_recover_driver_balance(store_email, customer_name, driver_name, store_increment, store_user.currency)
 
+                notify_incomplete_recovery(customer_name, store_name, order)
+
               end
 
 
@@ -207,6 +211,8 @@ class UnsuccessfulOrdersController < ApplicationController
               ActionCable.server.broadcast "view_driver_unsuccessful_orders_channel_#{driver.id}", {
                   driver_balance_usd: driver.get_balance_usd
               }
+
+
 
 
             else
@@ -220,6 +226,8 @@ class UnsuccessfulOrdersController < ApplicationController
 
               store_email = order.get_store_email
 
+              store_name = order.get_store_name
+
               send_store_notification(
                   order,
                   "The order of your customer #{customer_name} was canceled and a refund has been issued for the customer since the driver ( #{driver_name} ) failed to do the delivery. You may consider reporting the driver to the local authority to get your product(s) back, all of the driver's information is attached to the order in the order's page.",
@@ -231,6 +239,8 @@ class UnsuccessfulOrdersController < ApplicationController
 
 
               UnsuccessfulOrdersMailer.delay.no_recovery_driver_balance(store_email, customer_name, driver_name)
+
+              notify_incomplete_recovery(customer_name, store_name, order)
 
 
             end
@@ -578,6 +588,23 @@ class UnsuccessfulOrdersController < ApplicationController
 
   private
 
+  def notify_incomplete_recovery(customer_name, store_name, order)
+
+    admins = Admin.role_root_admins
+
+    admins.each do |admin|
+
+      UnsuccessfulOrdersMailer.delay.incomplete_order_recovery(
+          admin.email,
+          current_admin.full_name,
+          customer_name,
+          store_name,
+          order.id
+      )
+
+    end
+
+  end
 
   def notify_admins_order_canceled(customer_name, store_name, order)
 

@@ -63,4 +63,14 @@ class UnsuccessfulOrdersMailerPreview <  ActionMailer::Preview
   end
 
 
+  def incomplete_order_recovery
+    email = 'adelwaboufakher@gmail.com'
+    admin_name = 'Adel Abou Fakher'
+    customer_name = 'Wajih Abou Fakher'
+    store_name = 'ShopSmart'
+    order_id = 1
+    UnsuccessfulOrdersMailer.incomplete_order_recovery(email, admin_name, customer_name, store_name, order_id)
+  end
+
+
 end
