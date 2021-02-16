@@ -149,10 +149,10 @@ class Driver < ApplicationRecord
       unsuccessful_orders.push({
                                    id: order.id,
                                    resolve_time_limit: order.resolve_time_limit,
-                                   delivery_fee: order.delivery_fee,
+                                   delivery_fee: order.delivery_fee.to_f.round(2),
                                    delivery_fee_currency: order.delivery_fee_currency,
                                    order_type: order.order_type,
-                                   total_price: order.total_price,
+                                   total_price: order.total_price.to_f.round(2),
                                    total_price_currency: order.total_price_currency,
                                    ordered_at: order.created_at,
                                    delivery_time_limit: order.delivery_time_limit,
@@ -179,7 +179,7 @@ class Driver < ApplicationRecord
 
   def get_balance_usd
 
-    convert_amount(self.balance, self.currency, 'USD')
+    convert_amount(self.balance, self.currency, 'USD').to_f.round(2)
 
   end
 
