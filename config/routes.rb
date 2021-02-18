@@ -169,9 +169,6 @@ Rails.application.routes.draw do
 
   post '/destroy-like' => 'likes#destroy'
 
-  # Currencies Routes
-
-  get '/get-currencies' => 'currencies#currencies'
 
   # Order Routes
 
@@ -475,6 +472,10 @@ Rails.application.routes.draw do
   post '/search-orders' => 'orders#search'
 
   post '/view-order' => 'orders#show'
+
+  # Store Registration Routes
+
+  get '/store-registration-index' => 'store_registration#index'
 
 
 end

@@ -4,35 +4,53 @@ module CountriesHelper
 
   def is_country_blocked?(country_code)
 
-    blocked_countries = get_blocked_countries
+    whitelisted_countries = get_whitelisted_countries
 
-    blocked_countries.include?(country_code)
+    !whitelisted_countries.include?(country_code)
+
 
   end
 
   def get_countries
 
-    countries = ISO3166::Country.translations
+    {
+        'LB' =>  'Lebanon',
+        'NL' => 'Netherlands'
+    }
 
-    blocked_countries = get_blocked_countries
+  end
 
-    blocked_countries.each do |blocked_country|
 
-      countries.delete(blocked_country)
+  def get_phone_extensions
+
+    phone_extensions = []
+
+    countries = get_countries
+
+    countries.each do |code, name|
+
+      extension = "+#{ISO3166::Country.find_country_by_alpha2(code).country_code}"
+
+      phone_extensions.push({name: name, extension: extension, code: code })
 
     end
 
-    countries
+
+    phone_extensions
+
 
   end
 
 
-  private
+  def get_whitelisted_countries
 
-  def get_blocked_countries
+    countries = get_countries
 
-    ['IL', 'AF', 'AL', 'BA', 'CD', 'CG', 'CI', 'CU', 'IR', 'IQ', 'KP', 'LR', 'LY', 'MM', 'NG', 'PK', 'SO', 'SS', 'SD', 'SY', 'VE', 'YE', 'ZW']
+    countries.keys
 
   end
+
+
+
 
 end
