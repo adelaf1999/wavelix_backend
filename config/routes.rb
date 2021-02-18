@@ -245,6 +245,8 @@ Rails.application.routes.draw do
 
   post '/can-request-sms' => 'phone_verifications#can_request_sms'
 
+  get '/phone-verifications-index' => 'phone_verifications#index'
+
   # Drivers Routes
 
   post '/register-driver' => 'driver#register'

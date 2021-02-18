@@ -343,6 +343,13 @@ class PhoneVerificationsController < ApplicationController
   end
 
 
+  def index
+
+    @phone_extensions = get_phone_extensions
+
+  end
+
+
   private
 
   def can_use_phone_number?(country_code, number)
@@ -352,11 +359,6 @@ class PhoneVerificationsController < ApplicationController
     CustomerUser.find_by(phone_number: "+#{country_code}#{number}").nil?
 
   end
-
-
-
-
-
 
 
 
