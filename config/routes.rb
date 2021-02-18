@@ -477,5 +477,9 @@ Rails.application.routes.draw do
 
   get '/store-registration-index' => 'store_registration#index'
 
+  # Customer Registration Routes
+
+  get '/customer-registration-index' => 'customer_registration#index'
+
 
 end
