@@ -4,11 +4,22 @@ class SearchController < ApplicationController
 
   include OrderHelper
 
-
+  include CountriesHelper
 
   def index
 
     @currencies = get_currencies
+
+    @countries = []
+
+
+    get_countries.each do |code, name|
+
+      @countries.push({ code: code, name: name })
+
+    end
+
+
 
     if user_signed_in?
 

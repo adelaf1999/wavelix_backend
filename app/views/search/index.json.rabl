@@ -9,3 +9,7 @@ end
 if @currencies != nil
     node(:currencies) { @currencies }
 end
+
+if @countries != nil
+    node(:countries) { @countries }
+end
