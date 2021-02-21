@@ -664,7 +664,9 @@ module Auth
       def is_business_license_valid?(business_license)
 
         filename = business_license.original_filename.split(".")
-        extension = filename[filename.length - 1]
+
+        extension = filename[filename.length - 1].downcase
+
         valid_extensions = ["png" , "jpeg", "jpg", "pdf" ,"doc" , "docx", "odt"]
 
         valid_extensions.include?(extension)
