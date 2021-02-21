@@ -526,7 +526,9 @@ class ProductsController < ApplicationController
                                 temp_pic.rewind
 
                                 pic_name_array = pic_name.split(".")
-                                extension = pic_name_array[pic_name_array.length - 1]
+
+                                extension = pic_name_array[pic_name_array.length - 1].downcase
+
                                 valid_extensions = ["png" , "jpeg", "jpg", "gif"]
 
                                 if valid_extensions.include?(extension)
@@ -1143,7 +1145,9 @@ class ProductsController < ApplicationController
                                     temp_pic.rewind
 
                                     pic_name_array = pic_name.split(".")
-                                    extension = pic_name_array[pic_name_array.length - 1]
+
+                                    extension = pic_name_array[pic_name_array.length - 1].downcase
+
                                     valid_extensions = ["png" , "jpeg", "jpg", "gif"]
 
                                     if valid_extensions.include?(extension)
@@ -1842,7 +1846,9 @@ class ProductsController < ApplicationController
 
 
     def is_boolean?(arg)
+
         [true, false].include?(arg)
+
     end
 
     def decode_base64_pictures(pictures)
@@ -1856,7 +1862,9 @@ class ProductsController < ApplicationController
             if pic != nil && pic.instance_of?(Hash) && pic.size > 0
 
                 pic_name = pic[:name]
+
                 pic_type = pic[:type]
+
                 pic_uri = pic[:uri]
 
                 if pic_name != nil && pic_type != nil && pic_uri != nil
@@ -1866,12 +1874,17 @@ class ProductsController < ApplicationController
                     pic_base64_uri = pic_base64_uri_array[pic_base64_uri_array.length - 1]
 
                     temp_pic = Tempfile.new(pic_name)
+
                     temp_pic.binmode
+
                     temp_pic.write Base64.decode64(pic_base64_uri)
+
                     temp_pic.rewind
 
                     pic_name_array = pic_name.split(".")
-                    extension = pic_name_array[pic_name_array.length - 1]
+
+                    extension = pic_name_array[pic_name_array.length - 1].downcase
+
                     valid_extensions = ["png" , "jpeg", "jpg", "gif"]
 
                     if valid_extensions.include?(extension)
@@ -2009,8 +2022,11 @@ class ProductsController < ApplicationController
     def is_csv_file_valid?(file)
 
         filename = file.original_filename.split(".")
-        extension = filename[filename.length - 1]
+
+        extension = filename[filename.length - 1].downcase
+
         valid_extensions = ["csv"]
+
         valid_extensions.include?(extension)
 
 
@@ -2073,8 +2089,11 @@ class ProductsController < ApplicationController
     def is_picture_valid?(picture)
 
         filename = picture.original_filename.split(".")
-        extension = filename[filename.length - 1]
+
+        extension = filename[filename.length - 1].downcase
+
         valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
         valid_extensions.include?(extension)
 
     end
@@ -2090,12 +2109,19 @@ class ProductsController < ApplicationController
             if picture.is_a?(ActionDispatch::Http::UploadedFile)
 
                 filename = picture.original_filename.split(".")
-                extension = filename[filename.length - 1]
+
+                extension = filename[filename.length - 1].downcase
+
                 valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
                 if !valid_extensions.include?(extension)
+
                     valid = false
+
                     break
+
                 end
+
 
             else
                 valid = false
