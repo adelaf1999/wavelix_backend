@@ -360,7 +360,7 @@ class PostController < ApplicationController
 
               name_array = name.split(".")
 
-              extension = name_array[name_array.length - 1]
+              extension = name_array[name_array.length - 1].downcase
 
               if media_file_valid_extensions.include?(extension)
 
@@ -420,7 +420,7 @@ class PostController < ApplicationController
 
             filename = media_file.original_filename.split(".")
 
-            extension = filename[filename.length - 1]
+            extension = filename[filename.length - 1].downcase
 
             post.media_type = get_media_file_type(extension)
 
@@ -571,7 +571,7 @@ class PostController < ApplicationController
 
     filename = media_file.original_filename.split(".")
 
-    extension = filename[filename.length - 1]
+    extension = filename[filename.length - 1].downcase
 
     media_file_valid_extensions.include?(extension)
 
