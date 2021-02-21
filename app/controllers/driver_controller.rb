@@ -450,8 +450,11 @@ class DriverController < ApplicationController
   def is_picture_valid?(picture)
 
     filename = picture.original_filename.split(".")
-    extension = filename[filename.length - 1]
+
+    extension = filename[filename.length - 1].downcase
+
     valid_extensions = ["png" , "jpeg", "jpg", "gif"]
+
     valid_extensions.include?(extension)
 
   end
@@ -466,7 +469,7 @@ class DriverController < ApplicationController
 
         filename = picture.original_filename.split(".")
 
-        extension = filename[filename.length - 1]
+        extension = filename[filename.length - 1].downcase
 
         valid_extensions = ["png" , "jpeg", "jpg", "gif"]
 
