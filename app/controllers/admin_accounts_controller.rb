@@ -1008,7 +1008,7 @@ class AdminAccountsController < ApplicationController
 
     filename = profile_photo.original_filename.split('.')
 
-    extension = filename[filename.length - 1]
+    extension = filename[filename.length - 1].downcase
 
     valid_extensions = %w(png jpeg jpg gif)
 
