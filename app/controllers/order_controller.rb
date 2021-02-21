@@ -94,7 +94,7 @@ class OrderController < ApplicationController
 
                 name_array = name.split(".")
 
-                extension = name_array[name_array.length - 1]
+                extension = name_array[name_array.length - 1].downcase
 
                 if receipt_extensions.include?(extension)
 
@@ -2253,7 +2253,7 @@ class OrderController < ApplicationController
 
     filename = receipt.original_filename.split(".")
 
-    extension = filename[filename.length - 1]
+    extension = filename[filename.length - 1].downcase
 
     receipt_extensions.include?(extension)
 
