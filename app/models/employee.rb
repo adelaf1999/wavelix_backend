@@ -19,6 +19,16 @@ class Employee < ApplicationRecord
 
   enum status: { inactive: 0, active: 1 }
 
+
+  def get_roles
+
+    roles = self.roles
+
+    roles.delete(:user)
+
+    roles
+
+  end
  
 
   def get_store_currency

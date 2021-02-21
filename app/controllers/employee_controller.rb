@@ -392,7 +392,7 @@ class EmployeeController < ApplicationController
         name: employee.name,
         username: employee.username,
         status: employee.status,
-        roles: employee.roles,
+        roles: employee.get_roles,
         id: employee.id
     }
 
@@ -406,7 +406,11 @@ class EmployeeController < ApplicationController
     roles.each do |role|
 
 
-      if !Employee::ROLES.include?(role)
+      valid_roles = Employee::ROLES
+
+      valid_roles.delete(:user)
+
+      if !valid_roles.include?(role)
 
         is_valid = false
 
@@ -416,6 +420,7 @@ class EmployeeController < ApplicationController
 
     end
 
+    
     is_valid
 
 
