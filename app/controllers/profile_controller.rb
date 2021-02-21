@@ -377,7 +377,7 @@ class ProfileController < ApplicationController
 
                 name_array = name.split(".")
 
-                extension = name_array[name_array.length - 1]
+                extension = name_array[name_array.length - 1].downcase
 
                 if valid_profile_pic_extensions.include?(extension)
 
@@ -719,7 +719,7 @@ class ProfileController < ApplicationController
 
     filename = picture.original_filename.split(".")
 
-    extension = filename[filename.length - 1]
+    extension = filename[filename.length - 1].downcase
 
     valid_profile_pic_extensions.include?(extension)
 
