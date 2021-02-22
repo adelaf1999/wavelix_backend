@@ -4,7 +4,7 @@ class EmployeePortalController < ApplicationController
 
   def index
 
-    @roles = current_employee.roles
+    @roles = current_employee.get_roles
 
     @status = current_employee.status
 
