@@ -50,7 +50,7 @@ module HomeHelper
 
     stories = []
 
-    user.following.where(user_type: 1).each do |followed_store|
+    user.active_followings.where(user_type: 1).each do |followed_store|
 
 
       story_posts = []
@@ -79,7 +79,7 @@ module HomeHelper
     end
 
 
-    user.following.where(user_type: 0).each do |followed_friend|
+    user.active_followings.where(user_type: 0).each do |followed_friend|
 
 
       story_posts = []

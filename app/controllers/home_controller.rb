@@ -53,12 +53,12 @@ class HomeController < ApplicationController
 
     @profile_posts = []
 
-    profile_ids = []
-
     @stories = get_user_stories(current_user)
 
 
-    current_user.following.each do |followed_user|
+    profile_ids = []
+
+    current_user.active_followings.each do |followed_user|
 
       profile_ids.push(followed_user.profile.id)
 

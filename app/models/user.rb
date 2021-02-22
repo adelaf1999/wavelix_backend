@@ -36,6 +36,20 @@ class User < ActiveRecord::Base
 
   after_commit :update_post_cases, on: :update, if: proc { |object| object.previous_changes.include?('username') }
 
+
+  def active_followers
+
+    self.followers.merge(self.follower_relationships.where(status: 1))
+
+  end
+
+
+  def active_followings
+
+    self.following.merge(self.following_relationships.where(status: 1))
+
+  end
+
   def accept_follow_request(other)
 
     follower_relationship = Follow.find_by(follower_id: other.id)

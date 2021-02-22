@@ -502,11 +502,11 @@ class ProfileController < ApplicationController
 
           user = profile.user
 
-          follows_list = user.followers.merge(user.follower_relationships.where(status: 1))
+          follows_list = user.active_followers
 
         else
 
-          follows_list = current_user.followers.merge(current_user.follower_relationships.where(status: 1))
+          follows_list = current_user.active_followers
 
         end
 
@@ -519,12 +519,12 @@ class ProfileController < ApplicationController
 
           user = profile.user
 
-          follows_list = user.following.merge(user.following_relationships.where(status: 1))
+          follows_list = user.active_followings
 
 
         else
 
-          follows_list = current_user.following.merge(current_user.following_relationships.where(status: 1))
+          follows_list = current_user.active_followings
 
         end
 
@@ -542,7 +542,9 @@ class ProfileController < ApplicationController
       people_ids = []
 
       people.each do |person|
+
         people_ids.push(person.id)
+
       end
 
       people = CustomerUser.where(customer_id: people_ids)
