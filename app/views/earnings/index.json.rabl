@@ -1,5 +1,5 @@
-if @selected_year_index != nil
-    node(:selected_year_index) { @selected_year_index }
+if @total != nil
+    node(:total) { @total }
 end
 
 if @years != nil

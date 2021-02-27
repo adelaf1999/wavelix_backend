@@ -21,7 +21,7 @@ class EarningsController < ApplicationController
     else
 
 
-      @earnings = {}
+      @earnings = []
 
       selected_year = params[:selected_year]
 
@@ -29,19 +29,27 @@ class EarningsController < ApplicationController
 
         selected_year = selected_year.to_i
 
-        total = 0
+        @years = get_available_years
 
-        for month in 1..12
 
-          month_earning = get_month_earning(selected_year, month)
+        if @years.include?(selected_year)
 
-          total += month_earning.values[0]
 
-          @earnings[month_earning.keys[0]] = month_earning.values[0]
+          @total = 0
+
+          for month in 1..12
+
+            month_earning = get_month_earning(selected_year, month)
+
+            @total += month_earning.values[0]
+
+            @earnings.push(month_earning)
+
+          end
+
 
         end
 
-        @earnings[:total] = total
 
       end
 
@@ -67,7 +75,7 @@ class EarningsController < ApplicationController
 
     else
 
-      @earnings = {}
+      @earnings = []
 
       @years = get_available_years
 
@@ -85,23 +93,20 @@ class EarningsController < ApplicationController
 
         end
 
-
-        @selected_year_index = @years.find_index(selected_year)
-
-
-        total = 0
+        @total = 0
 
         for month in 1..12
 
           month_earning = get_month_earning(selected_year, month)
 
-          total += month_earning.values[0]
+          @total += month_earning.values[0]
 
-          @earnings[month_earning.keys[0]] = month_earning.values[0]
+
+          @earnings.push(month_earning)
 
         end
 
-        @earnings[:total] = total
+
 
       end
 
@@ -120,7 +125,11 @@ class EarningsController < ApplicationController
 
     end_day = start_day.next_month
 
-    Earning.group_by_month(:created_at, range: start_day...end_day, format: "%B %Y").sum(:amount)
+    month_earning = Earning.group_by_month(:created_at, range: start_day...end_day, format: "%B %Y").sum(:amount)
+
+    month_earning[ month_earning.keys[0] ]  = month_earning.values[0].to_f.round(2)
+
+    month_earning
 
   end
 
