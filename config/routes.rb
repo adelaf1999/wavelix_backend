@@ -487,5 +487,7 @@ Rails.application.routes.draw do
 
   get '/earnings-index' => 'earnings#index'
 
+  post '/get-year-earnings' => 'earnings#show'
+
 
 end

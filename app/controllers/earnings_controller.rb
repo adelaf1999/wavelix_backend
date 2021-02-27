@@ -2,7 +2,57 @@ class EarningsController < ApplicationController
 
   include AdminHelper
 
+  include ValidationsHelper
+
   before_action :authenticate_admin!
+
+
+  def show
+
+
+    if is_admin_session_expired?(current_admin)
+
+      head 440
+
+    elsif !current_admin.has_roles?(:root_admin)
+
+      head :unauthorized
+
+    else
+
+
+      @earnings = {}
+
+      selected_year = params[:selected_year]
+
+      if is_positive_integer?(selected_year)
+
+        selected_year = selected_year.to_i
+
+        total = 0
+
+        for month in 1..12
+
+          month_earning = get_month_earning(selected_year, month)
+
+          total += month_earning.values[0]
+
+          @earnings[month_earning.keys[0]] = month_earning.values[0]
+
+        end
+
+        @earnings[:total] = total
+
+      end
+
+
+    end
+
+
+
+
+
+  end
 
 
   def index
@@ -15,12 +65,11 @@ class EarningsController < ApplicationController
 
       head :unauthorized
 
-
     else
 
       @earnings = {}
 
-      @years = Earning.group_by_year(:created_at, format: '%Y', reverse: true).sum(:amount).keys.map &:to_i
+      @years = get_available_years
 
       if @years.size > 0
 
@@ -42,33 +91,46 @@ class EarningsController < ApplicationController
 
         total = 0
 
+        for month in 1..12
 
-        for m in 1..12
+          month_earning = get_month_earning(selected_year, month)
 
-          start_day = DateTime.new(selected_year, m, 1)
+          total += month_earning.values[0]
 
-          end_day = start_day.next_month
-
-          month = Earning.group_by_month(:created_at, range: start_day...end_day, format: "%B %Y").sum(:amount)
-
-          total += month.values[0]
-
-
-          @earnings[month.keys[0]] = month.values[0]
+          @earnings[month_earning.keys[0]] = month_earning.values[0]
 
         end
 
         @earnings[:total] = total
 
-
-
       end
-
-
 
 
     end
 
   end
+
+
+  private
+
+
+  def get_month_earning(year, month)
+
+    start_day = DateTime.new(year, month, 1)
+
+    end_day = start_day.next_month
+
+    Earning.group_by_month(:created_at, range: start_day...end_day, format: "%B %Y").sum(:amount)
+
+  end
+
+  def get_available_years
+
+    Earning.group_by_year(:created_at, format: '%Y', reverse: true).sum(:amount).keys.map &:to_i
+
+  end
+
+
+
 
 end
