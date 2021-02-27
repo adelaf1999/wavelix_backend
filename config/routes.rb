@@ -483,5 +483,9 @@ Rails.application.routes.draw do
 
   get '/customer-registration-index' => 'customer_registration#index'
 
+  # Earnings Routes
+
+  get '/earnings-index' => 'earnings#index'
+
 
 end
