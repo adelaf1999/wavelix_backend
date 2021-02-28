@@ -1373,7 +1373,7 @@ module OrderHelper
 
     travel_time = data['duration']['value'] / 60 # Minutes
 
-    0.0189 * travel_time + 0.533 * travel_distance + 3 # in USD
+    0.0189 * travel_time + 0.65 * travel_distance + 3 # in USD
 
   end
 
