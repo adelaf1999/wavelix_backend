@@ -1322,15 +1322,15 @@ module OrderHelper
     # Distance represent the distance radius from store to delivery location
 
     if distance >= 0 && distance <= 1
-      1.99
+      3
     elsif distance > 1 && distance <= 5
-      2.99
+      5
     elsif distance > 5 && distance <= 10
-      5.99
+      7
     elsif distance > 10 && distance <= 15
-      7.99
+      9
     elsif distance > 15 && distance <= 25
-      9.99
+      13
     end
 
   end
@@ -1373,7 +1373,7 @@ module OrderHelper
 
     travel_time = data['duration']['value'] / 60 # Minutes
 
-    0.0189 * travel_time + 0.533 * travel_distance + 2 # in USD
+    0.0189 * travel_time + 0.533 * travel_distance + 3 # in USD
 
   end
 
