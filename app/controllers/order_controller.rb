@@ -632,11 +632,12 @@ class OrderController < ApplicationController
 
             cancel_payment_intent(order)
 
-          else
+          elsif payment_intent.status == 'succeeded'
 
             refund_order(order)
 
           end
+
 
           send_store_orders(order)
 
@@ -1369,7 +1370,7 @@ class OrderController < ApplicationController
 
           cancel_payment_intent(order)
 
-        else
+        elsif payment_intent.status == 'succeeded'
 
           refund_order(order)
 

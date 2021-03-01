@@ -704,7 +704,7 @@ module OrderHelper
 
       cancel_payment_intent(order)
 
-    else
+    elsif payment_intent.status == 'succeeded'
 
       refund_order(order)
 
