@@ -3,17 +3,18 @@ module CommissionHelper
 
   def calculate_our_earning_store(net_amount)
 
+
     if net_amount <= 10
 
-      net_amount * 0.15
+      net_amount * 0.2
 
-    elsif net_amount > 10 && net_amount <= 70
+    elsif net_amount > 10 && net_amount <= 40
 
-      net_amount * 0.1
+      net_amount * 0.13
 
-    elsif net_amount > 70 && net_amount <= 700
+    elsif net_amount > 40 && net_amount <= 70
 
-      net_amount * 0.05
+      net_amount * 0.08
 
     else
 
