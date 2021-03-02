@@ -29,15 +29,19 @@ module CommissionHelper
 
     if net_amount <= 10
 
-      net_amount * 0.25
+      net_amount * 0.2
 
-    elsif net_amount > 10 && net_amount <= 100
+    elsif net_amount > 10 && net_amount <= 40
 
       net_amount * 0.15
 
+    elsif net_amount > 40 && net_amount <= 80
+
+      net_amount * 0.08
+
     else
 
-      net_amount * 0.1
+      net_amount * 0.05
 
     end
 
