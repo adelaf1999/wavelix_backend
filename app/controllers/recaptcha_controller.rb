@@ -8,7 +8,10 @@ class RecaptchaController < ApplicationController
 
     if !token.blank?
 
-      secret_key = params[:is_admin].blank? ? ENV.fetch('RECAPTCHA_SECRET_KEY') : ENV.fetch('ADMIN_RECAPTCHA_SECRET_KEY')
+      is_admin = params[:is_admin]
+
+      secret_key = fetch_secret_key(is_admin)
+
 
       uri = URI.parse("https://www.google.com/recaptcha/api/siteverify?secret=#{secret_key}&response=#{token}")
 
@@ -49,5 +52,43 @@ class RecaptchaController < ApplicationController
     end
 
   end
+
+  private
+
+  def fetch_secret_key(is_admin)
+
+    if is_admin.blank?
+
+
+      if Rails.env.development?
+
+        ENV.fetch('DEVELOPMENT_WEB_RECAPTCHA_SECRET_KEY')
+
+      else
+
+        ENV.fetch('PRODUCTION_WEB_RECAPTCHA_SECRET_KEY')
+
+      end
+
+
+    else
+
+
+      if Rails.env.development?
+
+        ENV.fetch('DEVELOPMENT_ADMIN_RECAPTCHA_SECRET_KEY')
+
+      else
+
+        ENV.fetch('PRODUCTION_ADMIN_RECAPTCHA_SECRET_KEY')
+
+      end
+
+
+    end
+
+
+  end
+
 
 end
