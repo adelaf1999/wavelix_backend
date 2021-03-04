@@ -1,6 +1,6 @@
 module PaymentsHelper
 
-  Stripe.api_key = ENV.fetch('STRIPE_SECRET_KEY')
+  Stripe.api_key = Rails.env.development? ?  ENV.fetch('DEVELOPMENT_STRIPE_SECRET_KEY') :  ENV.fetch('PRODUCTION_STRIPE_SECRET_KEY')
 
 
 

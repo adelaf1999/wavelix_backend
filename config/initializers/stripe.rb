@@ -1,5 +1,5 @@
-Stripe.api_key             = ENV.fetch('STRIPE_SECRET_KEY')
-StripeEvent.signing_secret = ENV.fetch('STRIPE_SIGNING_SECRET')
+Stripe.api_key             = Rails.env.development? ? ENV.fetch('DEVELOPMENT_STRIPE_SECRET_KEY') :  ENV.fetch('PRODUCTION_STRIPE_SECRET_KEY')
+StripeEvent.signing_secret = Rails.env.development? ? ENV.fetch('DEVELOPMENT_STRIPE_SIGNING_SECRET') : ENV.fetch('PRODUCTION_STRIPE_SIGNING_SECRET')
 
 
 StripeEvent.configure do |events|
