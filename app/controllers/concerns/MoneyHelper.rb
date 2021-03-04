@@ -30,7 +30,13 @@ module MoneyHelper
 
 
     response = Rails.cache.fetch("exchange_rates_#{base_currency}", expires_in: 12.hours) do
-      conn.get('latest', access_key: ENV.fetch('FIXER_IO_API_KEY'), base: base_currency)
+
+      conn.get('latest',
+               access_key: Rails.env.development? ? ENV.fetch('DEVELOPMENT_FIXER_IO_API_KEY') : ENV.fetch('PRODUCTION_FIXER_IO_API_KEY'),
+               base: base_currency
+      )
+
+
     end
 
 
