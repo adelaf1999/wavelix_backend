@@ -1364,7 +1364,7 @@ module OrderHelper
           units: 'metric',
           origins: "#{store_latitude},#{store_longitude}",
           destinations: "#{latitude},#{longitude}",
-          key: ENV.fetch('GOOGLE_API_KEY')
+          key: Rails.env.development? ? ENV.fetch('DEVELOPMENT_GOOGLE_API_KEY')  : ENV.fetch('PRODUCTION_GOOGLE_API_KEY')
       )
     end
 
@@ -1392,7 +1392,7 @@ module OrderHelper
         units: 'metric',
         origins: "#{origin_lat},#{origin_lng}",
         destinations: "#{dest_lat},#{dest_lng}",
-        key: ENV.fetch('GOOGLE_API_KEY')
+        key: Rails.env.development? ? ENV.fetch('DEVELOPMENT_GOOGLE_API_KEY')  : ENV.fetch('PRODUCTION_GOOGLE_API_KEY')
     )
 
     data = response.body['rows'][0]['elements'][0]
