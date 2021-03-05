@@ -82,7 +82,8 @@ test:
 #     url: <%= ENV['DATABASE_URL'] %>
 #
 production:
-  <<: *default
-  database: TheProductLand_production
-  username: TheProductLand
-  password: <%= ENV['THEPRODUCTLAND_DATABASE_PASSWORD'] %>
+  url: <%= ENV.fetch('PRODUCTION_DATABASE_URL') %>
+#  <<: *default
+#  database: wavelix_production
+#  username: wavelix
+#  password: <%= ENV['WAVELIX_DATABASE_PASSWORD'] %>
