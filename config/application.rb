@@ -20,6 +20,7 @@ require "sprockets/railtie"
 Bundler.require(*Rails.groups)
 
 module Wavelix
+
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.0
@@ -33,20 +34,11 @@ module Wavelix
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
     config.middleware.use ActionDispatch::Cookies
+
     config.middleware.use ActionDispatch::Session::CookieStore
 
-
-    config.middleware.insert_before 0, Rack::Cors do
-      allow do
-        origins 'localhost:19006', ENV.fetch('DEVELOPMENT_WEBSITE_URL'), ENV.fetch('PRODUCTION_WEBSITE_URL'), ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL'), ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL')
-        resource '*',
-                 headers: :any,
-                 expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'],
-                 methods: [:get, :post, :patch, :delete, :options],
-                 credentials: true
-      end
-    end
 
     config.active_job.queue_adapter = :delayed_job
 
@@ -66,4 +58,5 @@ module Wavelix
     config.assets.precompile += %w( foundation_emails.scss )
 
   end
+
 end

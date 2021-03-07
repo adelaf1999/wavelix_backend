@@ -5,12 +5,21 @@
 
 # Read more: https://github.com/cyu/rack-cors
 
-# Rails.application.config.middleware.insert_before 0, Rack::Cors do
-#   allow do
-#     origins 'example.com'
-#
-#     resource '*',
-#       headers: :any,
-#       methods: [:get, :post, :put, :patch, :delete, :options, :head]
-#   end
-# end
+
+Rails.application.config.middleware.insert_before 0, Rack::Cors do
+
+  allow do
+
+    origins 'localhost:19006', ENV.fetch('DEVELOPMENT_WEBSITE_URL'), ENV.fetch('PRODUCTION_WEBSITE_URL'), ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL'), ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL')
+
+    resource '*',
+             headers: :any,
+             expose: ['access-token', 'expiry', 'token-type', 'uid', 'client'],
+             methods: [:get, :post, :patch, :put, :delete, :options, :head],
+             credentials: true
+  end
+
+
+end
+
+
