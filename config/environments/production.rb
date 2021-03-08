@@ -58,14 +58,15 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { host: 'wavelix.com', protocol: 'https' }
 
-  config.action_mailer.smtp_settings = {
-      user_name:      ENV.fetch('PRODUCTION_EMAIL'),
-      password:       ENV.fetch('PRODUCTION_EMAIL_PASSWORD'),
-      domain:         'wavelix.com',
-      address:       'smtp.office365.com.',
-      port:          '587',
-      authentication: :login,
-      enable_starttls_auto: true
+  
+  ActionMailer::Base.smtp_settings = {
+      :user_name => 'apikey',
+      :password => ENV.fetch('PRODUCTION_SENDGRID_API_KEY'),
+      :domain => 'wavelix.com',
+      :address => 'smtp.sendgrid.net',
+      :port => 587,
+      :authentication => :plain,
+      :enable_starttls_auto => true
   }
 
 
