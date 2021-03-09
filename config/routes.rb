@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
 
-  mount StripeEvent::Engine, at: '/stripe-webhooks'
+
 
 
   mount_devise_token_auth_for 'Customer', controllers: {
@@ -489,5 +489,9 @@ Rails.application.routes.draw do
 
   post '/get-year-earnings' => 'earnings#show'
 
+
+  mount StripeEvent::Engine, at: '/stripe-webhooks'
+
+  mount ActionCable.server => '/cable'
 
 end
