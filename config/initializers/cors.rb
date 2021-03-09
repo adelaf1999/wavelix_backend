@@ -10,7 +10,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
 
   allow do
 
-    origins 'localhost:19006', ENV.fetch('DEVELOPMENT_WEBSITE_URL'), ENV.fetch('PRODUCTION_WEBSITE_URL'), ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL'), ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL')
+    origins 'localhost:19006', ENV.fetch('DEVELOPMENT_WEBSITE_URL'), ENV.fetch('PRODUCTION_WEBSITE_URL'), ENV.fetch('PRODUCTION_WEBSITE_SUBDOMAIN'),ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL'), ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL')
 
     resource '*',
              headers: :any,

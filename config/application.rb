@@ -48,6 +48,7 @@ module Wavelix
         'http://localhost:19006',
         ENV.fetch('DEVELOPMENT_WEBSITE_URL'),
         ENV.fetch('PRODUCTION_WEBSITE_URL'),
+        ENV.fetch('PRODUCTION_WEBSITE_SUBDOMAIN'),
         ENV.fetch('DEVELOPMENT_ADMIN_WEBSITE_URL'),
         ENV.fetch('PRODUCTION_ADMIN_WEBSITE_URL')
     ]
