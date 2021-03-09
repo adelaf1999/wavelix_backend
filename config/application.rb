@@ -57,6 +57,8 @@ module Wavelix
 
     config.assets.precompile += %w( foundation_emails.scss )
 
+    config.secret_key_base = ENV.fetch('SECRET_KEY_BASE')
+
   end
 
 end
