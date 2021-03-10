@@ -69,9 +69,6 @@ Rails.application.configure do
       :enable_starttls_auto => true
   }
 
-
-  config.action_mailer.preview_path = "#{Rails.root}/app/mailers/previews"
-
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
