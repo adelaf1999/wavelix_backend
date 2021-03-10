@@ -489,6 +489,10 @@ Rails.application.routes.draw do
 
   post '/get-year-earnings' => 'earnings#show'
 
+  # Geocode Routes
+
+  post '/reverse-geocode' => 'geocode#reverse_geocode'
+
 
   mount StripeEvent::Engine, at: '/stripe-webhooks'
 
