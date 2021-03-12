@@ -444,8 +444,6 @@ class PostController < ApplicationController
 
             @success = true
 
-            post.complete!
-
 
             if post.is_story
 
@@ -499,8 +497,6 @@ class PostController < ApplicationController
           if post.save!
 
             @success = true
-
-            post.complete!
 
 
             if post.is_story

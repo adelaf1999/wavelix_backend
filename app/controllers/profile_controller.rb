@@ -136,8 +136,8 @@ class ProfileController < ApplicationController
           if profile.public_account? || (profile.private_account? && is_following)
 
 
-            profile_posts = get_complete_profile_posts(profile)
-            story_posts = get_complete_story_posts(profile)
+            profile_posts = get_profile_posts(profile)
+            story_posts = get_story_posts(profile)
             follow_relationships = get_follow_relationships(user)
 
             @profile_data[:profile_posts] = profile_posts
@@ -209,8 +209,8 @@ class ProfileController < ApplicationController
           follow_relationships = get_follow_relationships(user)
           profile_picture = profile.profile_picture.url
           profile_bio = profile.profile_bio
-          profile_posts = get_complete_profile_posts(profile)
-          story_posts = get_complete_story_posts(profile)
+          profile_posts = get_profile_posts(profile)
+          story_posts = get_story_posts(profile)
           store_name = store_user.store_name
 
           @profile_data[:is_following] = is_following
@@ -677,13 +677,13 @@ class ProfileController < ApplicationController
   private
 
 
-  def get_complete_story_posts(profile)
+  def get_story_posts(profile)
 
     story_posts = []
 
     profile.posts.order(created_at: :desc).each do |post|
 
-      if post.complete? && post.is_story
+      if post.is_story
 
         story_posts.push(post.get_attributes)
 
@@ -695,13 +695,13 @@ class ProfileController < ApplicationController
 
   end
 
-  def get_complete_profile_posts(profile)
+  def get_profile_posts(profile)
 
     profile_posts = []
 
     profile.posts.order(created_at: :desc).each do |post|
 
-      if post.complete? && !post.is_story
+      if !post.is_story
 
         profile_posts.push(post.get_attributes)
 

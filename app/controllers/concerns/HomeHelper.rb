@@ -55,7 +55,7 @@ module HomeHelper
 
       story_posts = []
 
-      followed_store.profile.posts.where(status: 1, is_story: true).order(created_at: :asc).each do |story_post|
+      followed_store.profile.posts.where(is_story: true).order(created_at: :asc).each do |story_post|
 
         story_posts.push(story_post.get_attributes)
 
@@ -84,7 +84,7 @@ module HomeHelper
 
       story_posts = []
 
-      followed_friend.profile.posts.where(status: 1, is_story: true).order(created_at: :asc).each do |story_post|
+      followed_friend.profile.posts.where( is_story: true).order(created_at: :asc).each do |story_post|
 
         story_posts.push(story_post.get_attributes)
 
@@ -134,7 +134,7 @@ module HomeHelper
 
        profile_posts = []
 
-       Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc).each do |profile_post|
+       Post.where(profile_id: profile_ids, is_story: false).order(created_at: :desc).each do |profile_post|
 
          profile_posts.push(profile_post.get_attributes)
 

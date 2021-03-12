@@ -23,7 +23,7 @@ class HomeController < ApplicationController
 
         profile_ids = get_posts_profile_ids(post_category, current_user)
 
-        profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc)
+        profile_posts = Post.where(profile_id: profile_ids, is_story: false).order(created_at: :desc)
 
         profile_posts.each do |profile_post|
 
@@ -68,7 +68,7 @@ class HomeController < ApplicationController
 
     # All Profile Posts
 
-    profile_posts = Post.where(status: 1, profile_id: profile_ids, is_story: false).order(created_at: :desc)
+    profile_posts = Post.where(profile_id: profile_ids, is_story: false).order(created_at: :desc)
 
     profile_posts.each do |profile_post|
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_12_124134) do
+ActiveRecord::Schema.define(version: 2021_03_12_135024) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -336,7 +336,6 @@ ActiveRecord::Schema.define(version: 2021_03_12_124134) do
     t.datetime "updated_at", precision: 6, null: false
     t.text "image_file"
     t.text "video_file"
-    t.integer "status", default: 0
     t.text "video_thumbnail"
     t.boolean "is_story", default: false
     t.text "viewers_ids", default: [], array: true

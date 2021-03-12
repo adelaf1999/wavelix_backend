@@ -12,8 +12,6 @@ class Post < ApplicationRecord
 
   enum media_type: { image: 0, video: 1 }
 
-  enum status: { incomplete: 0, complete: 1 }
-
   has_many :comments, :dependent => :delete_all
 
   has_many :likes, :dependent => :delete_all
@@ -74,8 +72,6 @@ class Post < ApplicationRecord
     attributes[:image_file] = self.image_file
 
     attributes[:video_file] = self.video_file
-
-    attributes[:status] = self.status
 
     attributes[:video_thumbnail] = self.video_thumbnail
 

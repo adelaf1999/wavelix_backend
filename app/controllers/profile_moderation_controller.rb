@@ -427,7 +427,7 @@ class ProfileModerationController < ApplicationController
 
     profile.posts.order(created_at: :desc).each do |post|
 
-      if post.complete? && post.is_story
+      if post.is_story
 
         story_posts.push(post.get_attributes)
 
@@ -445,7 +445,7 @@ class ProfileModerationController < ApplicationController
 
     profile.posts.order(created_at: :desc).each do |post|
 
-      if post.complete? && !post.is_story
+      if !post.is_story
 
         profile_posts.push(post.get_attributes)
 
