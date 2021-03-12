@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_14_124449) do
+ActiveRecord::Schema.define(version: 2021_03_12_124134) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "intarray"
@@ -221,12 +221,6 @@ ActiveRecord::Schema.define(version: 2021_02_14_124449) do
     t.integer "privacy", null: false
     t.integer "customer_user_id", null: false
     t.boolean "is_default", default: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-  end
-
-  create_table "local_videos", force: :cascade do |t|
-    t.text "video", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end

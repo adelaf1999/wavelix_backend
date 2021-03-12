@@ -494,36 +494,29 @@ class PostController < ApplicationController
 
           post.video_thumbnail = video_thumbnail
 
+
+          post.video_file = media_file
+
+
+
           if post.save!
 
-            File.delete(thumbnail_path) if File.exist?(thumbnail_path)
-
             @success = true
+
+            post.complete!
+
+
+            if post.is_story
+
+              Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
+
+            end
+
+            File.delete(thumbnail_path) if File.exist?(thumbnail_path)
 
             PostBroadcastJob.perform_later(current_user.id)
 
 
-            local_video = LocalVideo.new
-
-            local_video.video = media_file
-
-            if local_video.save!
-
-              post_id = post.id
-
-              local_video_id = local_video.id
-
-              user_id = current_user.id
-
-              Delayed::Job.enqueue(
-                  CompressVideoJob.new(post_id, local_video_id, user_id),
-                  queue: 'compress_video_queue',
-                  priority: 0
-              )
-
-              return
-
-            end
 
           else
 
