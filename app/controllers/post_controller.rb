@@ -433,41 +433,38 @@ class PostController < ApplicationController
         end
 
 
-
         media_type = post.media_type_before_type_cast
+
 
         if media_type == 0
 
-          # The user will wait till his image is uploaded and encoded
+          post.image_file = media_file
 
           if post.save!
 
-            post.image_file = media_file
+            @success = true
 
-            if post.delay.save!
-
-              post.complete!
+            post.complete!
 
 
-              @success = true
+            if post.is_story
 
-              if post.is_story
-
-                Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
-
-              end
-
-
-              PostBroadcastJob.perform_later(current_user.id)
-
-              return
+              Delayed::Job.enqueue(StoryJob.new(post.id, current_user.id), queue: 'delete_story_post_queue', priority: 0, run_at: 24.hours.from_now)
 
             end
+
+
+            PostBroadcastJob.perform_later(current_user.id)
+
+            return
+
 
           else
 
             @success = false
+
             @message = "Error creating post"
+
             return
 
           end
@@ -516,12 +513,15 @@ class PostController < ApplicationController
 
             PostBroadcastJob.perform_later(current_user.id)
 
+            return
 
 
           else
 
             @success = false
+
             @message = "Error creating post"
+
             return
 
           end
