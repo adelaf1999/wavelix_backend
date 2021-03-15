@@ -70,7 +70,7 @@
             href="<%= "#{Rails.env.development?  ?  ENV.fetch('DEVELOPMENT_SERVER_URL') : ENV.fetch('PRODUCTION_SERVER_URL') }/auth/unlock?unlock_token=#{@token}"  %>"
             target="_blank"
            >
-            Confirm Account
+                Unlock Account
            </button>
 
         </center>
