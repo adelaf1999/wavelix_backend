@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_03_12_135024) do
+ActiveRecord::Schema.define(version: 2021_03_27_121354) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "hstore"
   enable_extension "intarray"
   enable_extension "pg_trgm"
   enable_extension "plpgsql"
@@ -237,6 +238,17 @@ ActiveRecord::Schema.define(version: 2021_03_12_135024) do
     t.integer "order_type"
     t.decimal "delivery_fee"
     t.string "delivery_fee_currency", default: "USD"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "ordered_products", force: :cascade do |t|
+    t.integer "product_id", null: false
+    t.integer "quantity", null: false
+    t.decimal "price", null: false
+    t.string "currency", null: false
+    t.json "product_options", default: {}
+    t.string "name", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end

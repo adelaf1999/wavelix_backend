@@ -243,26 +243,24 @@ class UnconfirmedOrdersController < ApplicationController
 
           @products = []
 
-          order.products.each do |ordered_product|
+          order.get_ordered_products.each do |ordered_product|
 
-            ordered_product = eval(ordered_product)
+            product = Product.find_by(id: ordered_product.product_id)
 
-            product = Product.find_by(id: ordered_product[:id])
+            product_price = ordered_product.price
 
-            product_price = ordered_product[:price]
-
-            product_currency = ordered_product[:currency]
+            product_currency = ordered_product.currency
 
             to_currency = 'USD'
 
             product_price = convert_amount(product_price, product_currency, to_currency).to_f.round(2)
 
             @products.push({
-                               id: ordered_product[:id],
-                               quantity: ordered_product[:quantity],
+                               id: ordered_product.product_id,
+                               quantity: ordered_product.quantity,
                                price: product_price,
                                currency: to_currency,
-                               product_options: ordered_product[:product_options],
+                               product_options: ordered_product.product_options,
                                name: product.name,
                                picture: product.main_picture.url
                            })

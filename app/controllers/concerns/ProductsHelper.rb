@@ -6,11 +6,9 @@ module ProductsHelper
 
     store_user = order.store_user
 
-    order.products.each do |ordered_product|
+    order.get_ordered_products.each do |ordered_product|
 
-      ordered_product = eval(ordered_product)
-
-      product = Product.find_by(id: ordered_product[:id])
+      product = Product.find_by(id: ordered_product.product_id)
 
       if product != nil && product.stock_quantity == 0 && product.product_available
 

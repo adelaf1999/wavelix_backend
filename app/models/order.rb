@@ -22,6 +22,16 @@ class Order < ApplicationRecord
   mount_uploader :receipt, ImageUploader
 
 
+  def get_ordered_products
+
+    ordered_products_ids = self.products.map(&:to_i)
+
+    OrderedProduct.where(id: ordered_products_ids)
+
+  end
+
+
+
   def get_drivers_canceled_order
 
     self.drivers_canceled_order.map(&:to_i)

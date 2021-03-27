@@ -5,6 +5,17 @@ class OrderRequest < ApplicationRecord
   serialize :delivery_location, Hash
 
 
+
+  def get_ordered_products
+
+    ordered_products_ids = self.products.map(&:to_i)
+
+    OrderedProduct.where(id: ordered_products_ids)
+
+  end
+
+
+
   def self.create_order(order_request, payment_intent_id)
 
     if Order.find_by(order_request_id: order_request.id) == nil
@@ -49,23 +60,24 @@ class OrderRequest < ApplicationRecord
 
       order.delivery_fee_currency = order_request.delivery_fee_currency
 
-      order_request.products.each do |ordered_product|
 
-        ordered_product = eval(ordered_product)
+      order_request.get_ordered_products.each do |ordered_product|
 
-        product = Product.find_by(id: ordered_product[:id])
+        product = Product.find_by(id: ordered_product.product_id)
 
         if (product != nil) && (product.stock_quantity != nil)
 
           # If the stock quantity of a product was not nil it will be decremented after an order is created
 
-          stock_quantity = product.stock_quantity - ordered_product[:quantity]
+          stock_quantity = product.stock_quantity - ordered_product.quantity
 
           product.update!(stock_quantity: stock_quantity)
 
         end
 
+
       end
+
 
       order.save!
 

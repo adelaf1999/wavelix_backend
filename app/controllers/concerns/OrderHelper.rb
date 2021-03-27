@@ -675,15 +675,13 @@ module OrderHelper
 
     # Re-increment stock quantity of each product if applicable
 
-    order.products.each do |ordered_product|
+    order.get_ordered_products.each do |ordered_product|
 
-      ordered_product = eval(ordered_product)
-
-      product = Product.find_by(id: ordered_product[:id])
+      product = Product.find_by(id: ordered_product.product_id)
 
       if (product != nil) && (product.stock_quantity != nil)
 
-        stock_quantity = product.stock_quantity + ordered_product[:quantity]
+        stock_quantity = product.stock_quantity + ordered_product.quantity
 
         product.update!(stock_quantity: stock_quantity)
 
@@ -906,19 +904,17 @@ module OrderHelper
     products = []
 
 
-    store_order.products.each do |ordered_product|
-
-      ordered_product = eval(ordered_product)
+    store_order.get_ordered_products.each do |ordered_product|
 
 
-      product = Product.find_by(id: ordered_product[:id])
+      product = Product.find_by(id: ordered_product.product_id)
 
       products.push({
-                        id: ordered_product[:id],
-                        quantity: ordered_product[:quantity],
-                        price: ordered_product[:price],
-                        currency: ordered_product[:currency],
-                        product_options: ordered_product[:product_options],
+                        id: ordered_product.product_id,
+                        quantity: ordered_product.quantity,
+                        price: ordered_product.price,
+                        currency: ordered_product.currency,
+                        product_options: ordered_product.product_options,
                         name: product.name,
                         picture: product.main_picture.url
                     })
@@ -1077,26 +1073,22 @@ module OrderHelper
 
       products = []
 
-      customer_order.products.each do |ordered_product|
+      customer_order.get_ordered_products.each do |ordered_product|
 
-        ordered_product = eval(ordered_product)
+        product = Product.find_by(id: ordered_product.product_id)
 
-        product = Product.find_by(id: ordered_product[:id])
+        product_price = ordered_product.price
 
-
-        product_price = ordered_product[:price]
-
-        product_currency = ordered_product[:currency]
-
+        product_currency = ordered_product.currency
 
         product_price = convert_amount(product_price, product_currency, default_currency)
 
         products.push({
-                          id: ordered_product[:id],
-                          quantity: ordered_product[:quantity],
+                          id: ordered_product.product_id,
+                          quantity: ordered_product.quantity,
                           price: product_price,
                           currency: default_currency,
-                          product_options: ordered_product[:product_options],
+                          product_options: ordered_product.product_options,
                           name: product.name,
                           picture: product.main_picture.url
                       })

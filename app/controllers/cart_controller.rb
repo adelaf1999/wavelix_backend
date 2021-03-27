@@ -107,16 +107,21 @@ class CartController < ApplicationController
                               'USD'
                           )
 
-                          ordered_product = {
-                              id: product.id,
+
+
+                          ordered_product = OrderedProduct.create!(
+                              product_id: product.id,
                               quantity: quantity,
                               price: price,
                               currency: product.currency,
                               product_options: cart_item.product_options,
                               name: product.name
-                          }
+                          )
 
-                          ordered_products.push(ordered_product)
+                          ordered_product_id = ordered_product.id
+
+
+                          ordered_products.push(ordered_product_id)
 
 
                         end

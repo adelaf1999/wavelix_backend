@@ -1345,21 +1345,27 @@ class OrderController < ApplicationController
 
         order.store_rejected!
 
-        order.products.each do |ordered_product|
 
-          ordered_product = eval(ordered_product)
 
-          product = Product.find_by(id: ordered_product[:id])
+        order.get_ordered_products.each do |ordered_product|
+
+
+          product = Product.find_by(id: ordered_product.product_id)
+
 
           if (product != nil) && (product.stock_quantity != nil)
 
-            stock_quantity = product.stock_quantity + ordered_product[:quantity]
+            stock_quantity = product.stock_quantity + ordered_product.quantity
 
             product.update!(stock_quantity: stock_quantity)
 
           end
 
+
         end
+
+
+
 
         order.update!(order_canceled_reason: 'Store canceled order')
 
@@ -2279,19 +2285,23 @@ class OrderController < ApplicationController
     if handles_delivery
 
 
-      ordered_product = {
-          id: product.id,
+
+      ordered_product = OrderedProduct.create!(
+          product_id: product.id,
           quantity: quantity,
           price: product.price,
           currency: product.currency,
           product_options: product_options,
           name: product.name
-      }
+      )
+
+      ordered_product_id = ordered_product.id
+
 
       total_price_usd = product_total_usd(product.price, product.currency, quantity)
 
       order_request = OrderRequest.create!(
-          products: [ordered_product],
+          products: [ordered_product_id],
           delivery_location: delivery_location,
           store_user_id: store_user.id,
           customer_user_id: customer_user.id,
@@ -2311,21 +2321,25 @@ class OrderController < ApplicationController
       if order_type == 0
 
 
-        ordered_product = {
-            id: product.id,
+
+        ordered_product = OrderedProduct.create!(
+            product_id: product.id,
             quantity: quantity,
             price: product.price,
             currency: product.currency,
             product_options: product_options,
             name: product.name
-        }
+        )
+
+        ordered_product_id = ordered_product.id
+
 
         delivery_fee_usd = calculate_standard_delivery_fee_usd(distance)
 
         total_price_usd = product_total_usd(product.price, product.currency, quantity) + delivery_fee_usd
 
         order_request = OrderRequest.create!(
-            products: [ordered_product],
+            products: [ordered_product_id],
             delivery_location: delivery_location,
             store_user_id: store_user.id,
             customer_user_id: customer_user.id,
@@ -2342,14 +2356,17 @@ class OrderController < ApplicationController
 
       elsif order_type == 1
 
-        ordered_product = {
-            id: product.id,
+
+        ordered_product = OrderedProduct.create!(
+            product_id: product.id,
             quantity: quantity,
             price: product.price,
             currency: product.currency,
             product_options: product_options,
             name: product.name
-        }
+        )
+
+        ordered_product_id = ordered_product.id
 
 
         delivery_fee_usd = calculate_exclusive_delivery_fee_usd(delivery_location, store_location )
@@ -2359,7 +2376,7 @@ class OrderController < ApplicationController
 
 
         order_request = OrderRequest.create!(
-            products: [ordered_product],
+            products: [ordered_product_id],
             delivery_location: delivery_location,
             store_user_id: store_user.id,
             customer_user_id: customer_user.id,
